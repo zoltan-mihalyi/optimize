@@ -138,6 +138,14 @@ describe('FiniteSetOfValues', function() {
         assert.deepEqual(valueSet.or(value3), new FiniteSetOfValues([value1, value2, value3]));
     });
 
+    it('test or with NaN KnownValue', function() {
+        var value1 = new KnownValue(1);
+        var value2 = new KnownValue(0 / 0);
+        var valueSet = new FiniteSetOfValues([value1, value2]);
+        var value3 = new KnownValue(0 / 0);
+        assert.deepEqual(valueSet.or(value3), new FiniteSetOfValues([value1, value2]));
+    });
+
     it('test or with ObjectValue', function() {
         var value1 = new KnownValue(1);
         var value2 = new KnownValue(2);

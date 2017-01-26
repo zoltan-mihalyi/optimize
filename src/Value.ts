@@ -170,10 +170,6 @@ export class UnknownValue extends Value {
     product():Value {
         return this;
     }
-
-    protected equalsInner() {
-        return true;
-    }
 }
 
 export const unknown:UnknownValue = new UnknownValue();
