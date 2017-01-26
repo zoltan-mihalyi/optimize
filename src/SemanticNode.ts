@@ -281,11 +281,29 @@ export class IdentifierNode extends SemanticExpression {
         return true;
     }
 
+    isRead():boolean {
+        if (!this.isReal()) {
+            return false;
+        }
+
+        if (this.parent instanceof VariableDeclaratorNode && this.parent.id === this) {
+            return false; //just initializing
+        }
+        if (this.parent instanceof FunctionDeclarationNode) {
+            return false; //function declaration
+        }
+        //noinspection RedundantIfStatementJS
+        if (this.parent instanceof AssignmentNode && this.parent.left === this) {
+            return false; //assignment
+        }
+        return true;
+    }
+
     protected updateAccessForNode() {
         let loopNode = this.findEnclosingLoop();
         if (loopNode) {
             this.scope.get(this.name).writes.push(loopNode);
-        } else if (this.isReal()) {
+        } else if (this.isRead()) {
             this.scope.get(this.name).reads.push(this);
         }
     }
@@ -415,6 +433,12 @@ export class VariableDeclaratorNode extends SemanticNode {
     protected handleDeclarationsForNode() {
         this.scope.set(this.id.name, this.parent.isBlockScoped());
     }
+
+    protected updateAccessForNode() {
+        if (this.init) {
+            this.scope.get(this.id.name).writes.push(this);
+        }
+    }
 }
 
 function map<S,T>(data:S[], transform:(source:S) => T):T[] {
@@ -427,6 +451,7 @@ function map<S,T>(data:S[], transform:(source:S) => T):T[] {
 
 const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope) => SemanticNode} = {
     'ArrayExpression': ArrayNode,
+    'AssignmentExpression': AssignmentNode,
     'BinaryExpression': BinaryNode,
     'BlockStatement': BlockNode,
     'CallExpression': CallNode,
@@ -442,7 +467,9 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'ObjectExpression': ObjectNode,
     'Program': ProgramNode,
     'PropertyExpression': PropertyNode,
-    'UnaryExpression': UnaryNode
+    'UnaryExpression': UnaryNode,
+    'VariableDeclaration': VariableDeclarationNode,
+    'VariableDeclarator': VariableDeclaratorNode
 };
 
 function toSemanticNode(expression:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope):SemanticNode {
@@ -455,6 +482,9 @@ function toSemanticNode(expression:Expression, parent:SemanticNode, parentObject
 }
 
 export function semantic(expression:Expression):SemanticNode {
+    if ((expression as any).errors && (expression as any).errors.length) {
+        throw (expression as any).errors[0];
+    }
     const node = toSemanticNode(expression, null, null, null, new Scope(null));
     node.handleDeclarations();
     node.updateAccess();

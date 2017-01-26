@@ -1,8 +1,15 @@
-import {SemanticNode, AssignmentNode, UpdateNode, ForEachNode, IdentifierNode} from "./SemanticNode";
+import {
+    SemanticNode,
+    AssignmentNode,
+    UpdateNode,
+    ForEachNode,
+    IdentifierNode,
+    VariableDeclaratorNode
+} from "./SemanticNode";
 
 interface Variable {
     usages:SemanticNode[];
-    writes:(AssignmentNode | UpdateNode | ForEachNode)[];
+    writes:(AssignmentNode | UpdateNode | ForEachNode | VariableDeclaratorNode)[];
     reads:IdentifierNode[];
     name:string;
 }
