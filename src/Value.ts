@@ -55,13 +55,37 @@ export class KnownValue extends SingleValue {
     }
 }
 
+abstract class ObjectClass {
+    abstract getTypeof():string;
+}
+class FunctionObjectClass extends ObjectClass {
+    getTypeof():string {
+        return 'function';
+    }
+}
+export const FUNCTION = new FunctionObjectClass();
+
+class ObjectObjectClass extends ObjectClass {
+    getTypeof():string {
+        return 'object';
+    }
+}
+export const OBJECT = new ObjectObjectClass();
+
+class ArrayObjectClass extends ObjectClass {
+    getTypeof():string {
+        return 'object';
+    }
+}
+export const ARRAY = new ArrayObjectClass();
+
 export class ObjectValue extends SingleValue {
-    constructor(private reference:Object) {
+    constructor(readonly objectClass:ObjectClass) {
         super();
     }
 
     protected equalsInner(other:ObjectValue):boolean {
-        return this.reference == other.reference;
+        return this.objectClass === other.objectClass;
     }
 }
 

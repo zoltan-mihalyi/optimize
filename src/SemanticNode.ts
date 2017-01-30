@@ -1,5 +1,5 @@
 ///<reference path="Expression.ts"/>
-import {unknown, Value, KnownValue} from "./Value";
+import {unknown, Value, KnownValue, ObjectValue, ARRAY, FUNCTION, OBJECT} from "./Value";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -163,7 +163,7 @@ export abstract class SemanticNode {
 }
 
 abstract class SemanticExpression extends SemanticNode {
-    protected calculatedValue:Value = unknown;
+    protected calculatedValue:Value = this.isClean() ? this.getInitialValue() : unknown;
 
     abstract isClean():boolean;
 
@@ -186,12 +186,16 @@ abstract class SemanticExpression extends SemanticNode {
             }
         }
 
-        if(this.calculatedValue.equals(value)){
+        if (this.calculatedValue.equals(value)) {
             return;
         }
 
         this.calculatedValue = value;
         this.markUpdated();
+    }
+
+    protected getInitialValue():Value {
+        return unknown;
     }
 }
 
@@ -212,6 +216,10 @@ export class ArrayNode extends SemanticExpression {
             }
         }
         return true;
+    }
+
+    protected getInitialValue():Value {
+        return new ObjectValue(ARRAY);
     }
 }
 
@@ -313,6 +321,10 @@ export class FunctionExpressionNode extends SemanticExpression {
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope);
     }
+
+    protected getInitialValue():Value {
+        return new ObjectValue(FUNCTION);
+    }
 }
 
 export class IdentifierNode extends SemanticExpression {
@@ -377,10 +389,11 @@ class LiteralNode extends SemanticExpression {
         return true;
     }
 
-    constructor(source:Expression, parent:SemanticNode, parentObject, parentProperty:string, scope:Scope) {
-        super(source, parent, parentObject, parentProperty, scope);
+    protected getInitialValue():Value {
         if (typeof this.value !== 'object' || this.value === null) {
-            this.calculatedValue = new KnownValue(this.value);
+            return new KnownValue(this.value);
+        } else {
+            return super.getInitialValue();
         }
     }
 }
@@ -419,6 +432,10 @@ export class ObjectNode extends SemanticExpression {
             }
         }
         return true;
+    }
+
+    protected getInitialValue():Value {
+        return new ObjectValue(OBJECT);
     }
 }
 

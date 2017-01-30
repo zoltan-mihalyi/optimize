@@ -1,6 +1,6 @@
 import NodeVisitor = require("../NodeVisitor");
 import {BinaryNode, UnaryNode} from "../SemanticNode";
-import {KnownValue, unknown} from "../Value";
+import {KnownValue, unknown, ObjectValue} from "../Value";
 
 export = (nodeVisitor:NodeVisitor) => {
 
@@ -23,6 +23,14 @@ export = (nodeVisitor:NodeVisitor) => {
         node.setValue(valueInformation.map(value => {
             if (value instanceof KnownValue) {
                 return new KnownValue(mapper(value.value));
+            } else if (value instanceof ObjectValue) {
+                if (node.operator === '!') {
+                    return new KnownValue(false);
+                } else if (node.operator === 'void') {
+                    return new KnownValue(void 0);
+                } else if (node.operator === 'typeof') {
+                    return new KnownValue(value.objectClass.getTypeof());
+                }
             }
             return unknown;
         }));

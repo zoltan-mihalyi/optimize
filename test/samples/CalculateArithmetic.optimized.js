@@ -14,6 +14,12 @@ console.log(1);
 console.log(-1);
 console.log("string");
 console.log(void 0);
+console.log(false);
+console.log(![err()]);
+console.log(void 0);
+console.log("object");
+console.log("object");
+console.log("function");
 
 console.log(1 + a);
 console.log(2);
