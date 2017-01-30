@@ -1,6 +1,6 @@
 import NodeVisitor = require("../NodeVisitor");
 import {BinaryNode, UnaryNode} from "../SemanticNode";
-import {KnownValue, unknown, ObjectValue} from "../Value";
+import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
 
 export = (nodeVisitor:NodeVisitor) => {
 
@@ -9,11 +9,32 @@ export = (nodeVisitor:NodeVisitor) => {
         const leftValue = node.left.getValue();
         const evaluator = new Function('left,right', `return left ${node.operator} right;`) as (x, y) => any;
         node.setValue(leftValue.product(rightValue, (leftValue, rightValue) => {
+            if (isStrictEqual() || isEqual()) {
+                const comparisionResult = leftValue.compareTo(rightValue, isStrictEqual());
+                if (comparisionResult === ComparisonResult.TRUE) {
+                    return maybeNegated(true);
+                } else if (comparisionResult === ComparisonResult.FALSE) {
+                    return maybeNegated(false);
+                }
+            }
+
             if (leftValue instanceof KnownValue && rightValue instanceof KnownValue) {
                 return new KnownValue(evaluator(leftValue.value, rightValue.value));
             }
             return unknown;
         }));
+
+        function isStrictEqual():boolean {
+            return node.operator === '===' || node.operator === '!==';
+        }
+
+        function isEqual():boolean {
+            return node.operator === '==' || node.operator === '!=';
+        }
+
+        function maybeNegated(value:boolean):KnownValue {
+            return new KnownValue(value === (node.operator[0] === '='));
+        }
     });
 
     nodeVisitor.on(UnaryNode, (node:UnaryNode) => {

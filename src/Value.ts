@@ -19,6 +19,16 @@ export abstract class IterableValue extends Value {
     abstract each(callback:(value:SingleValue) => void):void;
 }
 
+export const enum ComparisonResult{
+    TRUE,
+    FALSE,
+    UNKNOWN
+}
+
+function fromBoolean(bool:boolean):ComparisonResult {
+    return bool ? ComparisonResult.TRUE : ComparisonResult.FALSE;
+}
+
 export abstract class SingleValue extends IterableValue {
     or(value:Value):Value {
         if (value instanceof SingleValue) {
@@ -39,6 +49,8 @@ export abstract class SingleValue extends IterableValue {
     product(other:Value, mapper:(left:SingleValue, right:SingleValue) => Value):Value {
         return other.map(rval => mapper(this, rval));
     }
+
+    abstract compareTo(other:SingleValue, strict:boolean):ComparisonResult;
 }
 
 function isNaN(value):boolean {
@@ -48,6 +60,17 @@ function isNaN(value):boolean {
 export class KnownValue extends SingleValue {
     constructor(public value:any) {
         super();
+    }
+
+    compareTo(other:SingleValue, strict:boolean):ComparisonResult {
+        if (other instanceof KnownValue) {
+            let equals = strict ? (this.value === other.value) : (this.value == other.value);
+            return fromBoolean(equals);
+        }
+        if (strict) {
+            return ComparisonResult.FALSE;
+        }
+        return ComparisonResult.UNKNOWN;
     }
 
     protected equalsInner(other:KnownValue):boolean {
@@ -82,6 +105,13 @@ export const ARRAY = new ArrayObjectClass();
 export class ObjectValue extends SingleValue {
     constructor(readonly objectClass:ObjectClass) {
         super();
+    }
+
+    compareTo(other:ObjectValue, strict:boolean):ComparisonResult {
+        if (this.objectClass !== other.objectClass) {
+            return ComparisonResult.FALSE
+        }
+        return ComparisonResult.UNKNOWN;
     }
 
     protected equalsInner(other:ObjectValue):boolean {

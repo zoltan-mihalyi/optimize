@@ -27,5 +27,9 @@ console.log(0 || null || 2);
 console.log(-[]);
 console.log(-u);
 
+console.log(1 === {});
+console.log(1 !== {});
+console.log({} === []);
+
 console.log(1 == {});
 console.log(Math == 1);
