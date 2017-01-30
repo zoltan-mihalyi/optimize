@@ -7,7 +7,7 @@ export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(BinaryNode, (node:BinaryNode) => {
         const rightValue = node.right.getValue();
         const leftValue = node.left.getValue();
-        const evaluator = new Function('left,right', `return left ${node.operator} right;`) as (x, y) => any;
+        const evaluator = new Function('left,right', `return left ${node.operator} right;`) as (x:any, y:any) => any;
         node.setValue(leftValue.product(rightValue, (leftValue, rightValue) => {
             if (isStrictEqual() || isEqual()) {
                 const comparisionResult = leftValue.compareTo(rightValue, isStrictEqual());
@@ -40,7 +40,7 @@ export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(UnaryNode, (node:UnaryNode) => {
         const argument = node.argument;
         const valueInformation = argument.getValue();
-        const mapper = new Function('arg', `return ${node.operator} arg;`) as (x) => any;
+        const mapper = new Function('arg', `return ${node.operator} arg;`) as (x:any) => any;
         node.setValue(valueInformation.map(value => {
             if (value instanceof KnownValue) {
                 return new KnownValue(mapper(value.value));

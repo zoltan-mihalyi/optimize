@@ -13,13 +13,13 @@ export abstract class SemanticNode {
     private updated:boolean = false;
 
     constructor(source:Expression, public readonly parent:SemanticNode,
-                private readonly parentObject, private readonly parentProperty:string, scope:Scope) {
+                private readonly parentObject:{[idx:string]:any}, private readonly parentProperty:string, scope:Scope) {
         scope = this.createSubScopeIfNeeded(scope);
         this.scope = scope;
 
         for (let childKey in source) {
             this.childKeys.push(childKey);
-            let sourceChild = source[childKey];
+            let sourceChild:any = (source as any)[childKey];
             if (Array.isArray(sourceChild)) {
 
                 const semanticArray = [];
@@ -27,23 +27,23 @@ export abstract class SemanticNode {
                     semanticArray.push(toSemanticNode(sourceChild[i], this, semanticArray, i + '', scope));
                 }
 
-                this[childKey] = semanticArray;
+                (this as any)[childKey] = semanticArray;
             } else if (sourceChild && sourceChild.type) {
-                this[childKey] = toSemanticNode(sourceChild, this, this, childKey, scope);
+                (this as any)[childKey] = toSemanticNode(sourceChild, this, this, childKey, scope);
             } else {
-                this[childKey] = sourceChild;
+                (this as any)[childKey] = sourceChild;
             }
         }
     }
 
     toAst():Expression {
-        const result:Expression = {} as Expression;
+        const result:any = {};
 
         for (let i = 0; i < this.childKeys.length; i++) {
             const childKey = this.childKeys[i];
-            const childNode = this[childKey];
+            const childNode = (this as any)[childKey];
             if (Array.isArray(childNode)) {
-                result[childKey] = map(childNode, node => node.toAst());
+                (result as any)[childKey] = map(childNode, node => node.toAst());
             } else if (childNode instanceof SemanticNode) {
                 result[childKey] = childNode.toAst();
             } else {
@@ -51,7 +51,7 @@ export abstract class SemanticNode {
             }
         }
 
-        return result;
+        return result as Expression;
     }
 
     remove():void {
@@ -80,7 +80,7 @@ export abstract class SemanticNode {
         this.markChanged();
     }
 
-    contains(type:new(...args) => SemanticNode):boolean {
+    contains(type:new(...args:any[]) => SemanticNode):boolean {
         return this.walk(node => node instanceof type) || false;
     }
 
@@ -93,7 +93,7 @@ export abstract class SemanticNode {
         }
         for (let i = 0; i < this.childKeys.length; i++) {
             const key = this.childKeys[i];
-            let sub = this[key];
+            let sub = (this as any)[key];
             if (sub instanceof SemanticNode) {
                 let result:T = sub.walk(before, after);
                 if (result) {

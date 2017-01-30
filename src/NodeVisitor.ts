@@ -1,6 +1,6 @@
 import {SemanticNode} from "./SemanticNode";
 
-type Constructor<T> = new(...args) => T;
+type Constructor<T> = new(...args:any[]) => T;
 type Callback<T extends SemanticNode> = (node:T) => void;
 
 class NodeVisitor {

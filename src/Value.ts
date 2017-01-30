@@ -53,12 +53,12 @@ export abstract class SingleValue extends IterableValue {
     abstract compareTo(other:SingleValue, strict:boolean):ComparisonResult;
 }
 
-function isNaN(value):boolean {
+function isNaN(value:any):boolean {
     return value !== value;
 }
 
 export class KnownValue extends SingleValue {
-    constructor(public value:any) {
+    constructor(public value:string|boolean|number) {
         super();
     }
 
