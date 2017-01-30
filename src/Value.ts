@@ -4,6 +4,15 @@ export abstract class Value {
     abstract or(value:Value):Value;
 
     abstract product(other:Value, mapper:(left:SingleValue, right:SingleValue) => Value):Value;
+
+    equals(other:Value):boolean {
+        if (other.constructor === this.constructor) {
+            return this.equalsInner(other as this);
+        }
+        return false;
+    }
+
+    protected abstract equalsInner(other:this):boolean;
 }
 
 export abstract class IterableValue extends Value {
@@ -30,15 +39,6 @@ export abstract class SingleValue extends IterableValue {
     product(other:Value, mapper:(left:SingleValue, right:SingleValue) => Value):Value {
         return other.map(rval => mapper(this, rval));
     }
-
-    equals(other:SingleValue):boolean {
-        if (other.constructor === this.constructor) {
-            return this.equalsInner(other as this);
-        }
-        return false;
-    }
-
-    protected abstract equalsInner(other:this):boolean;
 }
 
 function isNaN(value):boolean {
@@ -115,6 +115,18 @@ export class FiniteSetOfValues extends IterableValue {
         }
     }
 
+    protected equalsInner(other:FiniteSetOfValues):boolean {
+        if (this.values.length !== other.values.length) {
+            return false;
+        }
+        for (let i = 0; i < this.values.length; i++) {
+            if (!this.values[i].equals(other.values[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private constructor(private values:SingleValue[]) {
         super();
     }
@@ -169,6 +181,10 @@ export class UnknownValue extends Value {
 
     product():Value {
         return this;
+    }
+
+    protected equalsInner(other:this):boolean {
+        return true;
     }
 }
 

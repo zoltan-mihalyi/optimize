@@ -1,12 +1,16 @@
 ///<reference path="Expression.ts"/>
 import {unknown, Value, KnownValue} from "./Value";
 import Scope = require("./Scope");
+import recast = require("recast");
+
+const builders = recast.types.builders;
 
 export abstract class SemanticNode {
     readonly type:string;
     readonly scope:Scope;
     private readonly childKeys:string[] = [];
     private changed:boolean = false;
+    private updated:boolean = false;
 
     constructor(source:Expression, public readonly parent:SemanticNode,
                 private readonly parentObject, private readonly parentProperty:string, scope:Scope) {
@@ -30,7 +34,6 @@ export abstract class SemanticNode {
                 this[childKey] = sourceChild;
             }
         }
-        this.initialize();
     }
 
     toAst():Expression {
@@ -55,10 +58,14 @@ export abstract class SemanticNode {
         this.replaceWith([]);
     }
 
-    replaceWith(nodes:SemanticNode[]):void {
+    replaceWith(expressions:Expression[]):void {
         if (!this.parent) {
             throw new Error('Parent does not exist.');
         }
+
+        console.log('REPLACED ' + recast.print(this.toAst()).code + ' WITH ' + expressions.map(e => recast.print(e).code));
+
+        const nodes:SemanticNode[] = map(expressions, e => toSemanticNode(e, this.parent, this.parentObject, this.parentProperty, this.scope));
 
         if (Array.isArray(this.parentObject)) {
             const index = this.parentObject.indexOf(this);
@@ -117,7 +124,16 @@ export abstract class SemanticNode {
         this.walk(node => node.updateAccessForNode());
     }
 
-    initialize() {
+    isUpdated():boolean {
+        return this.updated;
+    }
+
+    isChanged():boolean {
+        return this.changed;
+    }
+
+    clearUpdated() {
+        this.updated = false;
     }
 
     protected handleDeclarationsForNode() {
@@ -130,16 +146,24 @@ export abstract class SemanticNode {
         return scope;
     }
 
-    private markChanged() {
+    protected markChanged() {
         if (this.parent) {
             this.parent.markChanged();
         }
         this.changed = true;
+        this.updated = true;
+    }
+
+    protected markUpdated() {
+        if (this.parent) {
+            this.parent.markUpdated();
+        }
+        this.updated = true;
     }
 }
 
 abstract class SemanticExpression extends SemanticNode {
-    private calculatedValue:Value = unknown;
+    protected calculatedValue:Value = unknown;
 
     abstract isClean():boolean;
 
@@ -148,9 +172,27 @@ abstract class SemanticExpression extends SemanticNode {
     }
 
     setValue(value:Value) {
-        this.calculatedValue = value;
-    }
+        if (value instanceof KnownValue) {
+            if (value.value === void 0) {
+                if (!(this instanceof UnaryNode && this.operator === 'void' && this.argument instanceof LiteralNode && this.argument.value === 0)) {
+                    this.replaceWith([builders.unaryExpression('void', builders.literal(0), true)]);
+                    return;
+                }
+            } else {
+                if (!(this instanceof LiteralNode)) { //todo value check
+                    this.replaceWith([builders.literal(value.value)]);
+                    return;
+                }
+            }
+        }
 
+        if(this.calculatedValue.equals(value)){
+            return;
+        }
+
+        this.calculatedValue = value;
+        this.markUpdated();
+    }
 }
 
 export abstract class ForEachNode extends SemanticNode {
@@ -241,26 +283,36 @@ export class ForInNode extends ForEachNode {
 export class ForOfNode extends ForEachNode {
 }
 
-export abstract class FunctionNode extends SemanticNode {
+
+function addParametersToScope(params:IdentifierNode[], scope:Scope) {
+    for (let i = 0; i < params.length; i++) {
+        scope.set(params[i].name, false);
+    }
+}
+
+export class FunctionDeclarationNode extends SemanticNode {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:BlockNode;
 
     protected handleDeclarationsForNode() {
-        for (let i = 0; i < this.params.length; i++) {
-            this.body.scope.set(this.params[i].name, false);
-        }
-    }
-}
-
-export class FunctionDeclarationNode extends FunctionNode {
-    protected handleDeclarationsForNode() {
-        super.handleDeclarationsForNode();
+        addParametersToScope(this.params, this.body.scope);
         this.scope.set(this.id.name, false);
     }
 }
 
-export class FunctionExpressionNode extends FunctionNode {
+export class FunctionExpressionNode extends SemanticExpression {
+    id:IdentifierNode;
+    params:IdentifierNode[];
+    body:BlockNode;
+
+    isClean():boolean {
+        return true;
+    }
+
+    protected handleDeclarationsForNode() {
+        addParametersToScope(this.params, this.body.scope);
+    }
 }
 
 export class IdentifierNode extends SemanticExpression {
@@ -325,11 +377,10 @@ class LiteralNode extends SemanticExpression {
         return true;
     }
 
-    initialize() {
-        if (typeof this.value === 'object' && this.value !== null) {
-            //TODO ref??? this.setValue(new ObjectValue(OBJECT, {}, true));
-        } else {
-            this.setValue(new KnownValue(this.value));
+    constructor(source:Expression, parent:SemanticNode, parentObject, parentProperty:string, scope:Scope) {
+        super(source, parent, parentObject, parentProperty, scope);
+        if (typeof this.value !== 'object' || this.value === null) {
+            this.calculatedValue = new KnownValue(this.value);
         }
     }
 }
@@ -354,8 +405,21 @@ export class MemberNode extends SemanticExpression {
     }
 }
 
-export class ObjectNode extends SemanticNode {
+export class ObjectNode extends SemanticExpression {
     properties:PropertyNode[];
+
+    isClean():boolean {
+        for (let i = 0; i < this.properties.length; i++) {
+            const property = this.properties[i];
+            if (property.computed && !property.key.isClean()) {
+                return false;
+            }
+            if (!property.value.isClean()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 export class ProgramNode extends BlockNode {
