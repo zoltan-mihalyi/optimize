@@ -269,12 +269,15 @@ class CallNode extends SemanticExpression {
     }
 }
 
-export class ConditionalNode extends SemanticNode {
+export class ConditionalNode extends SemanticExpression {
     test:SemanticExpression;
-    consequent:SemanticNode;
-    alternate:SemanticNode;
-}
+    consequent:SemanticExpression;
+    alternate:SemanticExpression;
 
+    isClean():boolean {
+        return this.test.isClean() && this.consequent.isClean() && this.alternate.isClean();
+    }
+}
 
 export class ExpressionStatementNode extends SemanticNode {
     expression:SemanticExpression;
@@ -379,6 +382,12 @@ export class IdentifierNode extends SemanticExpression {
         }
         return (enclosingLoop instanceof ForEachNode) && enclosingLoop.left === this ? enclosingLoop : null;
     }
+}
+
+export class IfNode extends SemanticNode {
+    test:SemanticExpression;
+    consequent:SemanticNode;
+    alternate:SemanticNode;
 }
 
 class LiteralNode extends SemanticExpression {
@@ -536,12 +545,14 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'BinaryExpression': BinaryNode,
     'BlockStatement': BlockNode,
     'CallExpression': CallNode,
+    'ConditionalExpression': ConditionalNode,
     'ExpressionStatement': ExpressionStatementNode,
     'ForInStatement': ForInNode,
     'ForOfStatement': ForOfNode,
     'FunctionDeclaration': FunctionDeclarationNode,
     'FunctionExpression': FunctionExpressionNode,
     'Identifier': IdentifierNode,
+    'IfStatement': IfNode,
     'Literal': LiteralNode,
     'LogicalExpression': LogicalNode,
     'MemberExpression': MemberNode,
