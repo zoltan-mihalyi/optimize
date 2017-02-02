@@ -6,6 +6,7 @@ import {
     IdentifierNode,
     VariableDeclaratorNode
 } from "./SemanticNode";
+import {createUnusedName} from "./Utils";
 
 interface Variable {
     usages:SemanticNode[];
@@ -56,6 +57,10 @@ class Scope {
             writes: [],
             reads: []
         };
+    }
+
+    createUnusedIdentifier(base:string):string {
+        return createUnusedName(base, name => this.has(name));
     }
 }
 

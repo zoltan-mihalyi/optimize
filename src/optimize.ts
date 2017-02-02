@@ -2,16 +2,18 @@
 import recast = require('recast');
 import {semantic} from "./SemanticNode";
 import Scope = require("./Scope");
+import NodeVisitor = require("./NodeVisitor");
 
 import CalculateArithmetic = require("./features/CalculateArithmetic");
 import ReduceConditionals = require("./features/ReduceConditionals");
 import ReduceLogical = require("./features/ReduceLogical");
-import NodeVisitor = require("./NodeVisitor");
+import ReduceTailRecursion = require("./features/ReduceTailRecursion");
 
 const nodeVisitor = new NodeVisitor();
 CalculateArithmetic(nodeVisitor);
 ReduceConditionals(nodeVisitor);
 ReduceLogical(nodeVisitor);
+ReduceTailRecursion(nodeVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;

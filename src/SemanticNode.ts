@@ -36,6 +36,17 @@ export abstract class SemanticNode {
         }
     }
 
+    getEnclosingFunction():FunctionDeclarationNode|FunctionExpressionNode {
+        let parent = this.parent;
+        while (parent) {
+            if (parent instanceof FunctionDeclarationNode || parent instanceof FunctionExpressionNode) {
+                return parent;
+            }
+            parent = parent.parent;
+        }
+        return null;
+    }
+
     toAst():Expression {
         const result:any = {};
 
@@ -80,8 +91,12 @@ export abstract class SemanticNode {
         this.markChanged();
     }
 
-    contains(type:new(...args:any[]) => SemanticNode):boolean {
-        return this.walk(node => node instanceof type) || false;
+    contains(predicate:(node:SemanticNode) => boolean):boolean {
+        return this.walk(predicate) || false;
+    }
+
+    containsType(type:new(...args:any[]) => SemanticNode):boolean {
+        return this.contains(node => node instanceof type);
     }
 
     walk<T>(before:(node:this) => T, after?:(node:this) => T):T {
@@ -260,7 +275,7 @@ export class BlockNode extends SemanticNode {
 export class BreakNode extends SemanticNode {
 }
 
-class CallNode extends SemanticExpression {
+export class CallNode extends SemanticExpression {
     callee:SemanticExpression;
     arguments:SemanticExpression[];
 
@@ -279,6 +294,9 @@ export class ConditionalNode extends SemanticExpression {
     }
 }
 
+export class ContinueNode extends SemanticNode {
+}
+
 export class ExpressionStatementNode extends SemanticNode {
     expression:SemanticExpression;
     directive?:string;
@@ -294,6 +312,12 @@ export class ForInNode extends ForEachNode {
 export class ForOfNode extends ForEachNode {
 }
 
+export class ForNode extends SemanticNode {
+    init:SemanticNode;
+    test:SemanticExpression;
+    update:SemanticNode;
+    body:SemanticNode;
+}
 
 function addParametersToScope(params:IdentifierNode[], scope:Scope) {
     for (let i = 0; i < params.length; i++) {
@@ -315,7 +339,7 @@ export class FunctionDeclarationNode extends SemanticNode {
 export class FunctionExpressionNode extends SemanticExpression {
     id:IdentifierNode;
     params:IdentifierNode[];
-    body:BlockNode;
+    body:SemanticNode;
 
     isClean():boolean {
         return true;
@@ -334,7 +358,7 @@ export class IdentifierNode extends SemanticExpression {
     readonly name:string;
 
     isClean():boolean {
-        return this.scope.has(this.name);
+        return this.scope.has(this.name); //todo let and const!
     }
 
     isReal():boolean {
@@ -366,6 +390,13 @@ export class IdentifierNode extends SemanticExpression {
         return true;
     }
 
+    refersToSame(identifier:IdentifierNode):boolean {
+        if (!identifier.isReal()) {
+            return false;
+        }
+        return this.scope.get(this.name) === identifier.scope.get(identifier.name);
+    }
+
     protected updateAccessForNode() {
         let loopNode = this.findEnclosingLoop();
         if (loopNode) {
@@ -390,7 +421,12 @@ export class IfNode extends SemanticNode {
     alternate:SemanticNode;
 }
 
-class LiteralNode extends SemanticExpression {
+export class LabeledNode extends SemanticNode {
+    label:IdentifierNode;
+    body:SemanticNode;
+}
+
+export class LiteralNode extends SemanticExpression {
     value:any;
     raw:string;
 
@@ -481,6 +517,10 @@ export class SwitchStatementNode extends SemanticNode {
     cases:SwitchCaseNode[];
 }
 
+export class ReturnNode extends SemanticNode {
+    argument:SemanticExpression;
+}
+
 export class UnaryNode extends SemanticExpression {
     argument:SemanticExpression;
     operator:string;
@@ -531,6 +571,11 @@ export class VariableDeclaratorNode extends SemanticNode {
     }
 }
 
+export class WhileNode extends SemanticNode {
+    test:SemanticExpression;
+    body:SemanticNode;
+}
+
 function map<S,T>(data:S[], transform:(source:S) => T):T[] {
     const result = [];
     for (let i = 0; i < data.length; i++) {
@@ -546,22 +591,28 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'BlockStatement': BlockNode,
     'CallExpression': CallNode,
     'ConditionalExpression': ConditionalNode,
+    'ContinueStatement': ContinueNode,
     'ExpressionStatement': ExpressionStatementNode,
     'ForInStatement': ForInNode,
     'ForOfStatement': ForOfNode,
+    'ForStatement': ForNode,
     'FunctionDeclaration': FunctionDeclarationNode,
     'FunctionExpression': FunctionExpressionNode,
     'Identifier': IdentifierNode,
     'IfStatement': IfNode,
+    'LabeledStatement': LabeledNode,
     'Literal': LiteralNode,
     'LogicalExpression': LogicalNode,
     'MemberExpression': MemberNode,
     'ObjectExpression': ObjectNode,
     'Program': ProgramNode,
     'PropertyExpression': PropertyNode,
+    'ReturnStatement': ReturnNode,
     'UnaryExpression': UnaryNode,
+    'UpdateExpression': UpdateNode,
     'VariableDeclaration': VariableDeclarationNode,
-    'VariableDeclarator': VariableDeclaratorNode
+    'VariableDeclarator': VariableDeclaratorNode,
+    'WhileStatement': WhileNode
 };
 
 function toSemanticNode(expression:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope):SemanticNode {
