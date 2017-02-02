@@ -3,9 +3,7 @@
     console.log(i);
 }
 
-{
-    console.log(3);
-}
+console.log(3);
 
 if (a) {
     console.log(4);
@@ -19,17 +17,13 @@ if (a) {
     console.log(9);
 }
 
-{
-    console.log(10);
-}
+console.log(10);
 
 if ([console.log(1)]) {
     console.log(11);
 }
 
-{
-    console.log(13);
-}
+console.log(13);
 
 var x = 1;
 if (u) {
