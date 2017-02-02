@@ -18,6 +18,10 @@ export abstract class SemanticNode {
         this.scope = scope;
 
         for (let childKey in source) {
+            if (childKey === 'comments') {
+                continue;
+            }
+
             this.childKeys.push(childKey);
             let sourceChild:any = (source as any)[childKey];
             if (Array.isArray(sourceChild)) {
@@ -284,6 +288,11 @@ export class CallNode extends SemanticExpression {
     }
 }
 
+export class CatchNode extends SemanticNode {
+    param:IdentifierNode;
+    body:BlockNode;
+}
+
 export class ConditionalNode extends SemanticExpression {
     test:SemanticExpression;
     consequent:SemanticExpression;
@@ -295,6 +304,14 @@ export class ConditionalNode extends SemanticExpression {
 }
 
 export class ContinueNode extends SemanticNode {
+}
+
+export class DoWhileNode extends SemanticNode {
+    test:SemanticExpression;
+    body:SemanticNode;
+}
+
+export class EmptyNode extends SemanticNode {
 }
 
 export class ExpressionStatementNode extends SemanticNode {
@@ -466,6 +483,15 @@ export class MemberNode extends SemanticExpression {
     }
 }
 
+export class NewNode extends SemanticExpression {
+    callee:SemanticExpression;
+    arguments:SemanticExpression[];
+
+    isClean():boolean {
+        return false;
+    }
+}
+
 export class ObjectNode extends SemanticExpression {
     properties:PropertyNode[];
 
@@ -533,6 +559,35 @@ export class UnaryNode extends SemanticExpression {
     }
 }
 
+export class ThisNode extends SemanticExpression {
+    isClean():boolean {
+        return true;
+    }
+}
+
+export class ThrowNode extends SemanticNode {
+    argument:SemanticExpression;
+}
+
+export class TryNode extends SemanticNode {
+    block:BlockNode;
+    handler:CatchNode;
+    finalizer:BlockNode;
+}
+
+export class SequenceNode extends SemanticExpression {
+    expressions:SemanticExpression[];
+
+    isClean():boolean {
+        for (let i = 0; i < this.expressions.length; i++) {
+            if (!this.expressions[i].isClean()) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
 export class UpdateNode extends SemanticExpression {
     argument:SemanticExpression;
     operator:string;
@@ -592,9 +647,13 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'AssignmentExpression': AssignmentNode,
     'BinaryExpression': BinaryNode,
     'BlockStatement': BlockNode,
+    'BreakStatement': BreakNode,
     'CallExpression': CallNode,
+    'CatchClause': CatchNode,
     'ConditionalExpression': ConditionalNode,
     'ContinueStatement': ContinueNode,
+    'DoWhileStatement': DoWhileNode,
+    'EmptyStatement': EmptyNode,
     'ExpressionStatement': ExpressionStatementNode,
     'ForInStatement': ForInNode,
     'ForOfStatement': ForOfNode,
@@ -607,10 +666,17 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'Literal': LiteralNode,
     'LogicalExpression': LogicalNode,
     'MemberExpression': MemberNode,
+    'NewExpression': NewNode,
     'ObjectExpression': ObjectNode,
     'Program': ProgramNode,
-    'PropertyExpression': PropertyNode,
+    'Property': PropertyNode,
     'ReturnStatement': ReturnNode,
+    'SequenceExpression': SequenceNode,
+    'SwitchCase': SwitchCaseNode,
+    'SwitchStatement': SwitchStatementNode,
+    'ThisExpression': ThisNode,
+    'ThrowStatement': ThrowNode,
+    'TryStatement': TryNode,
     'UnaryExpression': UnaryNode,
     'UpdateExpression': UpdateNode,
     'VariableDeclaration': VariableDeclarationNode,
