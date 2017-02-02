@@ -319,9 +319,12 @@ export class ForNode extends SemanticNode {
     body:SemanticNode;
 }
 
-function addParametersToScope(params:IdentifierNode[], scope:Scope) {
+function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
     for (let i = 0; i < params.length; i++) {
         scope.set(params[i].name, false);
+    }
+    if (addArguments) {
+        scope.set('arguments', false);
     }
 }
 
@@ -331,7 +334,7 @@ export class FunctionDeclarationNode extends SemanticNode {
     body:BlockNode;
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope);
+        addParametersToScope(this.params, this.body.scope, true);
         this.scope.set(this.id.name, false);
     }
 }
@@ -346,7 +349,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope);
+        addParametersToScope(this.params, this.body.scope, true);
     }
 
     protected getInitialValue():Value {

@@ -40,3 +40,23 @@ function hasLabelAndVars(a, a2) {
     }
 }
 hasLabelAndVars(1);
+
+function usesArguments() {
+    if (arguments.length === 1) {
+        return usesArguments();
+    }
+    return 0;
+}
+usesArguments();
+
+function hasVars(x) {
+    if (x) {
+        var a = x;
+    }
+    if(a) {
+        console.log(a);
+    }
+    return hasVars();
+}
+
+hasVars(1);

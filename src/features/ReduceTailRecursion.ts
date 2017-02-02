@@ -8,7 +8,8 @@ import {
     LabeledNode,
     WhileNode,
     LiteralNode,
-    BlockNode
+    BlockNode,
+    VariableDeclarationNode
 } from "../SemanticNode";
 import {createUnusedName} from "../Utils";
 import Scope = require("../Scope");
@@ -21,11 +22,16 @@ export  = (nodeVisitor:NodeVisitor) => {
         const callee = node.callee;
         if (node.parent instanceof ReturnNode && callee instanceof IdentifierNode) {
             const enclosingFunction = node.getEnclosingFunction();
-            if (enclosingFunction instanceof FunctionDeclarationNode) {
-                if (enclosingFunction && callee.refersToSame(enclosingFunction.id)) {
-                    replaceRecursionWithGoto(node, enclosingFunction);
-                }
+            if (!(enclosingFunction instanceof FunctionDeclarationNode)) {
+                return;
             }
+            if (!callee.refersToSame(enclosingFunction.id)) {
+                return;
+            }
+            if (enclosingFunction.body.scope.get('arguments').reads.length > 0) {
+                return;
+            }
+            replaceRecursionWithGoto(node, enclosingFunction);
         }
     });
 };
@@ -57,6 +63,7 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
     }
 
     node.parent.replaceWith([ //change params and goto
+        ...resetUnsafeVars(enclosingFunction.body),
         ...swapVars(node.scope, enclosingFunction.params, node.arguments),
         builders.continueStatement(builders.identifier(labelName))
     ]);
@@ -78,6 +85,26 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
     }
 }
 
+function resetUnsafeVars(block:BlockNode):Expression[] {
+    const result:Expression[] = [];
+    block.walk(node => {
+        if (node instanceof VariableDeclarationNode && !node.isBlockScoped()) {
+            const declarations = node.declarations;
+            for (let i = 0; i < declarations.length; i++) {
+                let variableName = declarations[i].id.name;
+                result.push(builders.expressionStatement(
+                    builders.assignmentExpression('=', builders.identifier(variableName), void0())
+                ));
+            }
+        }
+    });
+    return result;
+}
+
+function void0() {
+    return builders.unaryExpression('void', builders.literal(0));
+}
+
 function swapVars(scope:Scope, vars:IdentifierNode[], newValues:SemanticNode[]):Expression[] {
     const result:Expression[] = [];
     if (vars.length) {
@@ -88,7 +115,7 @@ function swapVars(scope:Scope, vars:IdentifierNode[], newValues:SemanticNode[]):
             let newName = scope.createUnusedIdentifier('new_' + param.name);
             scope.set(newName, false);
 
-            let newParameter = newValues.length > i ? newValues[i].toAst() : builders.unaryExpression('void', builders.literal(0));
+            let newParameter = newValues.length > i ? newValues[i].toAst() : void0();
             declarations.push(builders.variableDeclarator(builders.identifier(newName), newParameter));
             result.push(builders.expressionStatement(
                 builders.assignmentExpression('=', param.toAst(), builders.identifier(newName))

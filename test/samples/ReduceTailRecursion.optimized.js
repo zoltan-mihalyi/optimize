@@ -23,6 +23,7 @@ function calledMultipleTimes(a) {
             a = new_a;
             continue x;
         } else if (a === 0) {
+            new_a = void 0;
             var new_a = void 0;
             a = new_a;
             continue x;
@@ -57,6 +58,8 @@ function hasLabelAndVars(a, a2) {
         var new_a = u();
         x:
         for (var i = 0; i < 2; i++) {
+            new_a = void 0;
+            i = void 0;
             var new_a2 = a + new_a + 1, new_a22 = a2 + 1;
             a = new_a2;
             a2 = new_a22;
@@ -66,3 +69,30 @@ function hasLabelAndVars(a, a2) {
     }
 }
 hasLabelAndVars(1);
+
+function usesArguments() {
+    if (arguments.length === 1) {
+        return usesArguments();
+    }
+    return 0;
+}
+usesArguments();
+
+function hasVars(x) {
+    x:
+    while (1) {
+        if (x) {
+            var a = x;
+        }
+        if (a) {
+            console.log(a);
+        }
+        a = void 0;
+        var new_x = void 0;
+        x = new_x;
+        continue x;
+        return;
+    }
+}
+
+hasVars(1);
