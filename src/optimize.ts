@@ -10,6 +10,7 @@ import ReduceLogical = require("./features/ReduceLogical");
 import ReduceTailRecursion = require("./features/ReduceTailRecursion");
 import RemoveBlock = require("./features/RemoveBlock");
 import RemoveExpressionStatements = require("./features/RemoveExpressionStatements");
+import ResolvePropertyAccess = require("./features/ResolvePropertyAccess");
 
 const nodeVisitor = new NodeVisitor();
 CalculateArithmetic(nodeVisitor);
@@ -18,6 +19,7 @@ ReduceLogical(nodeVisitor);
 ReduceTailRecursion(nodeVisitor);
 RemoveBlock(nodeVisitor);
 RemoveExpressionStatements(nodeVisitor);
+ResolvePropertyAccess(nodeVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;

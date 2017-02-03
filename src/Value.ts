@@ -95,15 +95,33 @@ class ObjectObjectClass extends ObjectClass {
 }
 export const OBJECT = new ObjectObjectClass();
 
-class ArrayObjectClass extends ObjectClass {
-    getTypeof():string {
-        return 'object';
-    }
+class ArrayObjectClass extends ObjectObjectClass {
 }
 export const ARRAY = new ArrayObjectClass();
 
+class NumberObjectClass extends ObjectObjectClass {
+}
+export const NUMBER = new NumberObjectClass();
+
+class BooleanObjectClass extends ObjectObjectClass {
+}
+export const BOOLEAN = new BooleanObjectClass();
+
+class StringObjectClass extends ObjectObjectClass {
+}
+export const STRING = new StringObjectClass();
+
+interface PropDescriptor {
+    enumerable:boolean;
+    value:Value;
+}
+
+export interface PropDescriptorMap {
+    [idx:string]:PropDescriptor;
+}
+
 export class ObjectValue extends SingleValue {
-    constructor(readonly objectClass:ObjectClass) {
+    constructor(readonly objectClass:ObjectClass, private proto:ObjectValue, private properties:PropDescriptorMap, private knowsAll:boolean) {
         super();
     }
 
@@ -116,6 +134,22 @@ export class ObjectValue extends SingleValue {
 
     protected equalsInner(other:ObjectValue):boolean {
         return this.objectClass === other.objectClass;
+    }
+
+    resolveProperty(name:string):Value {
+        if (!this.properties) {
+            return unknown;
+        }
+        if (Object.prototype.hasOwnProperty.call(this.properties, name)) {
+            return this.properties[name].value;
+        }
+        if (!this.knowsAll) {
+            return unknown;
+        }
+        if (this.proto) {
+            return this.proto.resolveProperty(name);
+        }
+        return new KnownValue(void 0);
     }
 }
 
@@ -243,3 +277,27 @@ export class UnknownValue extends Value {
 }
 
 export const unknown:UnknownValue = new UnknownValue();
+
+export const ObjectProto:ObjectValue = new ObjectValue(OBJECT, null, {}, false);
+
+export const ArrayProto:ObjectValue = new ObjectValue(ARRAY, null, {}, false);
+
+export const FunctionProto = new ObjectValue(FUNCTION, ObjectProto, {}, false);
+
+export const NumberProto = new ObjectValue(NUMBER, ObjectProto, {}, false);
+
+export const BooleanProto = new ObjectValue(BOOLEAN, ObjectProto, {
+    valueOf: {
+        enumerable: false,
+        value: new ObjectValue(FUNCTION, FunctionProto, {}, true)
+    }
+}, false);
+
+export const StringProto = new ObjectValue(STRING, ObjectProto, {
+    toString: {
+        enumerable: false,
+        value: new ObjectValue(FUNCTION, FunctionProto, {}, true)
+    }
+}, false);
+
+//todo more

@@ -1,5 +1,17 @@
 ///<reference path="Expression.ts"/>
-import {unknown, Value, KnownValue, ObjectValue, ARRAY, FUNCTION, OBJECT} from "./Value";
+import {
+    unknown,
+    Value,
+    KnownValue,
+    ObjectValue,
+    ARRAY,
+    FUNCTION,
+    OBJECT,
+    ArrayProto,
+    FunctionProto,
+    ObjectProto,
+    PropDescriptorMap
+} from "./Value";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -218,7 +230,7 @@ abstract class SemanticExpression extends SemanticNode {
     }
 }
 
-abstract class LoopNode extends SemanticNode{
+abstract class LoopNode extends SemanticNode {
     body:SemanticNode;
 }
 
@@ -241,7 +253,20 @@ export class ArrayNode extends SemanticExpression {
     }
 
     protected getInitialValue():Value {
-        return new ObjectValue(ARRAY);
+        const properties:PropDescriptorMap = {
+            length: {
+                enumerable: false,
+                value: new KnownValue(this.elements.length)
+            }
+        };
+        for (let i = 0; i < this.elements.length; i++) {
+            const element = this.elements[i];
+            properties[i] = {
+                enumerable: true,
+                value: element.getValue()
+            };
+        }
+        return new ObjectValue(ARRAY, ArrayProto, properties, true);
     }
 }
 
@@ -371,7 +396,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected getInitialValue():Value {
-        return new ObjectValue(FUNCTION);
+        return new ObjectValue(FUNCTION, FunctionProto, {}, true);
     }
 }
 
@@ -514,7 +539,23 @@ export class ObjectNode extends SemanticExpression {
     }
 
     protected getInitialValue():Value {
-        return new ObjectValue(OBJECT);
+        let properties:PropDescriptorMap = {};
+        let knowsAll = true;
+        for (let i = 0; i < this.properties.length; i++) {
+            const property = this.properties[i];
+            let value = property.getKeyValue();
+            if (value instanceof KnownValue) {
+                properties['' + value.value] = {
+                    enumerable: true,
+                    value: property.value.getValue()
+                };
+            } else {
+                properties = {};
+                knowsAll = false;
+                break;
+            }
+        }
+        return new ObjectValue(OBJECT, ObjectProto, properties, knowsAll);
     }
 }
 
@@ -539,6 +580,10 @@ export class PropertyNode extends SemanticNode {
     method:boolean;
     shorthand:boolean;
     value:SemanticExpression;
+
+    getKeyValue():Value {
+        return this.computed ? this.key.getValue() : new KnownValue((this.key as IdentifierNode).name);
+    }
 }
 
 export class SwitchCaseNode extends SemanticNode {
