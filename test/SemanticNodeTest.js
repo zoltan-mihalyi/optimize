@@ -43,4 +43,11 @@ describe('Parse', function() {
         var varD = semanticNode.scope.variables['d'];
         assert.strictEqual(varD.writes.length, 1);
     });
+
+    it('Unknown variables are global', function() {
+        var ast = recast.parse('function fn(){log(a)}').program;
+        var semanticNode = node.semantic(ast);
+        var varA = semanticNode.scope.variables['a'];
+        assert(varA);
+    });
 });

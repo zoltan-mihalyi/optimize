@@ -253,7 +253,7 @@ export class AssignmentNode extends SemanticExpression {
 
     protected updateAccessForNode() {
         if (this.left instanceof IdentifierNode) {
-            this.scope.get(this.left.name).writes.push(this);
+            this.scope.getOrCreate(this.left.name).writes.push(this);
         }
     }
 }
@@ -338,10 +338,10 @@ export class ForNode extends SemanticNode {
 
 function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
     for (let i = 0; i < params.length; i++) {
-        scope.set(params[i].name, false);
+        scope.set(params[i].name, false, true);
     }
     if (addArguments) {
-        scope.set('arguments', false);
+        scope.set('arguments', false, true);
     }
 }
 
@@ -352,7 +352,7 @@ export class FunctionDeclarationNode extends SemanticNode {
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
-        this.scope.set(this.id.name, false);
+        this.scope.set(this.id.name, false, true);
     }
 }
 
@@ -378,7 +378,11 @@ export class IdentifierNode extends SemanticExpression {
     readonly name:string;
 
     isClean():boolean {
-        return this.scope.has(this.name); //todo let and const!
+        let variable = this.scope.get(this.name);
+        if (!variable) {
+            return false;
+        }
+        return variable.initialized;
     }
 
     isReal():boolean {
@@ -414,15 +418,15 @@ export class IdentifierNode extends SemanticExpression {
         if (!identifier.isReal()) {
             return false;
         }
-        return this.scope.get(this.name) === identifier.scope.get(identifier.name);
+        return this.scope.getOrCreate(this.name) === identifier.scope.getOrCreate(identifier.name);
     }
 
     protected updateAccessForNode() {
         let loopNode = this.findEnclosingLoop();
         if (loopNode) {
-            this.scope.get(this.name).writes.push(loopNode);
+            this.scope.getOrCreate(this.name).writes.push(loopNode);
         } else if (this.isRead()) {
-            this.scope.get(this.name).reads.push(this);
+            this.scope.getOrCreate(this.name).reads.push(this);
         }
     }
 
@@ -523,7 +527,7 @@ export class ProgramNode extends BlockNode {
     }
 
     private saveApi(name:string) {
-        this.scope.set(name, true);
+        this.scope.set(name, true, true);
     }
 }
 
@@ -599,7 +603,7 @@ export class UpdateNode extends SemanticExpression {
 
     protected updateAccessForNode() {
         if (this.argument instanceof IdentifierNode) {
-            this.scope.get(this.argument.name).writes.push(this);
+            this.scope.getOrCreate(this.argument.name).writes.push(this);
         }
     }
 }
@@ -619,12 +623,13 @@ export class VariableDeclaratorNode extends SemanticNode {
     init:SemanticNode;
 
     protected handleDeclarationsForNode() {
-        this.scope.set(this.id.name, this.parent.isBlockScoped());
+        let blockScoped = this.parent.isBlockScoped();
+        this.scope.set(this.id.name, blockScoped, !blockScoped);
     }
 
     protected updateAccessForNode() {
         if (this.init) {
-            this.scope.get(this.id.name).writes.push(this);
+            this.scope.getOrCreate(this.id.name).writes.push(this);
         }
     }
 }
@@ -697,7 +702,7 @@ export function semantic(expression:Expression):SemanticNode {
     if ((expression as any).errors && (expression as any).errors.length) {
         throw (expression as any).errors[0];
     }
-    const node = toSemanticNode(expression, null, null, null, new Scope(null));
+    const node = toSemanticNode(expression, null, null, null, null);
     node.handleDeclarations();
     node.updateAccess();
     return node;

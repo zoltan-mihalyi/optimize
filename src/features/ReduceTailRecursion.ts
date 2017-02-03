@@ -113,7 +113,7 @@ function swapVars(scope:Scope, vars:IdentifierNode[], newValues:SemanticNode[]):
         for (let i = 0; i < vars.length; i++) {
             const param = vars[i];
             let newName = scope.createUnusedIdentifier('new_' + param.name);
-            scope.set(newName, false);
+            scope.set(newName, false, true);
 
             let newParameter = newValues.length > i ? newValues[i].toAst() : void0();
             declarations.push(builders.variableDeclarator(builders.identifier(newName), newParameter));

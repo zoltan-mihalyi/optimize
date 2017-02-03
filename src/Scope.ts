@@ -13,6 +13,7 @@ interface Variable {
     writes:(AssignmentNode | UpdateNode | ForEachNode | VariableDeclaratorNode)[];
     reads:IdentifierNode[];
     name:string;
+    initialized:boolean;
 }
 
 interface Variables {
@@ -24,17 +25,18 @@ class Scope {
     private readonly variables:Variables = {};
 
     constructor(private parent:Scope) {
-
     }
 
     has(name:string):boolean {
-        if (Object.prototype.hasOwnProperty.call(this.variables, name)) {
-            return true;
+        return !!this.get(name);
+    }
+
+    getOrCreate(name:string):Variable {
+        const result = this.get(name);
+        if (result) {
+            return result;
         }
-        if (this.parent) {
-            return this.parent.has(name);
-        }
-        return false;
+        return this.setUnknownGlobal(name);
     }
 
     get(name:string):Variable {
@@ -44,14 +46,22 @@ class Scope {
         if (this.parent) {
             return this.parent.get(name);
         }
-        return this.set(name, false);
+        return null;
     }
 
-    set(name:string, blockScope:boolean):Variable { //todo pass usage
+    setUnknownGlobal(name:string):Variable{
+        if (this.parent) {
+            return this.parent.setUnknownGlobal(name);
+        }
+        return this.set(name, false, false);
+    }
+
+    set(name:string, blockScope:boolean, initialized:boolean):Variable {
         if (!blockScope && this.blockScope) {
-            this.parent.set(name, false);
+            return this.parent.set(name, false, initialized);
         }
         return this.variables[name] = {
+            initialized: initialized,
             name: name,
             usages: [],
             writes: [],
