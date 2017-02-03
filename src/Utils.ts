@@ -1,4 +1,4 @@
-import {PropDescriptorMap, KnownValue, Value, PropDescriptor} from "./Value";
+import {PropDescriptorMap, KnownValue, Value, PropDescriptor, ObjectValue} from "./Value";
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
     let i = 2;
@@ -22,4 +22,11 @@ export function addConstants(props:PropDescriptorMap, source:any, propertiesToAd
         props[prop] = nonEnumerable(new KnownValue(source[prop]));
     }
     return props;
+}
+
+export function isPrimitive(value:any):value is number|string|boolean|null {
+    if (value === null) {
+        return true;
+    }
+    return typeof value !== 'object' && typeof value !== 'function';
 }

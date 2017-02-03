@@ -128,9 +128,25 @@ export const enum PropInfo {
     MAY_HAVE_NEW, NO_UNKNOWN_OVERRIDE, KNOWS_ALL
 }
 
+interface ObjectParameters {
+    proto:ObjectValue;
+    properties:PropDescriptorMap;
+    propertyInfo:PropInfo;
+    trueValue:Object|null;
+}
+
 export class ObjectValue extends SingleValue {
-    constructor(readonly objectClass:ObjectClass, private proto:ObjectValue, private properties:PropDescriptorMap, private propInfo:PropInfo) {
+    private proto:ObjectValue;
+    private properties:PropDescriptorMap;
+    private propertyInfo:PropInfo;
+    readonly trueValue:Object|null;
+
+    constructor(readonly objectClass:ObjectClass, parameters:ObjectParameters) {
         super();
+        this.proto = parameters.proto;
+        this.properties = parameters.properties;
+        this.propertyInfo = parameters.propertyInfo;
+        this.trueValue = parameters.trueValue;
     }
 
     compareTo(other:SingleValue, strict:boolean):ComparisonResult {
@@ -150,7 +166,7 @@ export class ObjectValue extends SingleValue {
             return this.properties[name].value;
         }
 
-        switch (this.propInfo) {
+        switch (this.propertyInfo) {
             case PropInfo.MAY_HAVE_NEW:
                 return unknown;
             case PropInfo.KNOWS_ALL:

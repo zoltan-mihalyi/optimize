@@ -14,7 +14,7 @@ describe('KnownValue', function() {
 
     it('test or with ObjectValue', function() {
         var value1 = new KnownValue(1);
-        var value2 = new ObjectValue(1);
+        var value2 = new ObjectValue(1, {});
 
         assert.deepEqual(value1.or(value2), new FiniteSetOfValues([value1, value2]));
     });
@@ -48,7 +48,7 @@ describe('KnownValue', function() {
 
     it('test product with ObjectValue', function() {
         var value1 = new KnownValue(1);
-        var value2 = new ObjectValue(1);
+        var value2 = new ObjectValue(1, {});
 
         assert.deepEqual(value1.product(value2, biMapper), new KnownValue('1, object'));
     });
@@ -69,20 +69,20 @@ describe('KnownValue', function() {
 
 describe('ObjectValue', function() {
     it('test or with KnownValue', function() {
-        var value1 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
         var value2 = new KnownValue(2);
         assert.deepEqual(value1.or(value2), new FiniteSetOfValues([value1, value2]));
     });
 
     it('test or with ObjectValue', function() {
-        var value1 = new ObjectValue(1);
-        var value2 = new ObjectValue(2);
+        var value1 = new ObjectValue(1, {});
+        var value2 = new ObjectValue(2, {});
 
         assert.deepEqual(value1.or(value2), new FiniteSetOfValues([value1, value2]));
     });
 
     it('test or with FiniteSetOfValues', function() {
-        var value1 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
         var value2 = new KnownValue(2);
         var value3 = new KnownValue(3);
 
@@ -91,39 +91,39 @@ describe('ObjectValue', function() {
     });
 
     it('test or with UnknownValue', function() {
-        var value1 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
         assert.deepEqual(value1.or(unknown), unknown);
     });
 
     it('test map', function() {
-        var value1 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
 
         assert.deepEqual(value1.map(mapper), new KnownValue('object+1'));
     });
 
     it('test product with KnownValue', function() {
-        var value1 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
         var value2 = new KnownValue(2);
 
         assert.deepEqual(value1.product(value2, biMapper), new KnownValue('object, 2'));
     });
 
     it('test product with ObjectValue', function() {
-        var value1 = new ObjectValue(1);
-        var value2 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
+        var value2 = new ObjectValue(1, {});
 
         assert.deepEqual(value1.product(value2, biMapper), new KnownValue('object, object'));
     });
 
     it('test product with FiniteSetOfValues', function() {
-        var value1 = new ObjectValue(1);
+        var value1 = new ObjectValue(1, {});
         var value2 = new FiniteSetOfValues([new KnownValue(1), new KnownValue(2)]);
 
         assert.deepEqual(value1.product(value2, biMapper), new FiniteSetOfValues([new KnownValue('object, 1'), new KnownValue('object, 2')]));
     });
 
     it('test product with UnknownValue', function() {
-        var value1 = new ObjectValue(3);
+        var value1 = new ObjectValue(3, {});
 
         assert.deepEqual(value1.product(unknown, biMapper), unknown);
     });
@@ -150,7 +150,7 @@ describe('FiniteSetOfValues', function() {
         var value1 = new KnownValue(1);
         var value2 = new KnownValue(2);
         var valueSet = new FiniteSetOfValues([value1, value2]);
-        var value3 = new ObjectValue(2);
+        var value3 = new ObjectValue(2, {});
 
         assert.deepEqual(valueSet.or(value3), new FiniteSetOfValues([value1, value2, value3]));
     });
@@ -187,7 +187,7 @@ describe('FiniteSetOfValues', function() {
 
     it('test product with ObjectValue', function() {
         var value1 = new FiniteSetOfValues([new KnownValue(1), new KnownValue(2)]);
-        var value2 = new ObjectValue(1);
+        var value2 = new ObjectValue(1, {});
 
         assert.deepEqual(value1.product(value2, biMapper), new FiniteSetOfValues([new KnownValue('1, object'), new KnownValue('2, object')]));
     });

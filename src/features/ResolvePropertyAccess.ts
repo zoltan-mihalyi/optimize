@@ -22,9 +22,21 @@ export  = (nodeVisitor:NodeVisitor) => {
             let object:ObjectValue;
             if (left instanceof KnownValue) {
                 if (typeof left.value === 'number') {
-                    object = new ObjectValue(NUMBER, NumberProto, {}, PropInfo.KNOWS_ALL);
+                    //noinspection JSPrimitiveTypeWrapperUsage
+                    object = new ObjectValue(NUMBER, {
+                        proto: NumberProto,
+                        properties: {},
+                        propertyInfo: PropInfo.KNOWS_ALL,
+                        trueValue: new Number(left.value)
+                    });
                 } else if (typeof left.value === 'boolean') {
-                    object = new ObjectValue(BOOLEAN, BooleanProto, {}, PropInfo.KNOWS_ALL);
+                    //noinspection JSPrimitiveTypeWrapperUsage
+                    object = new ObjectValue(BOOLEAN, {
+                        proto: BooleanProto,
+                        properties: {},
+                        propertyInfo: PropInfo.KNOWS_ALL,
+                        trueValue: new Boolean(left.value)
+                    });
                 } else if (typeof left.value === 'string') {
                     const properties:PropDescriptorMap = {
                         length: {
@@ -39,7 +51,13 @@ export  = (nodeVisitor:NodeVisitor) => {
                         };
                     }
 
-                    object = new ObjectValue(STRING, StringProto, properties, PropInfo.KNOWS_ALL);
+                    //noinspection JSPrimitiveTypeWrapperUsage
+                    object = new ObjectValue(STRING, {
+                        proto: StringProto,
+                        properties: properties,
+                        propertyInfo: PropInfo.KNOWS_ALL,
+                        trueValue: new String(left.value)
+                    });
                 } else {
                     return unknown;
                 }

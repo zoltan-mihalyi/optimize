@@ -1,17 +1,6 @@
 ///<reference path="Expression.ts"/>
-import {
-    unknown,
-    Value,
-    KnownValue,
-    ObjectValue,
-    ARRAY,
-    FUNCTION,
-    OBJECT,
-    PropDescriptorMap,
-    REG_EXP,
-    PropInfo
-} from "./Value";
-import {ArrayProto, FunctionProto, ObjectProto, RegExpProto} from "./BuiltIn";
+import {unknown, Value, KnownValue, ObjectValue, ARRAY, OBJECT, PropDescriptorMap, REG_EXP, PropInfo} from "./Value";
+import {ArrayProto, ObjectProto, RegExpProto, createFunctionValue} from "./BuiltIn";
 import {addConstants, nonEnumerable} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
@@ -260,14 +249,26 @@ export class ArrayNode extends SemanticExpression {
                 value: new KnownValue(this.elements.length)
             }
         };
+        let trueValue:any[] = [];
         for (let i = 0; i < this.elements.length; i++) {
             const element = this.elements[i];
+            let value = element.getValue();
             properties[i] = {
                 enumerable: true,
-                value: element.getValue()
+                value: value
             };
+            if (trueValue && value instanceof KnownValue) {
+                trueValue.push(value.value);
+            } else {
+                trueValue = null;
+            }
         }
-        return new ObjectValue(ARRAY, ArrayProto, properties, PropInfo.KNOWS_ALL);
+        return new ObjectValue(ARRAY, {
+            proto: ArrayProto,
+            properties: properties,
+            propertyInfo: PropInfo.KNOWS_ALL,
+            trueValue: trueValue
+        });
     }
 }
 
@@ -397,16 +398,17 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected getInitialValue():Value {
-        let prototypeProperties:any = {};
-        const prototype = new ObjectValue(OBJECT, ObjectProto, prototypeProperties, PropInfo.KNOWS_ALL);
+        let properties:any = {};
 
-        const fn = new ObjectValue(FUNCTION, FunctionProto, {
-            arguments: nonEnumerable(unknown),
-            caller: nonEnumerable(unknown),
-            length: nonEnumerable(new KnownValue(this.params.length)),
-            prototype: nonEnumerable(prototype)
-        }, PropInfo.NO_UNKNOWN_OVERRIDE);
-        prototypeProperties.constructor = nonEnumerable(fn);
+        const fn = createFunctionValue(properties, this.params.length);
+        properties.prototype = nonEnumerable(new ObjectValue(OBJECT, {
+            proto: ObjectProto,
+            properties: {
+                constructor: nonEnumerable(fn)
+            },
+            propertyInfo: PropInfo.KNOWS_ALL,
+            trueValue: null //todo
+        }));
 
         return fn;
     }
@@ -500,7 +502,12 @@ export class LiteralNode extends SemanticExpression {
         if (typeof this.value !== 'object' || this.value === null) {
             return new KnownValue(this.value);
         } else {
-            return new ObjectValue(REG_EXP, RegExpProto, addConstants({}, this.value, ['global', 'ignoreCase', 'lastIndex', 'multiline', 'source']), PropInfo.NO_UNKNOWN_OVERRIDE);
+            return new ObjectValue(REG_EXP, {
+                proto: RegExpProto,
+                properties: addConstants({}, this.value, ['global', 'ignoreCase', 'lastIndex', 'multiline', 'source']),
+                propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
+                trueValue: this.value
+            });
         }
     }
 }
@@ -553,21 +560,34 @@ export class ObjectNode extends SemanticExpression {
     protected getInitialValue():Value {
         let properties:PropDescriptorMap = {};
         let knowsAll = true;
+        let trueValue:{[idx:string]:any} = {};
         for (let i = 0; i < this.properties.length; i++) {
             const property = this.properties[i];
             let value = property.getKeyValue();
             if (value instanceof KnownValue) {
+                let propertyValue = property.value.getValue();
                 properties['' + value.value] = {
                     enumerable: true,
-                    value: property.value.getValue()
+                    value: propertyValue
                 };
+                if (trueValue && propertyValue instanceof KnownValue) {
+                    trueValue['' + value.value] = propertyValue.value;
+                } else {
+                    trueValue = null;
+                }
             } else {
                 properties = {};
                 knowsAll = false;
+                trueValue = null;
                 break;
             }
         }
-        return new ObjectValue(OBJECT, ObjectProto, properties, knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW);
+        return new ObjectValue(OBJECT, {
+            proto: ObjectProto,
+            properties: properties,
+            propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
+            trueValue: trueValue
+        });
     }
 }
 
