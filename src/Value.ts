@@ -124,8 +124,12 @@ export interface PropDescriptorMap {
     [idx:string]:PropDescriptor;
 }
 
+export const enum PropInfo {
+    MAY_HAVE_NEW, NO_UNKNOWN_OVERRIDE, KNOWS_ALL
+}
+
 export class ObjectValue extends SingleValue {
-    constructor(readonly objectClass:ObjectClass, private proto:ObjectValue, private properties:PropDescriptorMap, private knowsAll:boolean) {
+    constructor(readonly objectClass:ObjectClass, private proto:ObjectValue, private properties:PropDescriptorMap, private propInfo:PropInfo) {
         super();
     }
 
@@ -142,19 +146,39 @@ export class ObjectValue extends SingleValue {
     }
 
     resolveProperty(name:string):Value {
-        if (!this.properties) {
-            return unknown;
-        }
-        if (Object.prototype.hasOwnProperty.call(this.properties, name)) {
+        if (this.hasProperty(name)) {
             return this.properties[name].value;
         }
-        if (!this.knowsAll) {
-            return unknown;
+
+        switch (this.propInfo) {
+            case PropInfo.MAY_HAVE_NEW:
+                return unknown;
+            case PropInfo.KNOWS_ALL:
+                if (this.proto) {
+                    return this.proto.resolveProperty(name);
+                } else {
+                    return new KnownValue(void 0);
+                }
+            case PropInfo.NO_UNKNOWN_OVERRIDE:
+                if (this.proto.hasPropertyDeep(name)) {
+                    return this.proto.resolveProperty(name);
+                }
+                return unknown;
+        }
+    }
+
+    private hasPropertyDeep(name:string):boolean {
+        if (this.hasProperty(name)) {
+            return true;
         }
         if (this.proto) {
-            return this.proto.resolveProperty(name);
+            return this.proto.hasPropertyDeep(name);
         }
-        return new KnownValue(void 0);
+        return false;
+    }
+
+    private hasProperty(name:string):boolean {
+        return Object.prototype.hasOwnProperty.call(this.properties, name);
     }
 }
 

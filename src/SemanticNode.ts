@@ -1,7 +1,18 @@
 ///<reference path="Expression.ts"/>
-import {unknown, Value, KnownValue, ObjectValue, ARRAY, FUNCTION, OBJECT, PropDescriptorMap, REG_EXP} from "./Value";
+import {
+    unknown,
+    Value,
+    KnownValue,
+    ObjectValue,
+    ARRAY,
+    FUNCTION,
+    OBJECT,
+    PropDescriptorMap,
+    REG_EXP,
+    PropInfo
+} from "./Value";
 import {ArrayProto, FunctionProto, ObjectProto, RegExpProto} from "./BuiltIn";
-import {addConstants} from "./Utils";
+import {addConstants, nonEnumerable} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -256,7 +267,7 @@ export class ArrayNode extends SemanticExpression {
                 value: element.getValue()
             };
         }
-        return new ObjectValue(ARRAY, ArrayProto, properties, true);
+        return new ObjectValue(ARRAY, ArrayProto, properties, PropInfo.KNOWS_ALL);
     }
 }
 
@@ -386,7 +397,18 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected getInitialValue():Value {
-        return new ObjectValue(FUNCTION, FunctionProto, {}, true);
+        let prototypeProperties:any = {};
+        const prototype = new ObjectValue(OBJECT, ObjectProto, prototypeProperties, PropInfo.KNOWS_ALL);
+
+        const fn = new ObjectValue(FUNCTION, FunctionProto, {
+            arguments: nonEnumerable(unknown),
+            caller: nonEnumerable(unknown),
+            length: nonEnumerable(new KnownValue(this.params.length)),
+            prototype: nonEnumerable(prototype)
+        }, PropInfo.NO_UNKNOWN_OVERRIDE);
+        prototypeProperties.constructor = nonEnumerable(fn);
+
+        return fn;
     }
 }
 
@@ -478,7 +500,7 @@ export class LiteralNode extends SemanticExpression {
         if (typeof this.value !== 'object' || this.value === null) {
             return new KnownValue(this.value);
         } else {
-            return new ObjectValue(REG_EXP, RegExpProto, addConstants({}, this.value, ['global', 'ignoreCase', 'lastIndex', 'multiline', 'source']), false);
+            return new ObjectValue(REG_EXP, RegExpProto, addConstants({}, this.value, ['global', 'ignoreCase', 'lastIndex', 'multiline', 'source']), PropInfo.NO_UNKNOWN_OVERRIDE);
         }
     }
 }
@@ -545,7 +567,7 @@ export class ObjectNode extends SemanticExpression {
                 break;
             }
         }
-        return new ObjectValue(OBJECT, ObjectProto, properties, knowsAll);
+        return new ObjectValue(OBJECT, ObjectProto, properties, knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW);
     }
 }
 

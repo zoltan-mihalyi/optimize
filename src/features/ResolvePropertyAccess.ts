@@ -8,7 +8,8 @@ import {
     NUMBER,
     STRING,
     PropDescriptorMap,
-    BOOLEAN
+    BOOLEAN,
+    PropInfo
 } from "../Value";
 import {NumberProto, BooleanProto, StringProto} from "../BuiltIn";
 
@@ -21,9 +22,9 @@ export  = (nodeVisitor:NodeVisitor) => {
             let object:ObjectValue;
             if (left instanceof KnownValue) {
                 if (typeof left.value === 'number') {
-                    object = new ObjectValue(NUMBER, NumberProto, {}, true);
+                    object = new ObjectValue(NUMBER, NumberProto, {}, PropInfo.KNOWS_ALL);
                 } else if (typeof left.value === 'boolean') {
-                    object = new ObjectValue(BOOLEAN, BooleanProto, {}, true);
+                    object = new ObjectValue(BOOLEAN, BooleanProto, {}, PropInfo.KNOWS_ALL);
                 } else if (typeof left.value === 'string') {
                     const properties:PropDescriptorMap = {
                         length: {
@@ -38,7 +39,7 @@ export  = (nodeVisitor:NodeVisitor) => {
                         };
                     }
 
-                    object = new ObjectValue(STRING, StringProto, properties, true);
+                    object = new ObjectValue(STRING, StringProto, properties, PropInfo.KNOWS_ALL);
                 } else {
                     return unknown;
                 }
