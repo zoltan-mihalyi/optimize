@@ -218,10 +218,13 @@ abstract class SemanticExpression extends SemanticNode {
     }
 }
 
-export abstract class ForEachNode extends SemanticNode {
+abstract class LoopNode extends SemanticNode{
+    body:SemanticNode;
+}
+
+export abstract class ForEachNode extends LoopNode {
     left:SemanticExpression;
     right:SemanticExpression;
-    body:SemanticNode;
 }
 
 export class ArrayNode extends SemanticExpression {
@@ -306,9 +309,8 @@ export class ConditionalNode extends SemanticExpression {
 export class ContinueNode extends SemanticNode {
 }
 
-export class DoWhileNode extends SemanticNode {
+export class DoWhileNode extends LoopNode {
     test:SemanticExpression;
-    body:SemanticNode;
 }
 
 export class EmptyNode extends SemanticNode {
@@ -329,11 +331,10 @@ export class ForInNode extends ForEachNode {
 export class ForOfNode extends ForEachNode {
 }
 
-export class ForNode extends SemanticNode {
+export class ForNode extends LoopNode {
     init:SemanticNode;
     test:SemanticExpression;
     update:SemanticNode;
-    body:SemanticNode;
 }
 
 function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
@@ -634,9 +635,8 @@ export class VariableDeclaratorNode extends SemanticNode {
     }
 }
 
-export class WhileNode extends SemanticNode {
+export class WhileNode extends LoopNode {
     test:SemanticExpression;
-    body:SemanticNode;
 }
 
 function map<S,T>(data:S[], transform:(source:S) => T):T[] {
