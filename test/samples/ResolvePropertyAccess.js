@@ -3,8 +3,21 @@ console.log([1, 2, 3][0]);
 console.log(({
     x: 1
 }).x);
+console.log(/a/g.global);
+console.log(/a/g.ignoreCase);
+console.log(typeof [].concat);
 
 console.log('abc'.length);
 console.log('abc'[0]);
 console.log(typeof 'abc'.toString);
 console.log(typeof true.valueOf);
+
+console.log('x'.toString === 'y'.toString);
+console.log({}.toString === {}.toString);
+console.log((1).constructor === (0).constructor);
+
+console.log('x'.toString === true.toString);
+console.log('abc'.toString === {}.toString);
+console.log([].toString === {}.toString);
+
+console.log((0).constructor.MAX_VALUE);

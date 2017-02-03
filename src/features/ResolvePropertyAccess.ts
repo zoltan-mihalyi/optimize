@@ -6,13 +6,11 @@ import {
     unknown,
     ObjectValue,
     NUMBER,
-    NumberProto,
     STRING,
-    StringProto,
     PropDescriptorMap,
-    BooleanProto,
     BOOLEAN
 } from "../Value";
+import {NumberProto, BooleanProto, StringProto} from "../BuiltIn";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {

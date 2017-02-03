@@ -111,7 +111,11 @@ class StringObjectClass extends ObjectObjectClass {
 }
 export const STRING = new StringObjectClass();
 
-interface PropDescriptor {
+class RegExpObjectClass extends ObjectObjectClass {
+}
+export const REG_EXP = new RegExpObjectClass();
+
+export interface PropDescriptor {
     enumerable:boolean;
     value:Value;
 }
@@ -125,11 +129,12 @@ export class ObjectValue extends SingleValue {
         super();
     }
 
-    compareTo(other:ObjectValue, strict:boolean):ComparisonResult {
-        if (this.objectClass !== other.objectClass) {
-            return ComparisonResult.FALSE
+    compareTo(other:SingleValue, strict:boolean):ComparisonResult {
+        if (other instanceof ObjectValue) {
+            return fromBoolean(this === other);
+        } else {
+            return strict ? ComparisonResult.FALSE : ComparisonResult.UNKNOWN;
         }
-        return ComparisonResult.UNKNOWN;
     }
 
     protected equalsInner(other:ObjectValue):boolean {
@@ -277,27 +282,3 @@ export class UnknownValue extends Value {
 }
 
 export const unknown:UnknownValue = new UnknownValue();
-
-export const ObjectProto:ObjectValue = new ObjectValue(OBJECT, null, {}, false);
-
-export const ArrayProto:ObjectValue = new ObjectValue(ARRAY, null, {}, false);
-
-export const FunctionProto = new ObjectValue(FUNCTION, ObjectProto, {}, false);
-
-export const NumberProto = new ObjectValue(NUMBER, ObjectProto, {}, false);
-
-export const BooleanProto = new ObjectValue(BOOLEAN, ObjectProto, {
-    valueOf: {
-        enumerable: false,
-        value: new ObjectValue(FUNCTION, FunctionProto, {}, true)
-    }
-}, false);
-
-export const StringProto = new ObjectValue(STRING, ObjectProto, {
-    toString: {
-        enumerable: false,
-        value: new ObjectValue(FUNCTION, FunctionProto, {}, true)
-    }
-}, false);
-
-//todo more
