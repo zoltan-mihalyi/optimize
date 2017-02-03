@@ -564,6 +564,31 @@ export class ProgramNode extends BlockNode {
     sourceType:string;
 
     protected handleDeclarationsForNode() {
+        this.saveApi('undefined');
+        this.saveApi('Infinity');
+        this.saveApi('NaN');
+        this.saveApi('eval');
+        this.saveApi('isNaN');
+        this.saveApi('parseFloat');
+        this.saveApi('parseInt');
+        this.saveApi('decodeURI');
+        this.saveApi('decodeURIComponent');
+        this.saveApi('encodeURI');
+        this.saveApi('encodeURIComponent');
+        this.saveApi('Object');
+        this.saveApi('Function');
+        this.saveApi('Boolean');
+        this.saveApi('Error');
+        this.saveApi('EvalError');
+        this.saveApi('RangeError');
+        this.saveApi('ReferenceError');
+        this.saveApi('SyntaxError');
+        this.saveApi('TypeError');
+        this.saveApi('URIError');
+        this.saveApi('Number');
+        this.saveApi('String');
+        this.saveApi('Boolean');
+        this.saveApi('RegExp');
         this.saveApi('Math');
         this.saveApi('Date');
     }
