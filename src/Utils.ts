@@ -1,4 +1,4 @@
-import {PropDescriptorMap, KnownValue, Value, PropDescriptor} from "./Value";
+import {PropDescriptorMap, KnownValue, Value, PropDescriptor, unknown} from "./Value";
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
     let i = 2;
@@ -29,4 +29,9 @@ export function isPrimitive(value:any):value is number|string|boolean|null {
         return true;
     }
     return typeof value !== 'object' && typeof value !== 'function';
+}
+
+export function throwValue(msg:string):Value {
+    console.log('WARNING: ' + msg);
+    return unknown;
 }

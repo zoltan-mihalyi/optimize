@@ -13,11 +13,12 @@ import {
     Value
 } from "../Value";
 import {NumberProto, BooleanProto, StringProto, createValueFromCall} from "../BuiltIn";
+import {throwValue} from "../Utils";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {
         const resolved = node.object.getValue().product(node.getPropertyValue(), (left:SingleValue, property:SingleValue) => {
-            if (!(property instanceof KnownValue)) {
+            if (!(property instanceof KnownValue)) { //todo
                 return unknown;
             }
             let object:ObjectValue;
@@ -60,7 +61,7 @@ export  = (nodeVisitor:NodeVisitor) => {
                         trueValue: new String(left.value)
                     });
                 } else {
-                    return unknown;
+                    return throwValue(`ACCESSING PROPERTY ${property.value} ON ${left.value}`);
                 }
             } else {
                 object = left as ObjectValue;

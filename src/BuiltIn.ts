@@ -16,7 +16,7 @@ import {
     ObjectClass,
     Value
 } from "./Value";
-import {nonEnumerable, addConstants, isPrimitive} from "./Utils";
+import {nonEnumerable, addConstants, isPrimitive, throwValue} from "./Utils";
 import Map = require("./Map");
 
 function getterProperty(object:Object, property:string):PropDescriptor {
@@ -62,10 +62,9 @@ export function createValue(value:any):SingleValue {
 export function createValueFromCall(fn:Function, context:any, parameters:any[]):Value {
     let callResult;
     try {
-        callResult = fn.apply(context, parameters);
+        callResult = Function.prototype.apply.call(fn, context, parameters);
     } catch (e) {
-        //todo set throwValue
-        return unknown;
+        return throwValue(`CALLING ${fn} WITH CONTEXT: ${context} AND PARAMETERS: ${parameters} THROWS ${e}`);
     }
     return createValue(callResult);
 }
