@@ -13,10 +13,20 @@ import {
     unknown,
     SingleValue,
     REG_EXP,
-    ObjectClass
+    ObjectClass,
+    Value
 } from "./Value";
 import {nonEnumerable, addConstants, isPrimitive} from "./Utils";
 import Map = require("./Map");
+
+function getterProperty(object:Object, property:string):PropDescriptor {
+    let descriptor = Object.getOwnPropertyDescriptor(object, property);
+    return {
+        enumerable: false,
+        get: createNativeFunctionValue({}, descriptor.get),
+        value: descriptor.value
+    }
+}
 
 function nativeFnProp(native:Function):PropDescriptor {
     return nonEnumerable(createNativeFunctionValue({}, native));
@@ -49,6 +59,17 @@ export function createValue(value:any):SingleValue {
     }
 }
 
+export function createValueFromCall(fn:Function, context:any, parameters:any[]):Value {
+    let callResult;
+    try {
+        callResult = fn.apply(context, parameters);
+    } catch (e) {
+        //todo set throwValue
+        return unknown;
+    }
+    return createValue(callResult);
+}
+
 const map:Map<Object, ObjectValue> = new Map<Object, ObjectValue>();
 
 export function objectValueFromObject(object:Object):ObjectValue {
@@ -69,7 +90,7 @@ export function objectValueFromObject(object:Object):ObjectValue {
         const propDescriptor = Object.getOwnPropertyDescriptor(object, propName);
         properties[propName] = {
             enumerable: propDescriptor.enumerable,
-            value: createValue((object as any)[propName])
+            value: createValue((object as any)[propName]) //todo getter
         };
     }
     return result;
@@ -223,7 +244,11 @@ const regExpProtoProperties:any = {
     exec: nativeFnProp(RegExp.prototype.exec),
     test: nativeFnProp(RegExp.prototype.test),
     toString: nativeFnProp(RegExp.prototype.toString),
-    compile: nativeFnProp(RegExp.prototype.compile)
+    compile: nativeFnProp(RegExp.prototype.compile),
+    global: getterProperty(RegExp.prototype, 'global'),
+    ignoreCase: getterProperty(RegExp.prototype, 'ignoreCase'),
+    multiline: getterProperty(RegExp.prototype, 'multiline'),
+    source: getterProperty(RegExp.prototype, 'source')
 };
 export const RegExpProto = objectValueFromProperties(RegExp.prototype, regExpProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
 const RegExpConstructor = createNativeFunctionValue({

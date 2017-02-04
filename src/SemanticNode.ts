@@ -1,6 +1,6 @@
 ///<reference path="Expression.ts"/>
 import {unknown, Value, KnownValue, ObjectValue, ARRAY, OBJECT, PropDescriptorMap, REG_EXP, PropInfo} from "./Value";
-import {ArrayProto, ObjectProto, RegExpProto, createFunctionValue} from "./BuiltIn";
+import {ArrayProto, ObjectProto, RegExpProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
 import {addConstants, nonEnumerable} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
@@ -536,12 +536,7 @@ export class LiteralNode extends SemanticExpression {
         if (typeof this.value !== 'object' || this.value === null) {
             return new KnownValue(this.value);
         } else {
-            return new ObjectValue(REG_EXP, {
-                proto: RegExpProto,
-                properties: addConstants({}, this.value, ['global', 'ignoreCase', 'lastIndex', 'multiline', 'source']),
-                propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-                trueValue: this.value
-            });
+            return objectValueFromObject(this.value);
         }
     }
 }

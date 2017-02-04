@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, KnownValue} from "../Value";
-import {createValue} from "../BuiltIn";
+import {createValue, createValueFromCall} from "../BuiltIn";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(CallNode, (node:CallNode) => {
@@ -41,13 +41,6 @@ export  = (nodeVisitor:NodeVisitor) => {
             }
         }
 
-        let callResult;
-        try {
-            callResult = (value.trueValue as Function).apply(context, parameters);
-        } catch (e) {
-            //todo set throwValue
-            return;
-        }
-        node.setValue(createValue(callResult));
+        node.setValue(createValueFromCall((value.trueValue as Function),context,parameters));
     });
 };

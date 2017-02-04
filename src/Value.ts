@@ -117,7 +117,8 @@ export const REG_EXP = new RegExpObjectClass();
 
 export interface PropDescriptor {
     enumerable:boolean;
-    value:Value;
+    value?:Value;
+    get?:ObjectValue;
 }
 
 export interface PropDescriptorMap {
@@ -161,9 +162,14 @@ export class ObjectValue extends SingleValue {
         return this.objectClass === other.objectClass;
     }
 
-    resolveProperty(name:string):Value {
+    resolveProperty(name:string, getterEvaluator:(fn:Function) => Value):Value {
         if (this.hasProperty(name)) {
-            return this.properties[name].value;
+            let property = this.properties[name];
+            if (property.get) {
+                return getterEvaluator(property.get.trueValue as Function);
+            } else {
+                return property.value;
+            }
         }
 
         switch (this.propertyInfo) {
@@ -171,13 +177,13 @@ export class ObjectValue extends SingleValue {
                 return unknown;
             case PropInfo.KNOWS_ALL:
                 if (this.proto) {
-                    return this.proto.resolveProperty(name);
+                    return this.proto.resolveProperty(name, getterEvaluator);
                 } else {
                     return new KnownValue(void 0);
                 }
             case PropInfo.NO_UNKNOWN_OVERRIDE:
                 if (this.proto.hasPropertyDeep(name)) {
-                    return this.proto.resolveProperty(name);
+                    return this.proto.resolveProperty(name, getterEvaluator);
                 }
                 return unknown;
         }

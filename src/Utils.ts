@@ -1,4 +1,4 @@
-import {PropDescriptorMap, KnownValue, Value, PropDescriptor, ObjectValue} from "./Value";
+import {PropDescriptorMap, KnownValue, Value, PropDescriptor} from "./Value";
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
     let i = 2;

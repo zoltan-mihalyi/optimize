@@ -9,9 +9,10 @@ import {
     STRING,
     PropDescriptorMap,
     BOOLEAN,
-    PropInfo
+    PropInfo,
+    Value
 } from "../Value";
-import {NumberProto, BooleanProto, StringProto} from "../BuiltIn";
+import {NumberProto, BooleanProto, StringProto, createValueFromCall} from "../BuiltIn";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {
@@ -65,7 +66,11 @@ export  = (nodeVisitor:NodeVisitor) => {
                 object = left as ObjectValue;
             }
 
-            return object.resolveProperty('' + property.value);
+            function getterEvaluator(fn:Function):Value {
+                return createValueFromCall(fn, object.trueValue, []);
+            }
+
+            return object.resolveProperty('' + property.value, getterEvaluator);
         });
 
         node.setValue(resolved);
