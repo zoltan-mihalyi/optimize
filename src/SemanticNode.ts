@@ -1,7 +1,7 @@
 ///<reference path="Expression.ts"/>
-import {unknown, Value, KnownValue, ObjectValue, ARRAY, OBJECT, PropDescriptorMap, REG_EXP, PropInfo} from "./Value";
-import {ArrayProto, ObjectProto, RegExpProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
-import {addConstants, nonEnumerable} from "./Utils";
+import {unknown, Value, KnownValue, ObjectValue, ARRAY, OBJECT, PropDescriptorMap, PropInfo} from "./Value";
+import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
+import {nonEnumerable} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -668,7 +668,14 @@ export class PropertyNode extends SemanticNode {
     value:SemanticExpression;
 
     getKeyValue():Value {
-        return this.computed ? this.key.getValue() : new KnownValue((this.key as IdentifierNode).name);
+        if (this.computed) {
+            return this.key.getValue();
+        }
+        if (this.key instanceof IdentifierNode) {
+            return new KnownValue(this.key.name);
+        } else {
+            return this.key.getValue();
+        }
     }
 }
 
