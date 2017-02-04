@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, KnownValue} from "../Value";
-import {isPrimitive} from "../Utils";
+import {createValue} from "../BuiltIn";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(CallNode, (node:CallNode) => {
@@ -25,14 +25,20 @@ export  = (nodeVisitor:NodeVisitor) => {
             }
         }
 
-        const parameters:(string|boolean|number)[] = [];
+        const parameters = [];
         for (let i = 0; i < node.arguments.length; i++) {
             const argument = node.arguments[i];
             let parameter = argument.getValue();
-            if (!(parameter instanceof KnownValue)) {
-                return;
+            if (parameter instanceof KnownValue) {
+                parameters.push(parameter.value);
+            } else {
+                let trueValue = (parameter as ObjectValue).trueValue;
+                if (trueValue) {
+                    parameters.push(trueValue);
+                } else {
+                    return;
+                }
             }
-            parameters.push(parameter.value);
         }
 
         let callResult;
@@ -42,8 +48,6 @@ export  = (nodeVisitor:NodeVisitor) => {
             //todo set throwValue
             return;
         }
-        if (isPrimitive(callResult)) {
-            node.setValue(new KnownValue(callResult));
-        }
+        node.setValue(createValue(callResult));
     });
 };

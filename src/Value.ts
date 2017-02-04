@@ -78,7 +78,7 @@ export class KnownValue extends SingleValue {
     }
 }
 
-abstract class ObjectClass {
+export abstract class ObjectClass {
     abstract getTypeof():string;
 }
 class FunctionObjectClass extends ObjectClass {

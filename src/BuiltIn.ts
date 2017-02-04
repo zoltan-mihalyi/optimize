@@ -10,16 +10,22 @@ import {
     KnownValue,
     PropInfo,
     PropDescriptorMap,
-    unknown
+    unknown,
+    SingleValue,
+    REG_EXP,
+    ObjectClass
 } from "./Value";
-import {nonEnumerable, addConstants} from "./Utils";
+import {nonEnumerable, addConstants, isPrimitive} from "./Utils";
+import Map = require("./Map");
 
 function nativeFnProp(native:Function):PropDescriptor {
     return nonEnumerable(createNativeFunctionValue({}, native));
 }
 
 function createNativeFunctionValue(properties:PropDescriptorMap, native:Function):ObjectValue {
-    return createFunctionValue(properties, native.length, native);
+    const value = createFunctionValue(properties, native.length, native);
+    map.set(native, value);
+    return value;
 }
 
 export function createFunctionValue(properties:PropDescriptorMap, length:number, native?:Function):ObjectValue {
@@ -35,13 +41,77 @@ export function createFunctionValue(properties:PropDescriptorMap, length:number,
     });
 }
 
+export function createValue(value:any):SingleValue {
+    if (isPrimitive(value)) {
+        return new KnownValue(value);
+    } else {
+        return objectValueFromObject(value);
+    }
+}
+
+const map:Map<Object, ObjectValue> = new Map<Object, ObjectValue>();
+
+export function objectValueFromObject(object:Object):ObjectValue {
+    if (map.has(object)) {
+        return map.get(object);
+    }
+
+    let properties:PropDescriptorMap = {};
+    let proto = Object.getPrototypeOf(object);
+    if (proto) {
+        objectValueFromObject(proto);
+    }
+    const result = objectValueFromProperties(object, properties, PropInfo.KNOWS_ALL);
+
+    const propNames = Object.getOwnPropertyNames(object);
+    for (let i = 0; i < propNames.length; i++) {
+        const propName = propNames[i];
+        const propDescriptor = Object.getOwnPropertyDescriptor(object, propName);
+        properties[propName] = {
+            enumerable: propDescriptor.enumerable,
+            value: createValue((object as any)[propName])
+        };
+    }
+    return result;
+}
+
+function objectValueFromProperties(object:Object, properties:PropDescriptorMap, info:PropInfo):ObjectValue {
+    let protoObject = Object.getPrototypeOf(object);
+    let protoValue = protoObject ? map.get(protoObject) : null;
+    const result = new ObjectValue(getObjectClass(object), {
+        proto: protoValue,
+        properties: properties,
+        propertyInfo: info,
+        trueValue: object
+    });
+    map.set(object, result);
+    return result;
+}
+
+function getObjectClass(value:Object):ObjectClass {
+    let str = Object.prototype.toString.call(value);
+    let className = str.substring(8, str.length - 1);
+
+    switch (className) {
+        case 'Function':
+            return FUNCTION;
+        case 'Array':
+            return ARRAY;
+        case 'RegExp':
+            return REG_EXP;
+        case 'String':
+            return STRING;
+        case 'Boolean':
+            return BOOLEAN;
+        case 'Number':
+            return NUMBER;
+        default:
+            return OBJECT;
+    }
+}
+
 const objectProtoProperties:any = {};
-export const ObjectProto = new ObjectValue(OBJECT, {
-    proto: null,
-    properties: objectProtoProperties,
-    propertyInfo: PropInfo.MAY_HAVE_NEW,
-    trueValue: Object.prototype
-});
+export const ObjectProto = objectValueFromProperties(Object.prototype, objectProtoProperties, PropInfo.MAY_HAVE_NEW);
 
 const functionProtoProperties:any = {
     length: nonEnumerable(new KnownValue(1)),
@@ -49,20 +119,10 @@ const functionProtoProperties:any = {
     call: nativeFnProp(Function.prototype.call),
     toString: nativeFnProp(Function.prototype.toString)
 };
-export const FunctionProto = new ObjectValue(FUNCTION, {
-    proto: ObjectProto,
-    properties: functionProtoProperties,
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: Function.prototype
-});
-const FunctionConstructor = new ObjectValue(FUNCTION, {
-    proto: FunctionProto,
-    properties: {
-        prototype: nonEnumerable(FunctionProto)
-    },
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: Function
-});
+export const FunctionProto = objectValueFromProperties(Function.prototype, functionProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+const FunctionConstructor = createNativeFunctionValue({
+    prototype: nonEnumerable(FunctionProto)
+}, Function);
 functionProtoProperties.constructor = nonEnumerable(FunctionConstructor);
 
 
@@ -94,12 +154,7 @@ const arrayProtoProperties:any = {
     sort: nativeFnProp(Array.prototype.sort),
     concat: nativeFnProp(Array.prototype.concat)
 };
-export const ArrayProto = new ObjectValue(ARRAY, {
-    proto: ObjectProto,
-    properties: arrayProtoProperties,
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: Array.prototype
-});
+export const ArrayProto = objectValueFromProperties(Array.prototype, arrayProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
 const ArrayConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(ArrayProto)
 }, Array);
@@ -114,12 +169,7 @@ const numberProtoProperties:any = {
     toString: nativeFnProp(Number.prototype.toString),
     valueOf: nativeFnProp(Number.prototype.valueOf)
 };
-export const NumberProto = new ObjectValue(NUMBER, {
-    proto: ObjectProto,
-    properties: numberProtoProperties,
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: Number.prototype
-});
+export const NumberProto = objectValueFromProperties(Number.prototype, numberProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
 
 const numberConstructorProperties = addConstants({
         prototype: nonEnumerable(NumberProto)
@@ -133,12 +183,7 @@ const booleanProtoProperties:any = {
     toString: nativeFnProp(Boolean.prototype.toString),
     valueOf: nativeFnProp(Boolean.prototype.valueOf)
 };
-export const BooleanProto = new ObjectValue(BOOLEAN, {
-    proto: ObjectProto,
-    properties: booleanProtoProperties,
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: Boolean.prototype
-});
+export const BooleanProto = objectValueFromProperties(Boolean.prototype, booleanProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
 const BooleanConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(BooleanProto)
 }, Boolean);
@@ -167,12 +212,7 @@ const stringProtoProperties:any = {
     toUpperCase: nativeFnProp(String.prototype.toUpperCase),
     toLocaleUpperCase: nativeFnProp(String.prototype.toLocaleUpperCase)
 };
-export const StringProto = new ObjectValue(STRING, {
-    proto: ObjectProto,
-    properties: stringProtoProperties,
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: String.prototype
-});
+export const StringProto = objectValueFromProperties(String.prototype, stringProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
 const StringConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(StringProto)
 }, String);
@@ -185,12 +225,7 @@ const regExpProtoProperties:any = {
     toString: nativeFnProp(RegExp.prototype.toString),
     compile: nativeFnProp(RegExp.prototype.compile)
 };
-export const RegExpProto = new ObjectValue(OBJECT, {
-    proto: ObjectProto,
-    properties: regExpProtoProperties,
-    propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
-    trueValue: RegExp.prototype
-});
+export const RegExpProto = objectValueFromProperties(RegExp.prototype, regExpProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
 const RegExpConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(RegExpProto)
 }, RegExp);
