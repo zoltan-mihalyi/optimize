@@ -10,6 +10,7 @@ import ReduceLogical = require("./features/ReduceLogical");
 import ReduceTailRecursion = require("./features/ReduceTailRecursion");
 import RemoveBlock = require("./features/RemoveBlock");
 import RemoveExpressionStatements = require("./features/RemoveExpressionStatements");
+import ResolvePropertyName = require("./features/ResolvePropertyName");
 import ResolvePropertyAccess = require("./features/ResolvePropertyAccess");
 import ResolveNativeFunctionCalls = require("./features/ResolveNativeFunctionCalls");
 
@@ -20,6 +21,7 @@ ReduceLogical(nodeVisitor);
 ReduceTailRecursion(nodeVisitor);
 RemoveBlock(nodeVisitor);
 RemoveExpressionStatements(nodeVisitor);
+ResolvePropertyName(nodeVisitor);
 ResolvePropertyAccess(nodeVisitor);
 ResolveNativeFunctionCalls(nodeVisitor);
 

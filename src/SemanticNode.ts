@@ -11,7 +11,7 @@ import {
     UnknownValue
 } from "./Value";
 import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
-import {nonEnumerable} from "./Utils";
+import {nonEnumerable, equals} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -213,7 +213,7 @@ abstract class SemanticExpression extends SemanticNode {
                     return;
                 }
             } else {
-                if (!(this instanceof LiteralNode)) { //todo value check
+                if (!(this instanceof LiteralNode) || !equals(this.value, value.value)) {
                     this.replaceWith([builders.literal(value.value)]);
                     return;
                 }

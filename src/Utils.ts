@@ -35,3 +35,7 @@ export function throwValue(msg:string):Value {
     console.log('WARNING: ' + msg);
     return unknown;
 }
+
+export function equals(a:any, b:any):boolean {
+    return a === b || (a !== a && b !== b);
+}

@@ -1,3 +1,4 @@
+import {equals} from "./Utils";
 export abstract class Value {
     abstract map(mapper:(value:SingleValue) => Value):Value;
 
@@ -53,10 +54,6 @@ export abstract class SingleValue extends IterableValue {
     abstract compareTo(other:SingleValue, strict:boolean):ComparisonResult;
 }
 
-function isNaN(value:any):boolean {
-    return value !== value;
-}
-
 export class KnownValue extends SingleValue {
     constructor(public value:string|boolean|number) {
         super();
@@ -74,7 +71,7 @@ export class KnownValue extends SingleValue {
     }
 
     protected equalsInner(other:KnownValue):boolean {
-        return this.value === other.value || (isNaN(this.value) && isNaN(other.value));
+        return equals(this.value, other.value);
     }
 }
 
