@@ -211,7 +211,6 @@ abstract class SemanticExpression extends SemanticNode {
             if (primitiveValue === void 0) {
                 if (!(this instanceof UnaryNode && this.operator === 'void' && this.argument instanceof LiteralNode && this.argument.value === 0)) {
                     this.replaceWith([builders.unaryExpression('void', builders.literal(0), true)]);
-                    return;
                 }
             } else if (typeof primitiveValue === 'number' && (primitiveValue < 0 || 1 / primitiveValue) < 0) {
                 if (!(this instanceof UnaryNode && this.operator === '-' && this.argument instanceof LiteralNode && this.argument.value === -primitiveValue)) {
