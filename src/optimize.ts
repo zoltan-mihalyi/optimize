@@ -13,6 +13,7 @@ import RemoveExpressionStatements = require("./features/RemoveExpressionStatemen
 import ResolvePropertyName = require("./features/ResolvePropertyName");
 import ResolvePropertyAccess = require("./features/ResolvePropertyAccess");
 import ResolveNativeFunctionCalls = require("./features/ResolveNativeFunctionCalls");
+import ReduceSequenceExpression = require("./features/ReduceSequenceExpression");
 
 const nodeVisitor = new NodeVisitor();
 CalculateArithmetic(nodeVisitor);
@@ -24,6 +25,7 @@ RemoveExpressionStatements(nodeVisitor);
 ResolvePropertyName(nodeVisitor);
 ResolvePropertyAccess(nodeVisitor);
 ResolveNativeFunctionCalls(nodeVisitor);
+ReduceSequenceExpression(nodeVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;
