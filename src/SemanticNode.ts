@@ -207,14 +207,19 @@ abstract class SemanticExpression extends SemanticNode {
             return;
         }
         if (value instanceof KnownValue) {
-            if (value.value === void 0) {
+            let primitiveValue = value.value;
+            if (primitiveValue === void 0) {
                 if (!(this instanceof UnaryNode && this.operator === 'void' && this.argument instanceof LiteralNode && this.argument.value === 0)) {
                     this.replaceWith([builders.unaryExpression('void', builders.literal(0), true)]);
                     return;
                 }
+            } else if (typeof primitiveValue === 'number' && (primitiveValue < 0 || 1 / primitiveValue) < 0) {
+                if (!(this instanceof UnaryNode && this.operator === '-' && this.argument instanceof LiteralNode && this.argument.value === -primitiveValue)) {
+                    this.replaceWith([builders.unaryExpression('-', builders.literal(-primitiveValue))]);
+                }
             } else {
-                if (!(this instanceof LiteralNode) || !equals(this.value, value.value)) {
-                    this.replaceWith([builders.literal(value.value)]);
+                if (!(this instanceof LiteralNode) || !equals(this.value, primitiveValue)) {
+                    this.replaceWith([builders.literal(primitiveValue)]);
                     return;
                 }
             }

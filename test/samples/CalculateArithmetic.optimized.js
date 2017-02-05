@@ -41,3 +41,6 @@ console.log(typeof {
 console.log(typeof {
     [console.log()]: 1
 });
+
+console.log(-0);
+console.log(-0);
