@@ -63,11 +63,9 @@ export class KnownValue extends SingleValue {
         if (other instanceof KnownValue) {
             let equals = strict ? (this.value === other.value) : (this.value == other.value);
             return fromBoolean(equals);
+        } else {
+            return (other as ObjectValue).compareTo(this, strict);
         }
-        if (strict) {
-            return ComparisonResult.FALSE;
-        }
-        return ComparisonResult.UNKNOWN;
     }
 
     protected equalsInner(other:KnownValue):boolean {
@@ -150,9 +148,14 @@ export class ObjectValue extends SingleValue {
     compareTo(other:SingleValue, strict:boolean):ComparisonResult {
         if (other instanceof ObjectValue) {
             return fromBoolean(this === other);
-        } else {
-            return strict ? ComparisonResult.FALSE : ComparisonResult.UNKNOWN;
         }
+        if (strict) {
+            return ComparisonResult.FALSE;
+        }
+        if (this.trueValue) {
+            return fromBoolean(this.trueValue == (other as KnownValue).value);
+        }
+        return ComparisonResult.UNKNOWN;
     }
 
     protected equalsInner(other:ObjectValue):boolean {

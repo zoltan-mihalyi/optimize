@@ -24,7 +24,8 @@ console.log(typeof function(){});
 console.log(1 + a);
 console.log(0 || null || 2);
 
-console.log(-[]);
+console.log(1 + ({}).constructor(2));
+console.log(2-[]);
 console.log(-u);
 
 console.log(1 === {});
@@ -33,3 +34,10 @@ console.log({} === []);
 
 console.log(1 == {});
 console.log(Math == 1);
+
+console.log(typeof {
+    x: console.log()
+});
+console.log(typeof {
+    [console.log()]: 1
+});

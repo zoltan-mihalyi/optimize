@@ -24,12 +24,20 @@ console.log("function");
 console.log(1 + a);
 console.log(2);
 
-console.log(-[]);
+console.log(3);
+console.log(2);
 console.log(-u);
 
 console.log(false);
 console.log(true);
 console.log(false);
 
-console.log(1 == {});
+console.log(false);
 console.log(Math == 1);
+
+console.log(typeof {
+    x: console.log()
+});
+console.log(typeof {
+    [console.log()]: 1
+});

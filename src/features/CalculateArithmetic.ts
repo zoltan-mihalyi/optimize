@@ -1,6 +1,8 @@
 import NodeVisitor = require("../NodeVisitor");
 import {BinaryNode, UnaryNode} from "../SemanticNode";
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
+import {hasTrueValue, getTrueValue} from "../Utils";
+import {createValue} from "../BuiltIn";
 
 export = (nodeVisitor:NodeVisitor) => {
 
@@ -10,7 +12,7 @@ export = (nodeVisitor:NodeVisitor) => {
         const evaluator = new Function('left,right', `return left ${node.operator} right;`) as (x:any, y:any) => any;
         node.setValue(leftValue.product(rightValue, (leftValue, rightValue) => {
             if (isStrictEqual() || isEqual()) {
-                const comparisionResult = leftValue.compareTo(rightValue, isStrictEqual());
+                const comparisionResult = leftValue.compareTo(rightValue, isStrictEqual()); //todo compare to does not belong to value class
                 if (comparisionResult === ComparisonResult.TRUE) {
                     return maybeNegated(true);
                 } else if (comparisionResult === ComparisonResult.FALSE) {
@@ -18,8 +20,8 @@ export = (nodeVisitor:NodeVisitor) => {
                 }
             }
 
-            if (leftValue instanceof KnownValue && rightValue instanceof KnownValue) {
-                return new KnownValue(evaluator(leftValue.value, rightValue.value));
+            if (hasTrueValue(leftValue) && hasTrueValue(rightValue)) {
+                return createValue(evaluator(getTrueValue(leftValue), getTrueValue(rightValue)));
             }
             return unknown;
         }));
@@ -42,8 +44,8 @@ export = (nodeVisitor:NodeVisitor) => {
         const valueInformation = argument.getValue();
         const mapper = new Function('arg', `return ${node.operator} arg;`) as (x:any) => any;
         node.setValue(valueInformation.map(value => {
-            if (value instanceof KnownValue) {
-                return new KnownValue(mapper(value.value));
+            if (hasTrueValue(value)) {
+                return createValue(mapper(getTrueValue(value)));
             } else if (value instanceof ObjectValue) {
                 if (node.operator === '!') {
                     return new KnownValue(false);

@@ -18,11 +18,11 @@ import {throwValue} from "../Utils";
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {
         const resolved = node.object.getValue().product(node.getPropertyValue(), (left:SingleValue, property:SingleValue) => {
-            if (!(property instanceof KnownValue)) { //todo
+            if (!(property instanceof KnownValue)) {
                 return unknown;
             }
             let object:ObjectValue;
-            if (left instanceof KnownValue) {
+            if (left instanceof KnownValue) { //todo with a different wrap object resolver
                 if (typeof left.value === 'number') {
                     //noinspection JSPrimitiveTypeWrapperUsage
                     object = new ObjectValue(NUMBER, {

@@ -1,7 +1,8 @@
 import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, KnownValue} from "../Value";
-import {createValue, createValueFromCall} from "../BuiltIn";
+import {createValueFromCall} from "../BuiltIn";
+import {hasTrueValue, getTrueValue} from "../Utils";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(CallNode, (node:CallNode) => {
@@ -16,11 +17,9 @@ export  = (nodeVisitor:NodeVisitor) => {
         let context = null;
         if (callee instanceof MemberNode) {
             const contextValue = callee.object.getValue();
-            if (contextValue instanceof KnownValue) {
-                context = contextValue.value;
-            } else if (contextValue instanceof ObjectValue && contextValue.trueValue) {
-                context = contextValue.trueValue;
-            } else {
+            if (hasTrueValue(contextValue)) {
+                context = getTrueValue(contextValue);
+            }else{
                 return;
             }
         }
@@ -29,18 +28,13 @@ export  = (nodeVisitor:NodeVisitor) => {
         for (let i = 0; i < node.arguments.length; i++) {
             const argument = node.arguments[i];
             let parameter = argument.getValue();
-            if (parameter instanceof KnownValue) {
-                parameters.push(parameter.value);
-            } else {
-                let trueValue = (parameter as ObjectValue).trueValue;
-                if (trueValue) {
-                    parameters.push(trueValue);
-                } else {
-                    return;
-                }
+            if(hasTrueValue(parameter)){
+                parameters.push(getTrueValue(parameter));
+            }else{
+                return;
             }
         }
 
-        node.setValue(createValueFromCall((value.trueValue as Function),context,parameters));
+        node.setValue(createValueFromCall((value.trueValue as Function), context, parameters));
     });
 };

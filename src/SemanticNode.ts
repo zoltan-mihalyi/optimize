@@ -11,7 +11,7 @@ import {
     UnknownValue
 } from "./Value";
 import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
-import {nonEnumerable, equals} from "./Utils";
+import {nonEnumerable, equals, hasTrueValue, getTrueValue, throwValue} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -289,8 +289,8 @@ export class ArrayNode extends SemanticExpression {
                 enumerable: true,
                 value: value
             };
-            if (trueValue && value instanceof KnownValue) {
-                trueValue.push(value.value);
+            if (trueValue && hasTrueValue(value)) {
+                trueValue.push(getTrueValue(value));
             } else {
                 trueValue = null;
             }
@@ -613,14 +613,20 @@ export class ObjectNode extends SemanticExpression {
         for (let i = 0; i < this.properties.length; i++) {
             const property = this.properties[i];
             let value = property.getKeyValue();
-            if (value instanceof KnownValue) {
-                let propertyValue = property.value.getValue();
-                properties['' + value.value] = {
+            if (hasTrueValue(value)) {
+                const propertyValue = property.value.getValue();
+                let key;
+                try {
+                    key = '' + getTrueValue(value);
+                } catch (e) {
+                    return throwValue('CANNOT RESOLVE DYNAMIC PROPERTY' + e);
+                }
+                properties[key] = {
                     enumerable: true,
                     value: propertyValue
                 };
-                if (trueValue && propertyValue instanceof KnownValue) {
-                    trueValue['' + value.value] = propertyValue.value;
+                if (trueValue && hasTrueValue(propertyValue)) {
+                    trueValue[key] = getTrueValue(propertyValue);
                 } else {
                     trueValue = null;
                 }

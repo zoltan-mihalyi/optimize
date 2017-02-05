@@ -1,4 +1,4 @@
-import {PropDescriptorMap, KnownValue, Value, PropDescriptor, unknown} from "./Value";
+import {PropDescriptorMap, KnownValue, Value, PropDescriptor, unknown, ObjectValue} from "./Value";
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
     let i = 2;
@@ -38,4 +38,17 @@ export function throwValue(msg:string):Value {
 
 export function equals(a:any, b:any):boolean {
     return a === b || (a !== a && b !== b);
+}
+
+export function hasTrueValue(value:Value):boolean {
+    return value instanceof KnownValue || (value instanceof ObjectValue && !!value.trueValue);
+}
+
+export function getTrueValue(value:Value):any {
+    if (value instanceof KnownValue) {
+        return value.value;
+    } else if (value instanceof ObjectValue && value.trueValue) {
+        return value.trueValue;
+    }
+    throw new Error('no true value');
 }
