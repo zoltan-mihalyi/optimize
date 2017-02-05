@@ -167,6 +167,30 @@ export abstract class SemanticNode {
         this.updated = false;
     }
 
+    getDeclarations():Expression[] {
+        if (!(this instanceof BlockNode)) {
+            return [];
+        }
+        const enclosingFunction = this.getEnclosingFunction();
+        const result:Expression[] = [];
+        this.walk((node:SemanticNode) => {
+            if (node instanceof FunctionDeclarationNode) {
+                if (node.getEnclosingFunction() === enclosingFunction) {
+                    result.push(node.toAst());
+                }
+            } else if (node instanceof VariableDeclarationNode && !node.isBlockScoped()) {
+                if (node.getEnclosingFunction() === enclosingFunction) {
+                    let declaration = node.toAst() as any;
+                    for (let i = 0; i < declaration.declarations.length; i++) {
+                        declaration.declarations[i].init = null;
+                    }
+                    result.push(declaration);
+                }
+            }
+        });
+        return result;
+    }
+
     protected handleDeclarationsForNode() {
     }
 

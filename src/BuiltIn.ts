@@ -58,7 +58,7 @@ export function createFunctionValue(properties:PropDescriptorMap, length:number,
     return new ObjectValue(FUNCTION, {
         proto: FunctionProto,
         properties: properties,
-        propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE,
+        propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
         trueValue: native
     });
 }
@@ -143,7 +143,7 @@ function getObjectClass(value:Object):ObjectClass {
 }
 
 const objectProtoProperties:any = {};
-export const ObjectProto = objectValueFromProperties(Object.prototype, objectProtoProperties, PropInfo.MAY_HAVE_NEW);
+export const ObjectProto = objectValueFromProperties(Object.prototype, objectProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 
 const functionProtoProperties:any = {
     length: nonEnumerable(new KnownValue(1)),
@@ -151,7 +151,7 @@ const functionProtoProperties:any = {
     call: nativeFnProp(Function.prototype.call),
     toString: nativeFnProp(Function.prototype.toString)
 };
-export const FunctionProto = objectValueFromProperties(Function.prototype, functionProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+export const FunctionProto = objectValueFromProperties(Function.prototype, functionProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 const FunctionConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(FunctionProto)
 }, Function);
@@ -186,7 +186,7 @@ const arrayProtoProperties:any = {
     sort: nativeFnProp(Array.prototype.sort),
     concat: nativeFnProp(Array.prototype.concat)
 };
-export const ArrayProto = objectValueFromProperties(Array.prototype, arrayProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+export const ArrayProto = objectValueFromProperties(Array.prototype, arrayProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 const ArrayConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(ArrayProto)
 }, Array);
@@ -201,7 +201,7 @@ const numberProtoProperties:any = {
     toString: nativeFnProp(Number.prototype.toString),
     valueOf: nativeFnProp(Number.prototype.valueOf)
 };
-export const NumberProto = objectValueFromProperties(Number.prototype, numberProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+export const NumberProto = objectValueFromProperties(Number.prototype, numberProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 
 const numberConstructorProperties = addConstants({
         prototype: nonEnumerable(NumberProto)
@@ -215,7 +215,7 @@ const booleanProtoProperties:any = {
     toString: nativeFnProp(Boolean.prototype.toString),
     valueOf: nativeFnProp(Boolean.prototype.valueOf)
 };
-export const BooleanProto = objectValueFromProperties(Boolean.prototype, booleanProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+export const BooleanProto = objectValueFromProperties(Boolean.prototype, booleanProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 const BooleanConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(BooleanProto)
 }, Boolean);
@@ -244,7 +244,7 @@ const stringProtoProperties:any = {
     toUpperCase: nativeFnProp(String.prototype.toUpperCase),
     toLocaleUpperCase: nativeFnProp(String.prototype.toLocaleUpperCase)
 };
-export const StringProto = objectValueFromProperties(String.prototype, stringProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+export const StringProto = objectValueFromProperties(String.prototype, stringProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 const StringConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(StringProto)
 }, String);
@@ -261,7 +261,7 @@ const regExpProtoProperties:any = {
     multiline: getterProperty(RegExp.prototype, 'multiline'),
     source: getterProperty(RegExp.prototype, 'source')
 };
-export const RegExpProto = objectValueFromProperties(RegExp.prototype, regExpProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE);
+export const RegExpProto = objectValueFromProperties(RegExp.prototype, regExpProtoProperties, PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE);
 const RegExpConstructor = createNativeFunctionValue({
     prototype: nonEnumerable(RegExpProto)
 }, RegExp);

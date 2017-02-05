@@ -121,7 +121,7 @@ export interface PropDescriptorMap {
 }
 
 export const enum PropInfo {
-    MAY_HAVE_NEW, NO_UNKNOWN_OVERRIDE, KNOWS_ALL
+    MAY_HAVE_NEW, NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE, KNOWS_ALL
 }
 
 interface ObjectParameters {
@@ -158,10 +158,6 @@ export class ObjectValue extends SingleValue {
         return ComparisonResult.UNKNOWN;
     }
 
-    protected equalsInner(other:ObjectValue):boolean {
-        return this.objectClass === other.objectClass;
-    }
-
     resolveProperty(name:string, getterEvaluator:(fn:Function) => Value):Value {
         if (this.hasProperty(name)) {
             let property = this.properties[name];
@@ -181,12 +177,40 @@ export class ObjectValue extends SingleValue {
                 } else {
                     return new KnownValue(void 0);
                 }
-            case PropInfo.NO_UNKNOWN_OVERRIDE:
+            case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
                 if (this.proto.hasPropertyDeep(name)) {
                     return this.proto.resolveProperty(name, getterEvaluator);
                 }
                 return unknown;
         }
+    }
+
+    canIterate():boolean {
+        if (this.propertyInfo === PropInfo.MAY_HAVE_NEW) {
+            return false;
+        }
+        if (this.proto) {
+            return this.proto.canIterate();
+        }
+        return true;
+    }
+
+    iterate(callback:(key:string) => void) {
+        for (const i in this.properties) {
+            if (Object.prototype.hasOwnProperty.call(this.properties, i)) {
+                const property = this.properties[i];
+                if (property.enumerable) {
+                    callback(i);
+                }
+            }
+        }
+        if (this.proto) {
+            this.proto.iterate(callback);
+        }
+    }
+
+    protected equalsInner(other:ObjectValue):boolean {
+        return this.objectClass === other.objectClass;
     }
 
     private hasPropertyDeep(name:string):boolean {
