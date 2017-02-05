@@ -19,6 +19,18 @@ import {
 import {nonEnumerable, addConstants, isPrimitive, throwValue} from "./Utils";
 import Map = require("./Map");
 
+export function canWrapObjectValue(value:SingleValue):boolean {
+    return value instanceof ObjectValue || (value as KnownValue).value != null;
+}
+
+export function wrapObjectValue(value:SingleValue):ObjectValue {
+    if (value instanceof KnownValue) {
+        return objectValueFromObject(Object(value.value));
+    } else {
+        return value as ObjectValue;
+    }
+}
+
 function getterProperty(object:Object, property:string):PropDescriptor {
     let descriptor = Object.getOwnPropertyDescriptor(object, property);
     return {

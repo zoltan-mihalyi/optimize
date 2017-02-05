@@ -1,18 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {MemberNode} from "../SemanticNode";
-import {
-    SingleValue,
-    KnownValue,
-    unknown,
-    ObjectValue,
-    NUMBER,
-    STRING,
-    PropDescriptorMap,
-    BOOLEAN,
-    PropInfo,
-    Value
-} from "../Value";
-import {NumberProto, BooleanProto, StringProto, createValueFromCall} from "../BuiltIn";
+import {SingleValue, KnownValue, unknown} from "../Value";
+import {createValueFromCall, canWrapObjectValue, wrapObjectValue} from "../BuiltIn";
 import {throwValue} from "../Utils";
 
 export  = (nodeVisitor:NodeVisitor) => {
@@ -21,57 +10,15 @@ export  = (nodeVisitor:NodeVisitor) => {
             if (!(property instanceof KnownValue)) {
                 return unknown;
             }
-            let object:ObjectValue;
-            if (left instanceof KnownValue) { //todo with a different wrap object resolver
-                if (typeof left.value === 'number') {
-                    //noinspection JSPrimitiveTypeWrapperUsage
-                    object = new ObjectValue(NUMBER, {
-                        proto: NumberProto,
-                        properties: {},
-                        propertyInfo: PropInfo.KNOWS_ALL,
-                        trueValue: new Number(left.value)
-                    });
-                } else if (typeof left.value === 'boolean') {
-                    //noinspection JSPrimitiveTypeWrapperUsage
-                    object = new ObjectValue(BOOLEAN, {
-                        proto: BooleanProto,
-                        properties: {},
-                        propertyInfo: PropInfo.KNOWS_ALL,
-                        trueValue: new Boolean(left.value)
-                    });
-                } else if (typeof left.value === 'string') {
-                    const properties:PropDescriptorMap = {
-                        length: {
-                            enumerable: false,
-                            value: new KnownValue(left.value.length)
-                        }
-                    };
-                    for (var i = 0; i < left.value.length; i++) {
-                        properties['' + i] = {
-                            enumerable: true,
-                            value: new KnownValue(left.value[i])
-                        };
-                    }
 
-                    //noinspection JSPrimitiveTypeWrapperUsage
-                    object = new ObjectValue(STRING, {
-                        proto: StringProto,
-                        properties: properties,
-                        propertyInfo: PropInfo.KNOWS_ALL,
-                        trueValue: new String(left.value)
-                    });
-                } else {
-                    return throwValue(`ACCESSING PROPERTY ${property.value} ON ${left.value}`);
-                }
+            if (canWrapObjectValue(left)) {
+                let object = wrapObjectValue(left);
+                return object.resolveProperty('' + property.value, (fn:Function) => {
+                    return createValueFromCall(fn, object.trueValue, []);
+                });
             } else {
-                object = left as ObjectValue;
+                return throwValue(`ACCESSING PROPERTY ${property.value} ON ${(left as KnownValue).value}`);
             }
-
-            function getterEvaluator(fn:Function):Value {
-                return createValueFromCall(fn, object.trueValue, []);
-            }
-
-            return object.resolveProperty('' + property.value, getterEvaluator);
         });
 
         node.setValue(resolved);
