@@ -17,11 +17,13 @@ export = (nodeVisitor:NodeVisitor) => {
         });
         if (boolValue instanceof KnownValue) {
             const usedBranch = boolValue.value ? node.consequent : node.alternate;
+            const unUsedBranch = boolValue.value ? node.alternate : node.consequent;
+
+            const result = unUsedBranch ? unUsedBranch.getDeclarations() : [];
             if (usedBranch) {
-                node.replaceWith([usedBranch.toAst()]);
-            } else {
-                node.remove();
+                result.push(usedBranch.toAst());
             }
+            node.replaceWith(result);
         }
     }
 };

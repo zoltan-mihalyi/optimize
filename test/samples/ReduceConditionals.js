@@ -51,3 +51,8 @@ if (x) {
 }
 
 console.log(1 ? "true" : "false");
+
+if (null) {
+    var aaa = 1;
+}
+console.log(aaa);

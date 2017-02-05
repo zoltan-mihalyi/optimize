@@ -34,3 +34,6 @@ if (x) {
 }
 
 console.log("true");
+
+var aaa;
+console.log(aaa);
