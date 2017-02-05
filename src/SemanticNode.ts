@@ -1,5 +1,15 @@
 ///<reference path="Expression.ts"/>
-import {unknown, Value, KnownValue, ObjectValue, ARRAY, OBJECT, PropDescriptorMap, PropInfo} from "./Value";
+import {
+    unknown,
+    Value,
+    KnownValue,
+    ObjectValue,
+    ARRAY,
+    OBJECT,
+    PropDescriptorMap,
+    PropInfo,
+    UnknownValue
+} from "./Value";
 import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
 import {nonEnumerable} from "./Utils";
 import Scope = require("./Scope");
@@ -193,6 +203,9 @@ abstract class SemanticExpression extends SemanticNode {
     }
 
     setValue(value:Value) {
+        if (value instanceof UnknownValue) {
+            return;
+        }
         if (value instanceof KnownValue) {
             if (value.value === void 0) {
                 if (!(this instanceof UnaryNode && this.operator === 'void' && this.argument instanceof LiteralNode && this.argument.value === 0)) {
@@ -213,6 +226,13 @@ abstract class SemanticExpression extends SemanticNode {
 
         this.calculatedValue = value;
         this.markUpdated();
+    }
+
+    protected markUpdated() {
+        super.markUpdated();
+        if (this.calculatedValue instanceof UnknownValue) {
+            this.calculatedValue = this.getInitialValue();
+        }
     }
 
     protected getInitialValue():Value {
