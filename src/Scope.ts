@@ -4,13 +4,15 @@ import {
     UpdateNode,
     ForEachNode,
     IdentifierNode,
-    VariableDeclaratorNode
+    VariableDeclaratorNode,
+    FunctionDeclarationNode,
+    FunctionExpressionNode
 } from "./SemanticNode";
 import {createUnusedName} from "./Utils";
 
 interface Variable {
     usages:SemanticNode[];
-    writes:(AssignmentNode | UpdateNode | ForEachNode | VariableDeclaratorNode)[];
+    writes:(AssignmentNode | UpdateNode | ForEachNode | VariableDeclaratorNode | FunctionDeclarationNode | FunctionExpressionNode)[];
     reads:IdentifierNode[];
     name:string;
     initialized:boolean;

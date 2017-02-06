@@ -364,12 +364,12 @@ export class ForNode extends LoopNode {
     update:SemanticNode;
 }
 
-function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
+function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean, fn:FunctionExpressionNode|FunctionDeclarationNode) {
     for (let i = 0; i < params.length; i++) {
-        scope.set(params[i].name, false, true);
+        scope.set(params[i].name, false, true).writes.push(fn);
     }
     if (addArguments) {
-        scope.set('arguments', false, true);
+        scope.set('arguments', false, true).writes.push(fn);
     }
 }
 
@@ -379,7 +379,7 @@ export class FunctionDeclarationNode extends SemanticNode {
     body:BlockNode;
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, true);
+        addParametersToScope(this.params, this.body.scope, true, this);
         this.scope.set(this.id.name, false, true);
     }
 }
@@ -394,7 +394,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, true);
+        addParametersToScope(this.params, this.body.scope, true, this);
     }
 
     protected getInitialValue():Value {
@@ -444,8 +444,8 @@ export class IdentifierNode extends SemanticExpression {
         if (this.parent instanceof VariableDeclaratorNode && this.parent.id === this) {
             return false; //just initializing
         }
-        if (this.parent instanceof FunctionDeclarationNode) {
-            return false; //function declaration
+        if (this.parent instanceof FunctionDeclarationNode || this.parent instanceof FunctionExpressionNode) {
+            return false; //function declaration/parameter
         }
         //noinspection RedundantIfStatementJS
         if (this.parent instanceof AssignmentNode && this.parent.left === this) {
@@ -460,7 +460,6 @@ export class IdentifierNode extends SemanticExpression {
         }
         return this.scope.getOrCreate(this.name) === identifier.scope.getOrCreate(identifier.name);
     }
-
     protected updateAccessForNode() {
         let loopNode = this.findEnclosingLoop();
         if (loopNode) {

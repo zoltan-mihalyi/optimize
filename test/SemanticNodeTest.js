@@ -50,4 +50,34 @@ describe('Parse', function() {
         var varA = semanticNode.scope.variables['a'];
         assert(varA);
     });
+
+    it('Parameter scope', function() {
+        var ast = recast.parse('function fn(a){} (function(b){})').program;
+        var semanticNode = node.semantic(ast);
+        var outerVarA = semanticNode.scope.variables['a'];
+        assert.equal(outerVarA, void 0);
+
+        var outerVarB = semanticNode.scope.variables['b'];
+        assert.equal(outerVarB, void 0);
+    });
+
+    it('Parameter writes', function() {
+        var ast = recast.parse('function fn(a){log(a)} (function(b){})').program;
+        var semanticNode = node.semantic(ast);
+        var varA = semanticNode.body[0].body.scope.variables['a'];
+        assert.equal(varA.reads.length, 1);
+        assert.equal(varA.writes.length, 1);
+
+        var varB = semanticNode.body[1].expression.body.scope.variables['b'];
+        assert.equal(varB.reads.length, 0);
+        assert.equal(varB.writes.length, 1);
+    });
+
+    it('arguments writes', function() {
+        var ast = recast.parse('function fn(){}').program;
+        var semanticNode = node.semantic(ast);
+        var varArguments = semanticNode.body[0].body.scope.variables['arguments'];
+        assert.equal(varArguments.reads.length, 0);
+        assert.equal(varArguments.writes.length, 1);
+    });
 });
