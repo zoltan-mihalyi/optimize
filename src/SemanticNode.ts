@@ -453,6 +453,12 @@ export class IdentifierNode extends SemanticExpression {
     }
 
     isReal():boolean {
+        if (this.parent instanceof FunctionExpressionNode && this.parent.id === this) {
+            return false;
+        }
+        if (this.parent instanceof LabeledNode || this.parent instanceof BreakNode || this.parent instanceof ContinueNode) {
+            return false;
+        }
         if (this.parent instanceof PropertyNode && this.parent.key === this && !this.parent.computed) {
             return false;
         }
