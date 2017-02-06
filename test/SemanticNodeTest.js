@@ -78,6 +78,6 @@ describe('Parse', function() {
         var semanticNode = node.semantic(ast);
         var varArguments = semanticNode.body[0].body.scope.variables['arguments'];
         assert.equal(varArguments.reads.length, 0);
-        assert.equal(varArguments.writes.length, 1);
+        assert.equal(varArguments.writes.length, 0);
     });
 });

@@ -283,7 +283,7 @@ export class AssignmentNode extends SemanticExpression {
 
     protected updateAccessForNode() {
         if (this.left instanceof IdentifierNode) {
-            this.scope.getOrCreate(this.left.name).writes.push(this);
+            this.scope.getOrCreate(this.left.name).writes.push(this.left);
         }
     }
 }
@@ -364,12 +364,12 @@ export class ForNode extends LoopNode {
     update:SemanticNode;
 }
 
-function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean, fn:FunctionExpressionNode|FunctionDeclarationNode) {
+function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
     for (let i = 0; i < params.length; i++) {
-        scope.set(params[i].name, false, true).writes.push(fn);
+        scope.set(params[i].name, false, true).writes.push(params[i]);
     }
     if (addArguments) {
-        scope.set('arguments', false, true).writes.push(fn);
+        scope.set('arguments', false, true);
     }
 }
 
@@ -379,7 +379,7 @@ export class FunctionDeclarationNode extends SemanticNode {
     body:BlockNode;
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, true, this);
+        addParametersToScope(this.params, this.body.scope, true);
         this.scope.set(this.id.name, false, true);
     }
 }
@@ -394,7 +394,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, true, this);
+        addParametersToScope(this.params, this.body.scope, true);
     }
 
     protected getInitialValue():Value {
@@ -463,7 +463,7 @@ export class IdentifierNode extends SemanticExpression {
     protected updateAccessForNode() {
         let loopNode = this.findEnclosingLoop();
         if (loopNode) {
-            this.scope.getOrCreate(this.name).writes.push(loopNode);
+            this.scope.getOrCreate(this.name).writes.push(this);
         } else if (this.isRead()) {
             this.scope.getOrCreate(this.name).reads.push(this);
         }
@@ -705,7 +705,7 @@ export class UpdateNode extends SemanticExpression {
 
     protected updateAccessForNode() {
         if (this.argument instanceof IdentifierNode) {
-            this.scope.getOrCreate(this.argument.name).writes.push(this);
+            this.scope.getOrCreate(this.argument.name).writes.push(this.argument);
         }
     }
 }
@@ -731,7 +731,7 @@ export class VariableDeclaratorNode extends SemanticNode {
 
     protected updateAccessForNode() {
         if (this.init) {
-            this.scope.getOrCreate(this.id.name).writes.push(this);
+            this.scope.getOrCreate(this.id.name).writes.push(this.id);
         }
     }
 }

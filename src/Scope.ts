@@ -12,7 +12,7 @@ import {createUnusedName} from "./Utils";
 
 interface Variable {
     usages:SemanticNode[];
-    writes:(AssignmentNode | UpdateNode | ForEachNode | VariableDeclaratorNode | FunctionDeclarationNode | FunctionExpressionNode)[];
+    writes:IdentifierNode[];
     reads:IdentifierNode[];
     name:string;
     initialized:boolean;
