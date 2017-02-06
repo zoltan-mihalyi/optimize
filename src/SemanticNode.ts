@@ -302,7 +302,8 @@ export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
-        return new Scope(scope);
+        let isFnScope = !this.parent || this.parent instanceof FunctionExpressionNode || this.parent instanceof FunctionDeclarationNode;
+        return new Scope(scope, !isFnScope);
     }
 }
 

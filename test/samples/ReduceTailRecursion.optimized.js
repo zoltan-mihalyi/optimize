@@ -24,8 +24,8 @@ function calledMultipleTimes(a) {
             continue x;
         } else if (a === 0) {
             new_a = void 0;
-            var new_a = void 0;
-            a = new_a;
+            var new_a2 = void 0;
+            a = new_a2;
             continue x;
         } else {
             return 0;

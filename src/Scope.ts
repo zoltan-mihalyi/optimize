@@ -23,10 +23,9 @@ interface Variables {
 }
 
 class Scope {
-    private readonly blockScope:boolean;
     private readonly variables:Variables = {};
 
-    constructor(private parent:Scope) {
+    constructor(private parent:Scope, private readonly blockScope:boolean) {
     }
 
     has(name:string):boolean {

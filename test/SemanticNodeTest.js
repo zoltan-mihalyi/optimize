@@ -88,4 +88,14 @@ describe('Parse', function() {
         assert.equal(varFn.reads.length, 0);
         assert.equal(varFn.writes.length, 1);
     });
+
+    it('function and block scope vars', function() {
+        var ast = recast.parse('while(1){let x; var y;}').program;
+        var semanticNode = node.semantic(ast);
+        var varX = semanticNode.scope.variables['x'];
+        assert.equal(varX, void 0);
+
+        var varY = semanticNode.scope.variables['y'];
+        assert(varY);
+    });
 });
