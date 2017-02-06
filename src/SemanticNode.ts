@@ -15,7 +15,7 @@ export abstract class SemanticNode {
     private updated:boolean = false;
 
     constructor(source:Expression, public readonly parent:SemanticNode,
-                private readonly parentObject:{[idx:string]:any}, private readonly parentProperty:string, scope:Scope) {
+                private readonly parentObject:{[idx:string]:any}, protected readonly parentProperty:string, scope:Scope) {
         scope = this.createSubScopeIfNeeded(scope);
         this.scope = scope;
 
@@ -227,11 +227,17 @@ abstract class LoopNode extends SemanticNode {
 export abstract class ForEachNode extends LoopNode {
     left:IdentifierNode|VariableDeclarationNode;
     right:SemanticExpression;
+    innerScope:Scope;
 
     protected updateAccessForNode() {
         if (this.left instanceof IdentifierNode) {
             this.scope.getOrCreate(this.left.name).writes.push(this.left);
         }
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        this.innerScope = new Scope(scope, true);
+        return super.createSubScopeIfNeeded(scope);
     }
 }
 
@@ -308,8 +314,10 @@ export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
-        let isFnScope = !this.parent || this.parent instanceof FunctionExpressionNode || this.parent instanceof FunctionDeclarationNode;
-        return new Scope(scope, !isFnScope);
+        if (this.parent instanceof FunctionExpressionNode || this.parent instanceof FunctionDeclarationNode || this.parent instanceof ForEachNode) {
+            return this.parent.innerScope;
+        }
+        return new Scope(scope, !!this.parent);
     }
 }
 
@@ -384,10 +392,16 @@ export class FunctionDeclarationNode extends SemanticNode {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:BlockNode;
+    innerScope:Scope;
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
         this.scope.set(this.id.name, false, true).writes.push(this.id);
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        this.innerScope = new Scope(scope, false);
+        return scope;
     }
 }
 
@@ -395,6 +409,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:SemanticNode;
+    innerScope:Scope;
 
     isClean():boolean {
         return true;
@@ -402,6 +417,11 @@ export class FunctionExpressionNode extends SemanticExpression {
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope { //todo duplicate
+        this.innerScope = new Scope(scope, false);
+        return scope;
     }
 
     protected getInitialValue():Value {
@@ -448,7 +468,7 @@ export class IdentifierNode extends SemanticExpression {
             return false;
         }
 
-        if(this.parent instanceof ForEachNode && this.parent.left === this){
+        if (this.parent instanceof ForEachNode && this.parent.left === this) {
             return false;
         }
         if (this.parent instanceof VariableDeclaratorNode && this.parent.id === this) {
@@ -469,6 +489,15 @@ export class IdentifierNode extends SemanticExpression {
             return false;
         }
         return this.scope.getOrCreate(this.name) === identifier.scope.getOrCreate(identifier.name);
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        if (this.parent instanceof FunctionDeclarationNode || this.parent instanceof FunctionExpressionNode) {
+            if (this.parentProperty !== "id") {
+                return this.parent.innerScope;
+            }
+        }
+        return super.createSubScopeIfNeeded(scope);
     }
 
     protected updateAccessForNode() {
@@ -716,6 +745,13 @@ export class VariableDeclarationNode extends SemanticNode {
 
     isBlockScoped() {
         return this.kind !== 'var';
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        if (this.parent instanceof ForEachNode) {
+            return this.parent.innerScope;
+        }
+        return super.createSubScopeIfNeeded(scope);
     }
 }
 

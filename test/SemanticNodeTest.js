@@ -113,4 +113,16 @@ describe('Parse', function() {
         assert.equal(varI3.reads.length, 0);
         assert.equal(varI3.writes.length, 1);
     });
+
+    it('function parameter and foreach variable scopes', function() {
+        var ast = recast.parse('for(let i2 in x){} for(i3 in x){} function fn(i4){}').program;
+        var semanticNode = node.semantic(ast);
+
+        assert(semanticNode.body[0].left.scope === semanticNode.body[0].body.scope);
+
+        assert(semanticNode.body[1].left.scope === semanticNode.scope);
+
+        assert(semanticNode.body[2].id.scope === semanticNode.scope);
+        assert(semanticNode.body[2].params[0].scope === semanticNode.body[2].body.scope);
+    });
 });
