@@ -380,7 +380,7 @@ export class FunctionDeclarationNode extends SemanticNode {
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
-        this.scope.set(this.id.name, false, true);
+        this.scope.set(this.id.name, false, true).writes.push(this.id);
     }
 }
 

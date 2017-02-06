@@ -80,4 +80,12 @@ describe('Parse', function() {
         assert.equal(varArguments.reads.length, 0);
         assert.equal(varArguments.writes.length, 0);
     });
+
+    it('declaration writes', function() {
+        var ast = recast.parse('function fn(){}').program;
+        var semanticNode = node.semantic(ast);
+        var varFn = semanticNode.scope.variables['fn'];
+        assert.equal(varFn.reads.length, 0);
+        assert.equal(varFn.writes.length, 1);
+    });
 });
