@@ -225,8 +225,14 @@ abstract class LoopNode extends SemanticNode {
 }
 
 export abstract class ForEachNode extends LoopNode {
-    left:SemanticExpression;
+    left:IdentifierNode|VariableDeclarationNode;
     right:SemanticExpression;
+
+    protected updateAccessForNode() {
+        if (this.left instanceof IdentifierNode) {
+            this.scope.getOrCreate(this.left.name).writes.push(this.left);
+        }
+    }
 }
 
 export class ArrayNode extends SemanticExpression {
@@ -442,6 +448,9 @@ export class IdentifierNode extends SemanticExpression {
             return false;
         }
 
+        if(this.parent instanceof ForEachNode && this.parent.left === this){
+            return false;
+        }
         if (this.parent instanceof VariableDeclaratorNode && this.parent.id === this) {
             return false; //just initializing
         }
@@ -461,21 +470,11 @@ export class IdentifierNode extends SemanticExpression {
         }
         return this.scope.getOrCreate(this.name) === identifier.scope.getOrCreate(identifier.name);
     }
+
     protected updateAccessForNode() {
-        let loopNode = this.findEnclosingLoop();
-        if (loopNode) {
-            this.scope.getOrCreate(this.name).writes.push(this);
-        } else if (this.isRead()) {
+        if (this.isRead()) {
             this.scope.getOrCreate(this.name).reads.push(this);
         }
-    }
-
-    private findEnclosingLoop():ForEachNode {
-        let enclosingLoop = this.parent;
-        if (enclosingLoop instanceof VariableDeclaratorNode) {
-            enclosingLoop = enclosingLoop.parent.parent;
-        }
-        return (enclosingLoop instanceof ForEachNode) && enclosingLoop.left === this ? enclosingLoop : null;
     }
 }
 
@@ -726,13 +725,19 @@ export class VariableDeclaratorNode extends SemanticNode {
     init:SemanticNode;
 
     protected handleDeclarationsForNode() {
-        let blockScoped = this.parent.isBlockScoped();
-        this.scope.set(this.id.name, blockScoped, !blockScoped);
-    }
-
-    protected updateAccessForNode() {
-        if (this.init) {
-            this.scope.getOrCreate(this.id.name).writes.push(this.id);
+        const parent = this.parent;
+        let blockScoped = parent.isBlockScoped();
+        let variable;
+        let isWrite;
+        if (parent.parent instanceof ForEachNode) {
+            variable = parent.parent.body.scope.set(this.id.name, blockScoped, true);
+            isWrite = true;
+        } else {
+            variable = this.scope.set(this.id.name, blockScoped, !blockScoped);
+            isWrite = !!this.init;
+        }
+        if (isWrite) {
+            variable.writes.push(this.id);
         }
     }
 }

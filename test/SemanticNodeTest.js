@@ -98,4 +98,19 @@ describe('Parse', function() {
         var varY = semanticNode.scope.variables['y'];
         assert(varY);
     });
+
+    it('foreach loop variable writes and reads', function() {
+        var ast = recast.parse('for(var i1 in x){} for(let i2 in x){} for(i3 in x){}').program;
+        var semanticNode = node.semantic(ast);
+        var varI1 = semanticNode.scope.variables['i1'];
+        assert.equal(varI1.reads.length, 0);
+        assert.equal(varI1.writes.length, 1);
+
+        var varI2 = semanticNode.scope.variables['i2'];
+        assert.equal(varI2, void 0);
+
+        var varI3 = semanticNode.scope.variables['i3'];
+        assert.equal(varI3.reads.length, 0);
+        assert.equal(varI3.writes.length, 1);
+    });
 });
