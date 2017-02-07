@@ -3,7 +3,7 @@ var recast = require('recast');
 var node = require('../dist/SemanticNode');
 
 
-describe('Parse', function() {
+describe('Semantic node test', function() {
 
     it('parse basic', function() {
         var ast = recast.parse('var a = 1;  function b (){console.log(a)}').program;

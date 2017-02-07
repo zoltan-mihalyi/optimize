@@ -33,7 +33,7 @@ class Scope {
         return null;
     }
 
-    setUnknownGlobal(name:string):Variable{
+    setUnknownGlobal(name:string):Variable {
         if (this.parent) {
             return this.parent.setUnknownGlobal(name);
         }
@@ -45,6 +45,7 @@ class Scope {
             return this.parent.set(name, false, initialized);
         }
         return this.variables[name] = {
+            global: !this.parent,
             initialized: initialized,
             name: name,
             usages: [],

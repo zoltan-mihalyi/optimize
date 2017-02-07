@@ -52,3 +52,11 @@ export function getTrueValue(value:Value):any {
     }
     throw new Error('no true value');
 }
+
+export function map<S,T>(data:S[], transform:(source:S) => T):T[] {
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+        result.push(transform(data[i]));
+    }
+    return result;
+}

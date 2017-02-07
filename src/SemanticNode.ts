@@ -11,7 +11,7 @@ import {
     UnknownValue
 } from "./Value";
 import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
-import {nonEnumerable, equals, hasTrueValue, getTrueValue, throwValue} from "./Utils";
+import {nonEnumerable, equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
 
@@ -853,14 +853,6 @@ export class VariableDeclaratorNode extends SemanticNode {
 
 export class WhileNode extends LoopNode {
     test:SemanticExpression;
-}
-
-function map<S,T>(data:S[], transform:(source:S) => T):T[] {
-    const result = [];
-    for (let i = 0; i < data.length; i++) {
-        result.push(transform(data[i]));
-    }
-    return result;
 }
 
 const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope) => SemanticNode} = {

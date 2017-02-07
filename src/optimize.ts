@@ -16,6 +16,7 @@ import ResolveNativeFunctionCalls = require("./features/ResolveNativeFunctionCal
 import ReduceSequenceExpression = require("./features/ReduceSequenceExpression");
 import UnrollForIn = require("./features/UnrollForIn");
 import InlineFunctionCall = require("./features/InlineFunctionCall");
+import RemoveUnused = require("./features/RemoveUnused");
 
 const nodeVisitor = new NodeVisitor();
 CalculateArithmetic(nodeVisitor);
@@ -30,6 +31,7 @@ ResolveNativeFunctionCalls(nodeVisitor);
 ReduceSequenceExpression(nodeVisitor);
 UnrollForIn(nodeVisitor);
 InlineFunctionCall(nodeVisitor);
+RemoveUnused(nodeVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;
