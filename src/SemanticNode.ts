@@ -63,22 +63,22 @@ export abstract class SemanticNode {
         return null;
     }
 
-    toAst():Expression {
+    toAst(transform?:(node:SemanticNode, e:Expression) => Expression):Expression {
         const result:any = {};
 
         for (let i = 0; i < this.childKeys.length; i++) {
             const childKey = this.childKeys[i];
             const childNode = (this as any)[childKey];
             if (Array.isArray(childNode)) {
-                (result as any)[childKey] = map(childNode, node => node.toAst());
+                (result as any)[childKey] = map(childNode, node => node.toAst(transform));
             } else if (childNode instanceof SemanticNode) {
-                result[childKey] = childNode.toAst();
+                result[childKey] = childNode.toAst(transform);
             } else {
                 result[childKey] = childNode;
             }
         }
 
-        return result as Expression;
+        return transform ? transform(this, result) : result;
     }
 
     remove():void {
@@ -105,6 +105,17 @@ export abstract class SemanticNode {
         }
         // this.replaced = true;
         this.markChanged();
+    }
+
+    hasParent(predicate:(node:SemanticNode) => boolean):boolean {
+        let parent = this.parent;
+        while (parent) {
+            if (predicate(parent)) {
+                return true;
+            }
+            parent = parent.parent;
+        }
+        return false;
     }
 
     contains(predicate:(node:SemanticNode) => boolean):boolean {
@@ -268,7 +279,7 @@ abstract class SemanticExpression extends SemanticNode {
     }
 }
 
-abstract class LoopNode extends SemanticNode {
+export abstract class LoopNode extends SemanticNode {
     body:SemanticNode;
 }
 

@@ -15,6 +15,7 @@ import ResolvePropertyAccess = require("./features/ResolvePropertyAccess");
 import ResolveNativeFunctionCalls = require("./features/ResolveNativeFunctionCalls");
 import ReduceSequenceExpression = require("./features/ReduceSequenceExpression");
 import UnrollForIn = require("./features/UnrollForIn");
+import InlineFunctionCall = require("./features/InlineFunctionCall");
 
 const nodeVisitor = new NodeVisitor();
 CalculateArithmetic(nodeVisitor);
@@ -28,6 +29,7 @@ ResolvePropertyAccess(nodeVisitor);
 ResolveNativeFunctionCalls(nodeVisitor);
 ReduceSequenceExpression(nodeVisitor);
 UnrollForIn(nodeVisitor);
+InlineFunctionCall(nodeVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;
