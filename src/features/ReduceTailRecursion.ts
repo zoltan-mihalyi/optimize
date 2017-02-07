@@ -63,8 +63,8 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
     }
 
     node.parent.replaceWith([ //change params and goto
-        ...resetUnsafeVars(enclosingFunction.body),
         ...swapVars(node.scope, enclosingFunction.params, node.arguments),
+        ...resetUnsafeVars(enclosingFunction.body),
         builders.continueStatement(builders.identifier(labelName))
     ]);
 
