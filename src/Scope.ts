@@ -1,22 +1,5 @@
-import {
-    SemanticNode,
-    AssignmentNode,
-    UpdateNode,
-    ForEachNode,
-    IdentifierNode,
-    VariableDeclaratorNode,
-    FunctionDeclarationNode,
-    FunctionExpressionNode
-} from "./SemanticNode";
 import {createUnusedName} from "./Utils";
-
-interface Variable {
-    usages:SemanticNode[];
-    writes:IdentifierNode[];
-    reads:IdentifierNode[];
-    name:string;
-    initialized:boolean;
-}
+import {Variable} from "./Variable";
 
 interface Variables {
     [name:string]:Variable;
