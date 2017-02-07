@@ -16,3 +16,9 @@ for (var j = 0; j < 2; j++) {
         };
     })(j);
 }
+
+( function() {
+    function a() {
+        var b = 1;
+    }
+} )();

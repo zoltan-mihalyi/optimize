@@ -20,3 +20,5 @@ for (var j = 0; j < 2; j++) {
         };
     })(j);
 }
+
+function a() {}

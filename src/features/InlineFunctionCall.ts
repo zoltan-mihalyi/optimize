@@ -57,7 +57,9 @@ export = (nodeVisitor:NodeVisitor) => {
             }
             declarations.push(builders.variableDeclarator(paramId, paramValue));
         }
-        body.push(builders.variableDeclaration('var', declarations));
+        if (declarations.length > 0) {
+            body.push(builders.variableDeclaration('var', declarations));
+        }
         for (let i = callee.params.length; i < callNode.arguments.length; i++) {
             body.push(builders.expressionStatement(callNode.arguments[i].toAst()));
         }
