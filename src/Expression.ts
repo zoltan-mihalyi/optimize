@@ -1,4 +1,4 @@
 interface Expression {
     type:string;
-    calculatedValue?:any;
+    original?:Expression;
 }

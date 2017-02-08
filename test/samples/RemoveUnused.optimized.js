@@ -1,7 +1,8 @@
 function fn() {
     console.log("x");
 
-    function used() {}
+    function used() {
+    }
 
     used();
 }

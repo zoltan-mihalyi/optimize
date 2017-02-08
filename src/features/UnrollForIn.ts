@@ -30,8 +30,9 @@ export  = (nodeVisitor:NodeVisitor) => {
                 let setLoopVariable:Expression;
                 let initialExpression = builders.literal(key);
                 if (left instanceof VariableDeclarationNode) {
-                    setLoopVariable = left.toAst();
-                    (setLoopVariable as any).declarations[0].init = initialExpression;
+                    const declarator = left.declarations[0].toAst();
+                    (declarator as any).init = initialExpression;
+                    setLoopVariable = builders.variableDeclaration(left.kind, [declarator]);
                 } else {
                     let assignment = builders.assignmentExpression('=', left.toAst(), initialExpression);
                     setLoopVariable = builders.expressionStatement(assignment);
@@ -49,7 +50,7 @@ export  = (nodeVisitor:NodeVisitor) => {
             let declarations = body.getDeclarations();
             unrolled.unshift(...declarations);
             if (left instanceof VariableDeclarationNode && !left.isBlockScoped()) {
-                unrolled.unshift(left.toAst());
+                unrolled.unshift(builders.variableDeclaration('var', [left.declarations[0].toAst()]));
             }
         }
 

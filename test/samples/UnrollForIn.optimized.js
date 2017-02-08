@@ -26,5 +26,6 @@ console.log(i);
 i = "1";
 console.log(i);
 
-function x() {}
+function x() {
+}
 x();

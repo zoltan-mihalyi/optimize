@@ -53,7 +53,7 @@ function hasVars(x) {
     if (x) {
         var a = x;
     }
-    if(a) {
+    if (a) {
         console.log(a);
     }
     return hasVars();

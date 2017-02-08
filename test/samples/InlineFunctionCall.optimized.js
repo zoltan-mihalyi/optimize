@@ -1,8 +1,6 @@
 var g, obj, i;
 
-var obj2 = {
-        x: 1
-    },
+var obj2 = {x: 1},
     callback = function(key, value) {
         console.log(obj, key, value);
     };

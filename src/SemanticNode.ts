@@ -23,12 +23,14 @@ export abstract class SemanticNode {
     private readonly childKeys:string[] = [];
     private changed:boolean = false;
     private updated:boolean = false;
+    private original:Expression;
 
     constructor(source:Expression, public readonly parent:SemanticNode,
                 private readonly parentObject:{[idx:string]:any}, protected readonly parentProperty:string, scope:Scope) {
         scope = this.createSubScopeIfNeeded(scope);
         this.scope = scope;
 
+        this.original = source.original;
         for (let childKey in source) {
             if (childKey === 'comments') {
                 continue;
@@ -65,6 +67,12 @@ export abstract class SemanticNode {
 
     toAst(transform?:(node:SemanticNode, e:Expression) => Expression):Expression {
         const result:any = {};
+        Object.defineProperty(result, 'original', {
+            configurable: false,
+            enumerable: false,
+            writable: false,
+            value: this.original,
+        });
 
         for (let i = 0; i < this.childKeys.length; i++) {
             const childKey = this.childKeys[i];
