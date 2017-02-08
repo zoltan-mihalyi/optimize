@@ -33,7 +33,7 @@ class Scope {
         return null;
     }
 
-    setUnknownGlobal(name:string):Variable {
+    private setUnknownGlobal(name:string):Variable {
         if (this.parent) {
             return this.parent.setUnknownGlobal(name);
         }
@@ -45,10 +45,11 @@ class Scope {
             return this.parent.set(name, false, initialized);
         }
         return this.variables[name] = {
+            blockScoped: blockScope,
             global: !this.parent,
             initialized: initialized,
             name: name,
-            usages: [],
+            usages: [], //todo remove
             writes: [],
             reads: []
         };
@@ -56,6 +57,28 @@ class Scope {
 
     createUnusedIdentifier(base:string):string {
         return createUnusedName(base, name => this.has(name));
+    }
+
+    getFunctionScopedVariables():Variable[] {
+        const result:Variable[] = [];
+        for (const name in this.variables) {
+            const variable = this.variables[name];
+            if (!variable.blockScoped) {
+                result.push(variable);
+            }
+        }
+        return result;
+    }
+
+    hasFunctionScopedVariables():boolean {
+        const variables = this.getFunctionScopedVariables();
+        for (let i = 0; i < variables.length; i++) {
+            const variable = variables[i];
+            if (variable.writes.length > 0 || variable.reads.length > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

@@ -22,6 +22,12 @@ export = (nodeVisitor:NodeVisitor) => {
         if (!(callee instanceof FunctionExpressionNode)) {
             return;
         }
+        if (callNode.getEnclosingFunction() === null && callee.innerScope.hasFunctionScopedVariables()) { //avoid global pollution
+            return;
+        }
+        if (callee.innerScope.get('arguments').reads.length > 0) { //todo util
+            return;
+        }
         if (callNode.hasParent(node => node instanceof LoopNode)) {
             return;
         }
@@ -34,7 +40,7 @@ export = (nodeVisitor:NodeVisitor) => {
                 let newName:string;
                 if (rename.has(variable)) {
                     newName = rename.get(variable);
-                } else if (variable !== callNode.scope.get(name)) {
+                } else if (!variable.blockScoped && variable !== callNode.scope.get(name)) {
                     newName = callNode.scope.createUnusedIdentifier(name);
                     rename.set(variable, newName);
                 }
@@ -46,22 +52,22 @@ export = (nodeVisitor:NodeVisitor) => {
         }) as any;
 
         const body:Expression[] = [];
-        const declarations = [];
-        for (let i = 0; i < calleeAst.params.length; i++) {
+        let max = Math.max(calleeAst.params.length, callNode.arguments.length);
+        for (let i = 0; i < max; i++) {
+            if (calleeAst.params.length <= i) {
+                body.push(builders.expressionStatement(callNode.arguments[i].toAst()));
+                continue;
+            }
+
             const paramId = calleeAst.params[i];
             let paramValue;
-            if (i < callNode.arguments.length) {
-                paramValue = callNode.arguments[i].toAst();
+            if (callNode.arguments.length <= i) {
+                paramValue = builders.unaryExpression('void', builders.literal(0)); //todo util
             } else {
-                paramValue = builders.unaryExpression('void', builders.literal(0));
+                paramValue = callNode.arguments[i].toAst();
             }
-            declarations.push(builders.variableDeclarator(paramId, paramValue));
-        }
-        if (declarations.length > 0) {
-            body.push(builders.variableDeclaration('var', declarations));
-        }
-        for (let i = callee.params.length; i < callNode.arguments.length; i++) {
-            body.push(builders.expressionStatement(callNode.arguments[i].toAst()));
+
+            body.push(builders.variableDeclaration('var', [builders.variableDeclarator(paramId, paramValue)]));
         }
         body.push(...calleeAst.body.body);
         callNode.parent.replaceWith([builders.blockStatement(body)]);
