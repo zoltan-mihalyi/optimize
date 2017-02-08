@@ -1,6 +1,16 @@
 function fn() {
     var a = console.log("x");
 
+    var b;
+    for (b in x) {
+    }
+
+    var c;
+    c = 2;
+
+    var d;
+    var d;
+
     function used() {
     }
 

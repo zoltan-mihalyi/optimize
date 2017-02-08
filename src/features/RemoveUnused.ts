@@ -15,6 +15,9 @@ export  = (nodeVisitor:NodeVisitor) => {
         if (canBeUsed(variable)) {
             return;
         }
+        if (hasWriteWithoutDeclaration(variable)) {
+            return;
+        }
 
         const parentNode = node.parent;
         const index = parentNode.declarations.indexOf(node);
@@ -48,6 +51,17 @@ export  = (nodeVisitor:NodeVisitor) => {
             node.remove();
         }
     });
+
+    function hasWriteWithoutDeclaration(variable:Variable):boolean {
+        let writes = variable.writes;
+        for (let i = 0; i < writes.length; i++) {
+            const write = writes[i];
+            if (!(write.parent instanceof VariableDeclaratorNode)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     function canBeUsed(variable:Variable):boolean {
         return variable.global || variable.reads.length > 0;
