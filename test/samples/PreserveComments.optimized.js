@@ -6,3 +6,6 @@ var y = true/*shorter version of true*/;
 var i = "x";
 
 console.log(i);//logging
+
+while (1) //do nothing
+{}

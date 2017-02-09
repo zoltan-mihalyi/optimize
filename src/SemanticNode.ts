@@ -114,7 +114,11 @@ export abstract class SemanticNode {
             });
         }
         removedCommentsByOriginal.each((original:Expression, comment:Comment) => {
-            nodes[0].addComment(comment);
+            if (nodes.length > 0) {
+                nodes[0].addComment(comment);
+            }else{
+                this.parent.addComment(comment);
+            }
         });
 
         console.log('REPLACED ' + recast.print(this.toAst()).code + ' WITH ' + expressions.map(e => recast.print(e).code));
@@ -336,6 +340,7 @@ export abstract class ForEachNode extends LoopNode {
 
 abstract class Comment extends SemanticNode {
     leading:boolean;
+    trailing:boolean;
     value:string;
 }
 
