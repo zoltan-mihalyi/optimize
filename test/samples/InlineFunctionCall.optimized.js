@@ -53,3 +53,10 @@ function fn() {
 (function() {
     console.log(arguments);
 })();
+
+(function() {
+    if (a) {
+        return console.log(1);
+    }
+    console.log(2);
+})();

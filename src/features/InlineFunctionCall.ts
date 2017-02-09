@@ -5,7 +5,8 @@ import {
     SemanticNode,
     IdentifierNode,
     ExpressionStatementNode,
-    LoopNode
+    LoopNode,
+    ReturnNode
 } from "../SemanticNode";
 import {Variable} from "../Variable";
 import recast = require("recast");
@@ -29,6 +30,9 @@ export = (nodeVisitor:NodeVisitor) => {
             return;
         }
         if (callNode.hasParent(node => node instanceof LoopNode)) {
+            return;
+        }
+        if (callee.containsType(ReturnNode)) { //todo only in the function scope
             return;
         }
 
