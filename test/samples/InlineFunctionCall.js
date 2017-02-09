@@ -62,6 +62,11 @@ function fn() {
     }
     console.log(2);
 })();
+
+console.log((function() {
+    return a * a
+})());
+
 console.log((function(a) {
     return a * a
-})(6));
+})(a));

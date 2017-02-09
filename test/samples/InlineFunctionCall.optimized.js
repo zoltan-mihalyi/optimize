@@ -60,4 +60,9 @@ function fn() {
     }
     console.log(2);
 })();
-console.log(36);
+
+console.log(a * a);
+
+console.log((function(a) {
+    return a * a
+})(a));

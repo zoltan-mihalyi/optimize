@@ -35,7 +35,7 @@ export = (nodeVisitor:NodeVisitor) => {
         }
 
         if (canReduceToExpression) {
-            reduceExpression(returnExpression, callNode, callee);
+            reduceExpression(returnExpression, callNode);
         } else {
             reduceStatement(callNode, callee);
         }
@@ -93,41 +93,20 @@ export = (nodeVisitor:NodeVisitor) => {
         callNode.parent.replaceWith([builders.blockStatement(body)]);
     }
 
-    function reduceExpression(returnExpression:SemanticExpression, callNode:CallNode, callee:FunctionExpressionNode) {
-        let params = callee.params;
-        const paramVars = params.map(param => param.scope.get(param.name));
-        const ast = returnExpression.toAst((node:SemanticNode, expression:Expression) => {
-            if (node instanceof IdentifierNode && node.isReal()) {
-                const name = node.name;
-                let variable = node.scope.get(name);
-                let paramIndex = paramVars.indexOf(variable);
-                if (paramIndex !== -1) {
-                    return callNode.arguments.length >= paramIndex ? callNode.arguments[paramIndex].toAst() : void0();
-                }
-            }
-            return expression;
-        }) as any;
-
-        callNode.replaceWith([ast]);
-        return;
+    function reduceExpression(returnExpression:SemanticExpression, callNode:CallNode) {
+        callNode.replaceWith([returnExpression.toAst()]);
     }
 
     function canSubstituteParameters(node:CallNode, callee:FunctionExpressionNode) {
+        if (callee.params.length > 0) {
+            return false;
+        }
         for (let i = 0; i < node.arguments.length; i++) {
             const argument = node.arguments[i];
-            if (!isSimple(argument) && getUsages(callee.params[i]) > 1) {
+            if (!argument.isClean()) {
                 return false;
             }
         }
         return true;
-    }
-
-    function isSimple(argument:SemanticExpression):boolean {
-        return argument instanceof IdentifierNode || argument instanceof LiteralNode;
-    }
-
-    function getUsages(id:IdentifierNode):number { //todo util
-        let variable = id.scope.get(id.name);
-        return variable.reads.length + variable.writes.length;
     }
 };
