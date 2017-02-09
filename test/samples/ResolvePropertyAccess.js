@@ -33,5 +33,6 @@ console.log('abc'.toString === {}.toString);
 console.log([].toString === {}.toString);
 
 console.log((0).constructor.MAX_VALUE);
+console.log(typeof Math.random);
 
 console.log(null.x);

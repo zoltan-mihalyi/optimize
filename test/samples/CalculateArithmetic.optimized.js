@@ -35,7 +35,7 @@ console.log(true);
 console.log(false);
 
 console.log(false);
-console.log(Math == 1);
+console.log(false);
 
 console.log(typeof {
     x: console.log()

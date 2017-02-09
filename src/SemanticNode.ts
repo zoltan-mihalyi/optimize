@@ -10,7 +10,7 @@ import {
     PropInfo,
     UnknownValue
 } from "./Value";
-import {createCustomFunctionValue, getObjectValue} from "./BuiltIn";
+import {createCustomFunctionValue, getObjectValue, createValue} from "./BuiltIn";
 import {equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
 import {Variable} from "./Variable";
 import Scope = require("./Scope");
@@ -18,6 +18,8 @@ import recast = require("recast");
 import Map = require("./Map");
 
 const builders = recast.types.builders;
+
+const global = new Function('return this')();
 
 export abstract class SemanticNode {
     readonly type:string;
@@ -783,7 +785,7 @@ export class ProgramNode extends BlockNode {
     }
 
     private saveApi(name:string) {
-        this.scope.set(name, true, true);
+        this.scope.set(name, true, true).constantValue = createValue(global[name]);
     }
 }
 

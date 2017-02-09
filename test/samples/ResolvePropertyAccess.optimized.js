@@ -25,5 +25,6 @@ console.log(false);
 console.log(false);
 
 console.log(1.7976931348623157e+308);
+console.log("function");
 
 console.log(null.x);

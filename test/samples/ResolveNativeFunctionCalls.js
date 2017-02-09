@@ -6,3 +6,6 @@ console.log(({}).constructor(2).toString());
 console.log([1, 3, 2].sort().constructor === [].constructor);
 console.log([true.constructor].toString());
 console.log(({x: true.constructor}).hasOwnProperty('x'));
+
+console.log(Math.log(Math.E));
+console.log(Date());
