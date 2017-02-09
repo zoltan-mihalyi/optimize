@@ -22,6 +22,22 @@ class Map<K,V> {
     has(key:K) {
         return this.keys.indexOf(key) !== -1;
     }
+
+    remove(key:K) {
+        const idx = this.keys.indexOf(key);
+        if (idx === -1) {
+            return;
+        }
+        this.keys.splice(idx, 1);
+        this.values.splice(idx, 1);
+    }
+
+    each(callback:(key:K, value:V) => void) {
+        const length = this.keys.length;
+        for (let i = 0; i < length; i++) {
+            callback(this.keys[i], this.values[i]);
+        }
+    }
 }
 
 export = Map;

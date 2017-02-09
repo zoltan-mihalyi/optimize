@@ -14,6 +14,7 @@ import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} fro
 import {nonEnumerable, equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
 import Scope = require("./Scope");
 import recast = require("recast");
+import Map = require("./Map");
 
 const builders = recast.types.builders;
 
@@ -24,6 +25,7 @@ export abstract class SemanticNode {
     private changed:boolean = false;
     private updated:boolean = false;
     private original:Expression;
+    private comments?:Comment[];
 
     constructor(source:Expression, public readonly parent:SemanticNode,
                 private readonly parentObject:{[idx:string]:any}, protected readonly parentProperty:string, scope:Scope) {
@@ -32,10 +34,6 @@ export abstract class SemanticNode {
 
         this.original = source.original;
         for (let childKey in source) {
-            if (childKey === 'comments') {
-                continue;
-            }
-
             this.childKeys.push(childKey);
             let sourceChild:any = (source as any)[childKey];
             if (Array.isArray(sourceChild)) {
@@ -98,9 +96,28 @@ export abstract class SemanticNode {
             throw new Error('Parent does not exist.');
         }
 
-        console.log('REPLACED ' + recast.print(this.toAst()).code + ' WITH ' + expressions.map(e => recast.print(e).code));
-
         const nodes:SemanticNode[] = map(expressions, e => toSemanticNode(e, this.parent, this.parentObject, this.parentProperty, this.scope));
+
+        const removedCommentsByOriginal:Map<Expression,Comment> = new Map<Expression,Comment>();
+        this.walk((node:SemanticNode) => {
+            if (node instanceof Comment) {
+                removedCommentsByOriginal.set(node.original, node);
+            }
+        });
+
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            node.walk((node:SemanticNode) => {
+                if (node instanceof Comment) {
+                    removedCommentsByOriginal.remove(node.original);
+                }
+            });
+        }
+        removedCommentsByOriginal.each((original:Expression, comment:Comment) => {
+            nodes[0].addComment(comment);
+        });
+
+        console.log('REPLACED ' + recast.print(this.toAst()).code + ' WITH ' + expressions.map(e => recast.print(e).code));
 
         if (Array.isArray(this.parentObject)) {
             const index = this.parentObject.indexOf(this);
@@ -111,7 +128,6 @@ export abstract class SemanticNode {
             }
             this.parentObject[this.parentProperty] = nodes[0];
         }
-        // this.replaced = true;
         this.markChanged();
     }
 
@@ -124,6 +140,16 @@ export abstract class SemanticNode {
             parent = parent.parent;
         }
         return false;
+    }
+
+    addComment(comment:Comment) {
+        if (!this.comments) {
+            this.comments = [];
+            if (this.childKeys.indexOf('comments') === -1) {
+                this.childKeys.push('comments');
+            }
+        }
+        this.comments.push(comment);
     }
 
     contains(predicate:(node:SemanticNode) => boolean):boolean {
@@ -308,6 +334,11 @@ export abstract class ForEachNode extends LoopNode {
     }
 }
 
+abstract class Comment extends SemanticNode {
+    leading:boolean;
+    value:string;
+}
+
 export class ArrayNode extends SemanticExpression {
     elements:SemanticExpression[];
 
@@ -375,6 +406,9 @@ export class BinaryNode extends SemanticExpression {
     isClean():boolean {
         return false;
     }
+}
+
+export class BlockComment extends Comment {
 }
 
 export class BlockNode extends SemanticNode {
@@ -603,6 +637,9 @@ export class IfNode extends SemanticNode {
 export class LabeledNode extends SemanticNode {
     label:IdentifierNode;
     body:SemanticNode;
+}
+
+export class LineComment extends Comment {
 }
 
 export class LiteralNode extends SemanticExpression {
@@ -881,6 +918,7 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'ArrayExpression': ArrayNode,
     'AssignmentExpression': AssignmentNode,
     'BinaryExpression': BinaryNode,
+    'Block': BlockComment,
     'BlockStatement': BlockNode,
     'BreakStatement': BreakNode,
     'CallExpression': CallNode,
@@ -898,6 +936,7 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'Identifier': IdentifierNode,
     'IfStatement': IfNode,
     'LabeledStatement': LabeledNode,
+    'Line': LineComment,
     'Literal': LiteralNode,
     'LogicalExpression': LogicalNode,
     'MemberExpression': MemberNode,
