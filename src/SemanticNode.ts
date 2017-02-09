@@ -10,7 +10,7 @@ import {
     PropInfo,
     UnknownValue
 } from "./Value";
-import {ArrayProto, ObjectProto, objectValueFromObject, createCustomFunctionValue} from "./BuiltIn";
+import {createCustomFunctionValue, getObjectValue} from "./BuiltIn";
 import {equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
 import {Variable} from "./Variable";
 import Scope = require("./Scope");
@@ -380,7 +380,7 @@ export class ArrayNode extends SemanticExpression {
             }
         }
         return new ObjectValue(ARRAY, {
-            proto: ArrayProto,
+            proto: getObjectValue(Array.prototype),
             properties: properties,
             propertyInfo: PropInfo.KNOWS_ALL,
             trueValue: trueValue
@@ -658,7 +658,7 @@ export class LiteralNode extends SemanticExpression {
         if (typeof this.value !== 'object' || this.value === null) {
             return new KnownValue(this.value);
         } else {
-            return objectValueFromObject(this.value);
+            return getObjectValue(this.value);
         }
     }
 }
@@ -740,7 +740,7 @@ export class ObjectNode extends SemanticExpression {
             }
         }
         return new ObjectValue(OBJECT, {
-            proto: ObjectProto,
+            proto: getObjectValue(Object.prototype),
             properties: properties,
             propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
             trueValue: trueValue
