@@ -236,7 +236,7 @@ export abstract class SemanticNode {
     }
 }
 
-abstract class SemanticExpression extends SemanticNode {
+export abstract class SemanticExpression extends SemanticNode {
     protected calculatedValue:Value = this.isClean() ? this.getInitialValue() : unknown;
 
     abstract isClean():boolean;
@@ -475,11 +475,25 @@ export class FunctionDeclarationNode extends SemanticNode {
 export class FunctionExpressionNode extends SemanticExpression {
     id:IdentifierNode;
     params:IdentifierNode[];
-    body:SemanticNode;
+    body:SemanticExpression|BlockNode;
     innerScope:Scope;
+    expression:boolean;
 
     isClean():boolean {
         return true;
+    }
+
+    getReturnExpression():SemanticExpression {
+        let body = this.body;
+        if (this.expression) {
+            return body as SemanticExpression;
+        } else if (body instanceof BlockNode && body.body.length === 1) {
+            const statement = body.body[0];
+            if (statement instanceof ReturnNode) {
+                return statement.argument;
+            }
+        }
+        return null;
     }
 
     protected handleDeclarationsForNode() {
@@ -620,7 +634,7 @@ export class MemberNode extends SemanticExpression {
     computed:boolean;
 
     isClean():boolean {
-        return false;
+        return false; //todo
     }
 
     getPropertyValue():Value {

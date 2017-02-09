@@ -11,7 +11,7 @@ import {
     BlockNode,
     VariableDeclarationNode
 } from "../SemanticNode";
-import {createUnusedName} from "../Utils";
+import {createUnusedName, void0} from "../Utils";
 import Scope = require("../Scope");
 import recast = require("recast");
 
@@ -99,10 +99,6 @@ function resetUnsafeVars(block:BlockNode):Expression[] {
         }
     });
     return result;
-}
-
-function void0() {
-    return builders.unaryExpression('void', builders.literal(0));
 }
 
 function swapVars(scope:Scope, vars:IdentifierNode[], newValues:SemanticNode[]):Expression[] {

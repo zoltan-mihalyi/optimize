@@ -60,3 +60,4 @@ function fn() {
     }
     console.log(2);
 })();
+console.log(36);

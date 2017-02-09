@@ -1,4 +1,6 @@
-import {PropDescriptorMap, KnownValue, Value, PropDescriptor, unknown, ObjectValue} from "./Value";
+import recast = require("recast");
+
+const builders = recast.types.builders;import {PropDescriptorMap, KnownValue, Value, PropDescriptor, unknown, ObjectValue} from "./Value";
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
     let i = 2;
@@ -59,4 +61,8 @@ export function map<S,T>(data:S[], transform:(source:S) => T):T[] {
         result.push(transform(data[i]));
     }
     return result;
+}
+
+export function void0():Expression {
+    return builders.unaryExpression('void', builders.literal(0));
 }
