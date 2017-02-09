@@ -20,6 +20,8 @@ console.log(void []);
 console.log(typeof []);
 console.log(typeof {});
 console.log(typeof function(){});
+console.log(typeof fn);
+function fn(){}
 
 console.log(1 + a);
 console.log(0 || null || 2);

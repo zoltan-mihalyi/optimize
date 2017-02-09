@@ -44,6 +44,22 @@ function nativeFnProp(native:Function):PropDescriptor {
     return nonEnumerable(createNativeFunctionValue({}, native));
 }
 
+export function createCustomFunctionValue(length:number):ObjectValue {
+    let properties:any = {};
+
+    const fn = createFunctionValue(properties, length);
+    properties.prototype = nonEnumerable(new ObjectValue(OBJECT, {
+        proto: ObjectProto,
+        properties: {
+            constructor: nonEnumerable(fn)
+        },
+        propertyInfo: PropInfo.KNOWS_ALL,
+        trueValue: null //todo
+    }));
+
+    return fn;
+}
+
 function createNativeFunctionValue(properties:PropDescriptorMap, native:Function):ObjectValue {
     const value = createFunctionValue(properties, native.length, native);
     map.set(native, value);

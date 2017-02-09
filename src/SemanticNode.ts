@@ -10,8 +10,9 @@ import {
     PropInfo,
     UnknownValue
 } from "./Value";
-import {ArrayProto, ObjectProto, createFunctionValue, objectValueFromObject} from "./BuiltIn";
-import {nonEnumerable, equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
+import {ArrayProto, ObjectProto, objectValueFromObject, createCustomFunctionValue} from "./BuiltIn";
+import {equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
+import {Variable} from "./Variable";
 import Scope = require("./Scope");
 import recast = require("recast");
 import Map = require("./Map");
@@ -116,7 +117,7 @@ export abstract class SemanticNode {
         removedCommentsByOriginal.each((original:Expression, comment:Comment) => {
             if (nodes.length > 0) {
                 nodes[0].addComment(comment);
-            }else{
+            } else {
                 this.parent.addComment(comment);
             }
         });
@@ -502,7 +503,9 @@ export class FunctionDeclarationNode extends SemanticNode {
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
-        this.scope.set(this.id.name, false, true).writes.push(this.id);
+        let variable = this.scope.set(this.id.name, false, true);
+        variable.writes.push(this.id);
+        variable.constantValue = createCustomFunctionValue(this.params.length);
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
@@ -545,19 +548,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     }
 
     protected getInitialValue():Value {
-        let properties:any = {};
-
-        const fn = createFunctionValue(properties, this.params.length);
-        properties.prototype = nonEnumerable(new ObjectValue(OBJECT, {
-            proto: ObjectProto,
-            properties: {
-                constructor: nonEnumerable(fn)
-            },
-            propertyInfo: PropInfo.KNOWS_ALL,
-            trueValue: null //todo
-        }));
-
-        return fn;
+        return createCustomFunctionValue(this.params.length);
     }
 }
 
@@ -565,11 +556,15 @@ export class IdentifierNode extends SemanticExpression {
     readonly name:string;
 
     isClean():boolean {
-        let variable = this.scope.get(this.name);
+        let variable = this.getVariable();
         if (!variable) {
             return false;
         }
         return variable.initialized;
+    }
+
+    getVariable():Variable {
+        return this.scope.get(this.name);
     }
 
     isReal():boolean {
@@ -628,7 +623,11 @@ export class IdentifierNode extends SemanticExpression {
 
     protected updateAccessForNode() {
         if (this.isRead()) {
-            this.scope.getOrCreate(this.name).reads.push(this);
+            let variable = this.scope.getOrCreate(this.name);
+            variable.reads.push(this);
+            if (variable.constantValue) {
+                this.setValue(variable.constantValue);
+            }
         }
     }
 }

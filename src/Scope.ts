@@ -51,7 +51,8 @@ class Scope {
             name: name,
             usages: [], //todo remove
             writes: [],
-            reads: []
+            reads: [],
+            constantValue: null
         };
     }
 

@@ -1,4 +1,5 @@
 import {SemanticNode, IdentifierNode} from "./SemanticNode";
+import {Value} from "./Value";
 export interface Variable {
     global:boolean;
     blockScoped:boolean;
@@ -7,4 +8,5 @@ export interface Variable {
     reads:IdentifierNode[];
     name:string;
     initialized:boolean;
+    constantValue:Value;
 }
