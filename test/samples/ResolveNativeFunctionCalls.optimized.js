@@ -17,3 +17,5 @@ console.log(10);
 
 console.log(Array.prototype.push(1));
 console.log(Array.prototype.push.apply(Object.prototype, [1]));
+
+console.log(100);

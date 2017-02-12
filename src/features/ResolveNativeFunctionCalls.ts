@@ -3,13 +3,13 @@ import {CallNode, MemberNode, NewNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, Value} from "../Value";
 import {createValueFromCall, createValueFromNewCall, isBuiltIn} from "../BuiltIn";
 import {hasTrueValue, getTrueValue} from "../Utils";
+import Map = require("../Map");
 
 const UNSAFE_FUNCTIONS:Function[] = [
     Object.prototype.toLocaleString,
     Array.prototype.toLocaleString,
     Number.prototype.toLocaleString,
     Math.random,
-    Date,
     Date.prototype.toString,
     Date.prototype.toDateString,
     Date.prototype.toTimeString,
@@ -17,6 +17,13 @@ const UNSAFE_FUNCTIONS:Function[] = [
     Date.prototype.toLocaleDateString,
     Date.prototype.toLocaleTimeString
 ];
+
+function isUnsafeInSpecialCase(fn:Function, newCall:boolean, parameters:any[]):boolean {
+    if (fn === Date) {
+        return newCall ? parameters.length === 0 : true;
+    }
+    return false;
+}
 
 const MUTATING_METHODS:Function[] = [
     Array.prototype.pop,
@@ -38,8 +45,8 @@ export  = (nodeVisitor:NodeVisitor) => {
         if (!(value instanceof ObjectValue) || value.objectClass !== FUNCTION) {
             return;
         }
-        const trueValue = value.trueValue;
-        if (!trueValue || UNSAFE_FUNCTIONS.indexOf(trueValue as any) !== -1) {
+        const fn = value.trueValue as Function;
+        if (!fn || UNSAFE_FUNCTIONS.indexOf(fn as any) !== -1) {
             return;
         }
 
@@ -52,6 +59,9 @@ export  = (nodeVisitor:NodeVisitor) => {
             } else {
                 return;
             }
+        }
+        if (isUnsafeInSpecialCase(fn, node instanceof NewNode, parameters)) {
+            return;
         }
 
         let resultValue:Value;
@@ -66,12 +76,12 @@ export  = (nodeVisitor:NodeVisitor) => {
                     return;
                 }
             }
-            if (canMutate(trueValue as Function, context, parameters)) {
+            if (canMutate(fn, context, parameters)) {
                 return;
             }
-            resultValue = createValueFromCall(trueValue as Function, context, parameters);
+            resultValue = createValueFromCall(fn, context, parameters);
         } else {
-            resultValue = createValueFromNewCall(trueValue as Function, parameters);
+            resultValue = createValueFromNewCall(fn, parameters);
         }
         node.setValue(resultValue);
 
