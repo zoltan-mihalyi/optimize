@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode, NewNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, Value} from "../Value";
-import {createValueFromCall, createValueFromNewCall} from "../BuiltIn";
+import {createValueFromCall, createValueFromNewCall, isBuiltIn} from "../BuiltIn";
 import {hasTrueValue, getTrueValue} from "../Utils";
 
 const UNSAFE_FUNCTIONS:Function[] = [
@@ -18,6 +18,15 @@ const UNSAFE_FUNCTIONS:Function[] = [
     Date.prototype.toLocaleTimeString
 ];
 
+const MUTATING_METHODS:Function[] = [
+    Array.prototype.pop,
+    Array.prototype.push,
+    Array.prototype.reverse,
+    Array.prototype.sort,
+    Array.prototype.shift,
+    Array.prototype.unshift,
+    Array.prototype.splice
+];
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(CallNode, resolveCall);
@@ -29,7 +38,8 @@ export  = (nodeVisitor:NodeVisitor) => {
         if (!(value instanceof ObjectValue) || value.objectClass !== FUNCTION) {
             return;
         }
-        if (!value.trueValue || UNSAFE_FUNCTIONS.indexOf(value.trueValue as any) !== -1) {
+        const trueValue = value.trueValue;
+        if (!trueValue || UNSAFE_FUNCTIONS.indexOf(trueValue as any) !== -1) {
             return;
         }
 
@@ -56,11 +66,22 @@ export  = (nodeVisitor:NodeVisitor) => {
                     return;
                 }
             }
-            resultValue = createValueFromCall(value.trueValue as Function, context, parameters);
+            if (canMutate(trueValue as Function, context, parameters)) {
+                return;
+            }
+            resultValue = createValueFromCall(trueValue as Function, context, parameters);
         } else {
-            resultValue = createValueFromNewCall(value.trueValue as Function, parameters);
+            resultValue = createValueFromNewCall(trueValue as Function, parameters);
         }
         node.setValue(resultValue);
 
+    }
+
+    function canMutate(fn:Function, context:any, parameters:any[]) {
+        if (fn === Function.prototype.apply || fn === Function.prototype.call) {
+            fn = context;
+            context = parameters[0];
+        }
+        return MUTATING_METHODS.indexOf(fn) !== -1 && isBuiltIn(context);
     }
 };

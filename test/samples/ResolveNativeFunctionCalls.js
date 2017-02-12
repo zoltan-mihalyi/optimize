@@ -14,3 +14,6 @@ console.log(typeof Array);
 
 console.log(new Number("123").valueOf());
 console.log(new Array(10).length);
+
+console.log(Array.prototype.push(1));
+console.log(Array.prototype.push.apply(Object.prototype, [1]));

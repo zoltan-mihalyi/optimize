@@ -270,6 +270,13 @@ SAFE_PROPERTY_MAP.set(Date.prototype, [
 
 SAFE_PROPERTY_MAP.each(getObjectValue);
 
+const builtInObjects:Object[] = [];
+map.each((object) => builtInObjects.push(object));
+
+export function isBuiltIn(object:Object):boolean {
+    return builtInObjects.indexOf(object) !== -1;
+}
+
 export function getObjectValue(object:Object):ObjectValue {
     if (map.has(object)) {
         return map.get(object);
