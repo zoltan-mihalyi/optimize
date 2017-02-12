@@ -134,4 +134,11 @@ describe('Semantic node test', function() {
         assert.strictEqual(varI.reads.length, 0);
         assert.strictEqual(varI.writes.length, 1);
     });
+
+    it('function parameters are initialized', function() {
+        var ast = recast.parse('function fn(a){} (function(a){})').program;
+        var semanticNode = node.semantic(ast);
+        assert(semanticNode.body[0].body.scope.get('a').initialized);
+        assert(semanticNode.body[1].expression.body.scope.get('a').initialized);
+    });
 });
