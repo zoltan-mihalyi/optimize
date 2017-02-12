@@ -130,7 +130,7 @@ describe('Semantic node test', function() {
         var ast = recast.parse('var i = 0; i:while(1){continue i; break i;};(function i(){})').program;
         var semanticNode = node.semantic(ast);
 
-        let varI = semanticNode.scope.get('i');
+        var varI = semanticNode.scope.get('i');
         assert.strictEqual(varI.reads.length, 0);
         assert.strictEqual(varI.writes.length, 1);
     });
