@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
-import {CallNode, MemberNode} from "../SemanticNode";
-import {ObjectValue, FUNCTION} from "../Value";
-import {createValueFromCall} from "../BuiltIn";
+import {CallNode, MemberNode, NewNode} from "../SemanticNode";
+import {ObjectValue, FUNCTION, Value} from "../Value";
+import {createValueFromCall, createValueFromNewCall} from "../BuiltIn";
 import {hasTrueValue, getTrueValue} from "../Utils";
 
 const UNSAFE_FUNCTIONS:Function[] = [
@@ -20,7 +20,10 @@ const UNSAFE_FUNCTIONS:Function[] = [
 
 
 export  = (nodeVisitor:NodeVisitor) => {
-    nodeVisitor.on(CallNode, (node:CallNode) => {
+    nodeVisitor.on(CallNode, resolveCall);
+    nodeVisitor.on(NewNode, resolveCall);
+
+    function resolveCall(node:CallNode|NewNode) {
         let callee = node.callee;
         let value = callee.getValue();
         if (!(value instanceof ObjectValue) || value.objectClass !== FUNCTION) {
@@ -28,15 +31,6 @@ export  = (nodeVisitor:NodeVisitor) => {
         }
         if (!value.trueValue || UNSAFE_FUNCTIONS.indexOf(value.trueValue as any) !== -1) {
             return;
-        }
-        let context = null;
-        if (callee instanceof MemberNode) {
-            const contextValue = callee.object.getValue();
-            if (hasTrueValue(contextValue)) {
-                context = getTrueValue(contextValue);
-            } else {
-                return;
-            }
         }
 
         const parameters = [];
@@ -50,6 +44,23 @@ export  = (nodeVisitor:NodeVisitor) => {
             }
         }
 
-        node.setValue(createValueFromCall((value.trueValue as Function), context, parameters));
-    });
+        let resultValue:Value;
+        if (node instanceof CallNode) {
+
+            let context = null;
+            if (callee instanceof MemberNode) {
+                const contextValue = callee.object.getValue();
+                if (hasTrueValue(contextValue)) {
+                    context = getTrueValue(contextValue);
+                } else {
+                    return;
+                }
+            }
+            resultValue = createValueFromCall(value.trueValue as Function, context, parameters);
+        } else {
+            resultValue = createValueFromNewCall(value.trueValue as Function, parameters);
+        }
+        node.setValue(resultValue);
+
+    }
 };

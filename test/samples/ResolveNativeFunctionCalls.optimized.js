@@ -11,3 +11,6 @@ console.log(1);
 console.log(Date());
 
 console.log("function");
+
+console.log(123);
+console.log(10);

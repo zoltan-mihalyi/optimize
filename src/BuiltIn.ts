@@ -78,6 +78,17 @@ export function createValueFromCall(fn:Function, context:any, parameters:any[]):
     return createValue(callResult);
 }
 
+export function createValueFromNewCall(fn:Function, parameters:any[]):Value {
+    let params:string[] = [];
+    for (let i = 0; i < parameters.length; i++) {
+        const parameter = parameters[i];
+        params.push('p' + i);
+    }
+    let paramsString = params.join(',');
+    const callNew = new Function(paramsString, 'return new this(' + paramsString + ')');
+    return createValueFromCall(callNew, fn, parameters);
+}
+
 const map:Map<Object, ObjectValue> = new Map<Object, ObjectValue>();
 
 function getObjectClass(value:Object):ObjectClass {

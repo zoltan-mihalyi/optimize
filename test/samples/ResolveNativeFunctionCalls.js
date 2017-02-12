@@ -11,3 +11,6 @@ console.log(Math.log(Math.E));
 console.log(Date());
 
 console.log(typeof Array);
+
+console.log(new Number("123").valueOf());
+console.log(new Array(10).length);
