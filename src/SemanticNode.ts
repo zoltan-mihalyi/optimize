@@ -272,7 +272,13 @@ export abstract class SemanticNode {
 export abstract class SemanticExpression extends SemanticNode {
     protected calculatedValue:Value = this.isClean() ? this.getInitialValue() : unknown;
 
-    abstract isClean():boolean;
+    isClean():boolean {
+        if(this.calculatedValue && !(this.calculatedValue instanceof UnknownValue)){
+            return true;
+        }else {
+            return this.isCleanInner();
+        }
+    }
 
     getValue():Value {
         return this.calculatedValue;
@@ -310,7 +316,7 @@ export abstract class SemanticExpression extends SemanticNode {
 
     protected markUpdated() {
         super.markUpdated();
-        if (this.calculatedValue instanceof UnknownValue) {
+        if (this.calculatedValue instanceof UnknownValue && this.isClean()) {
             this.calculatedValue = this.getInitialValue();
         }
     }
@@ -318,6 +324,8 @@ export abstract class SemanticExpression extends SemanticNode {
     protected getInitialValue():Value {
         return unknown;
     }
+
+    protected abstract isCleanInner():boolean;
 }
 
 export abstract class LoopNode extends SemanticNode {
@@ -350,7 +358,7 @@ abstract class Comment extends SemanticNode {
 export class ArrayNode extends SemanticExpression {
     elements:SemanticExpression[];
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         for (let i = 0; i < this.elements.length; i++) {
             const element = this.elements[i];
             if (!element.isClean()) {
@@ -395,7 +403,7 @@ export class AssignmentNode extends SemanticExpression {
     operator:string;
     right:SemanticExpression;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return false;
     }
 
@@ -411,7 +419,7 @@ export class BinaryNode extends SemanticExpression {
     left:SemanticExpression;
     right:SemanticExpression;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return false;
     }
 }
@@ -437,7 +445,7 @@ export class CallNode extends SemanticExpression {
     callee:SemanticExpression;
     arguments:SemanticExpression[];
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return false;
     }
 }
@@ -452,7 +460,7 @@ export class ConditionalNode extends SemanticExpression {
     consequent:SemanticExpression;
     alternate:SemanticExpression;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return this.test.isClean() && this.consequent.isClean() && this.alternate.isClean();
     }
 }
@@ -523,7 +531,7 @@ export class FunctionExpressionNode extends SemanticExpression {
     innerScope:Scope;
     expression:boolean;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return true;
     }
 
@@ -557,7 +565,7 @@ export class FunctionExpressionNode extends SemanticExpression {
 export class IdentifierNode extends SemanticExpression {
     readonly name:string;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         let variable = this.getVariable();
         if (!variable) {
             return false;
@@ -652,7 +660,7 @@ export class LiteralNode extends SemanticExpression {
     value:any;
     raw:string;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return true;
     }
 
@@ -676,7 +684,7 @@ export class MemberNode extends SemanticExpression {
     property:SemanticExpression;
     computed:boolean;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return false; //todo
     }
 
@@ -689,7 +697,7 @@ export class NewNode extends SemanticExpression {
     callee:SemanticExpression;
     arguments:SemanticExpression[];
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return false;
     }
 }
@@ -697,7 +705,7 @@ export class NewNode extends SemanticExpression {
 export class ObjectNode extends SemanticExpression {
     properties:PropertyNode[];
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         for (let i = 0; i < this.properties.length; i++) {
             const property = this.properties[i];
             if (property.computed && !property.key.isClean()) {
@@ -828,13 +836,13 @@ export class UnaryNode extends SemanticExpression {
     argument:SemanticExpression;
     operator:string;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return (this.operator === 'void' || this.operator === 'typeof') && this.argument.isClean();
     }
 }
 
 export class ThisNode extends SemanticExpression {
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return true;
     }
 }
@@ -852,7 +860,7 @@ export class TryNode extends SemanticNode {
 export class SequenceNode extends SemanticExpression {
     expressions:SemanticExpression[];
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         for (let i = 0; i < this.expressions.length; i++) {
             if (!this.expressions[i].isClean()) {
                 return false;
@@ -867,7 +875,7 @@ export class UpdateNode extends SemanticExpression {
     operator:string;
     prefix:boolean;
 
-    isClean():boolean {
+    protected isCleanInner():boolean {
         return false;
     }
 
