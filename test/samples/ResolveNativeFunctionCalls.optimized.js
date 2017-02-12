@@ -9,3 +9,5 @@ console.log(true);
 
 console.log(1);
 console.log(Date());
+
+console.log("function");

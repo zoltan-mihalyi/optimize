@@ -768,6 +768,7 @@ export class ProgramNode extends BlockNode {
         this.saveApi('encodeURIComponent');
         this.saveApi('Object');
         this.saveApi('Function');
+        this.saveApi('Array');
         this.saveApi('Boolean');
         this.saveApi('Error');
         this.saveApi('EvalError');
