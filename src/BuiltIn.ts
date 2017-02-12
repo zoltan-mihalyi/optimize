@@ -18,6 +18,7 @@ import {
 } from "./Value";
 import {nonEnumerable, isPrimitive, throwValue} from "./Utils";
 import Map = require("./Map");
+import Cache = require("./Cache");
 
 export function canWrapObjectValue(value:SingleValue):boolean {
     return value instanceof ObjectValue || (value as KnownValue).value != null;
@@ -78,15 +79,17 @@ export function createValueFromCall(fn:Function, context:any, parameters:any[]):
     return createValue(callResult);
 }
 
-export function createValueFromNewCall(fn:Function, parameters:any[]):Value {
+const newCallCache = new Cache<number,Function>(paramNum => {
     let params:string[] = [];
-    for (let i = 0; i < parameters.length; i++) {
-        const parameter = parameters[i];
+    for (let i = 0; i < paramNum; i++) {
         params.push('p' + i);
     }
     let paramsString = params.join(',');
-    const callNew = new Function(paramsString, 'return new this(' + paramsString + ')');
-    return createValueFromCall(callNew, fn, parameters);
+    return new Function(paramsString, 'return new this(' + paramsString + ')');
+});
+
+export function createValueFromNewCall(fn:Function, parameters:any[]):Value {
+    return createValueFromCall(newCallCache.get(parameters.length), fn, parameters);
 }
 
 const map:Map<Object, ObjectValue> = new Map<Object, ObjectValue>();
