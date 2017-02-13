@@ -18,14 +18,6 @@ export function nonEnumerable(value:Value):PropDescriptor {
     }
 }
 
-export function addConstants(props:PropDescriptorMap, source:any, propertiesToAdd:string[]):PropDescriptorMap {
-    for (let i = 0; i < propertiesToAdd.length; i++) {
-        const prop = propertiesToAdd[i];
-        props[prop] = nonEnumerable(new KnownValue(source[prop]));
-    }
-    return props;
-}
-
 export function isPrimitive(value:any):value is number|string|boolean|null {
     if (value === null) {
         return true;

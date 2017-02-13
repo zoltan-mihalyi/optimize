@@ -20,6 +20,11 @@ for (i in [1, 2])
 
 for (let i in []) {
     function x() {
+        function y() {
+        }
+
+        var z;
+        return y + z;
     }
 }
 x();

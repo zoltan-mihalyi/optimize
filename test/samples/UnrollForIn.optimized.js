@@ -27,5 +27,10 @@ i = "1";
 console.log(i);
 
 function x() {
+    function y() {
+    }
+
+    var z;
+    return y + z;
 }
 x();

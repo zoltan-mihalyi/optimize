@@ -9,6 +9,10 @@ console.log(({
 console.log(({
     [["x"]]: 1
 })["x"]);
+var x;
+console.log(({
+    [{x:x}]: 1
+})["x"]);
 console.log(/a/g.global);
 console.log(/a/g.ignoreCase);
 console.log(typeof [].concat);

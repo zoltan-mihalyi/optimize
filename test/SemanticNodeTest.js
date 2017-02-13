@@ -141,4 +141,28 @@ describe('Semantic node test', function() {
         assert(semanticNode.body[0].body.scope.get('a').initialized);
         assert(semanticNode.body[1].expression.body.scope.get('a').initialized);
     });
+
+    it('replace root', function() {
+        var ast = recast.parse('log(1)').program;
+        var semanticNode = node.semantic(ast);
+        assert.throws(function() {
+            semanticNode.replaceWith([]);
+        });
+    });
+
+    it('replace non-array', function() {
+        var ast = recast.parse('1+1').program;
+        var semanticNode = node.semantic(ast);
+        assert.throws(function() {
+            semanticNode.body[0].expression.remove();
+        });
+    });
+
+    it('creating node with errors throws error', function() {
+        var ast = recast.parse('return;').program;
+
+        assert.throws(function() {
+            node.semantic(ast);
+        });
+    });
 });

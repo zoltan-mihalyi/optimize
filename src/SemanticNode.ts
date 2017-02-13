@@ -167,44 +167,34 @@ export abstract class SemanticNode {
         return this.contains(node => node instanceof type);
     }
 
-    walk<T>(before:(node:this) => T, after?:(node:this) => T):T {
-        if (before) {
-            let result:T = before(this);
-            if (result) {
-                return result;
-            }
+    walk<T>(before:(node:this) => T):T {
+        let result:T = before(this);
+        if (result) {
+            return result;
         }
         for (let i = 0; i < this.childKeys.length; i++) {
             const key = this.childKeys[i];
             let sub = (this as any)[key];
             if (sub instanceof SemanticNode) {
-                let result:T = sub.walk(before, after);
+                let result:T = sub.walk(before);
                 if (result) {
                     return result;
                 }
             } else if (Array.isArray(sub)) {
-                for (var j = 0; j < sub.length; j++) {
-                    let result:T = (sub[j] as SemanticNode).walk(before, after);
+                for (let j = 0; j < sub.length; j++) {
+                    let result:T = (sub[j] as SemanticNode).walk(before);
                     if (result) {
                         return result;
                     }
                 }
             }
         }
-        if (after) {
-            let result:T = after(this);
-            if (result) {
-                return result;
-            }
-        }
     }
 
-    handleDeclarations() {
+    initialize() {
         this.walk(node => node.handleDeclarationsForNode());
-    }
-
-    updateAccess() {
         this.walk(node => node.updateAccessForNode());
+        this.walk(node => node.initializeNode());
     }
 
     isUpdated():boolean {
@@ -249,6 +239,9 @@ export abstract class SemanticNode {
     protected updateAccessForNode() {
     }
 
+    protected initializeNode() {
+    }
+
     protected createSubScopeIfNeeded(scope:Scope):Scope {
         return scope;
     }
@@ -273,9 +266,9 @@ export abstract class SemanticExpression extends SemanticNode {
     protected calculatedValue:Value = this.isClean() ? this.getInitialValue() : unknown;
 
     isClean():boolean {
-        if(this.calculatedValue && !(this.calculatedValue instanceof UnknownValue)){
+        if (this.calculatedValue && !(this.calculatedValue instanceof UnknownValue)) {
             return true;
-        }else {
+        } else {
             return this.isCleanInner();
         }
     }
@@ -987,7 +980,6 @@ export function semantic(expression:Expression):SemanticNode {
         throw (expression as any).errors[0];
     }
     const node = toSemanticNode(expression, null, null, null, null);
-    node.handleDeclarations();
-    node.updateAccess();
+    node.initialize();
     return node;
 }

@@ -11,3 +11,8 @@ while (1) {
     //do nothing
     42
 }
+
+while(1)/*comment*/{
+    //comment2
+    42
+}

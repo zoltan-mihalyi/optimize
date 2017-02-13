@@ -3,6 +3,10 @@ console.log(1);
 console.log(1);
 console.log(1);
 console.log(1);
+var x;
+console.log(({
+    [{x:x}]: 1
+})["x"]);
 console.log(true);
 console.log(false);
 console.log("function");
