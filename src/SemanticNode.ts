@@ -287,7 +287,7 @@ export abstract class SemanticExpression extends SemanticNode {
                 if (!(this instanceof UnaryNode && this.operator === 'void' && this.argument instanceof LiteralNode && this.argument.value === 0)) {
                     this.replaceWith([builders.unaryExpression('void', builders.literal(0), true)]);
                 }
-            } else if (typeof primitiveValue === 'number' && (primitiveValue < 0 || 1 / primitiveValue) < 0) {
+            } else if (typeof primitiveValue === 'number' && (primitiveValue < 0 || 1 / primitiveValue < 0)) {
                 if (!(this instanceof UnaryNode && this.operator === '-' && this.argument instanceof LiteralNode && this.argument.value === -primitiveValue)) {
                     this.replaceWith([builders.unaryExpression('-', builders.literal(-primitiveValue))]);
                 }
