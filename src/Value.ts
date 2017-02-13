@@ -178,7 +178,7 @@ export class ObjectValue extends SingleValue {
                     return new KnownValue(void 0);
                 }
             case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
-                if (this.proto.hasPropertyDeep(name)) {
+                if (this.proto && this.proto.hasPropertyDeep(name)) {
                     return this.proto.resolveProperty(name, getterEvaluator);
                 }
                 return unknown;

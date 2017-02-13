@@ -7,6 +7,7 @@ var x;
 console.log(({
     [{x:x}]: 1
 })["x"]);
+console.log({}.x);
 console.log(true);
 console.log(false);
 console.log("function");

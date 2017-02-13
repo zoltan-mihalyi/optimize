@@ -13,6 +13,7 @@ var x;
 console.log(({
     [{x:x}]: 1
 })["x"]);
+console.log({}.x);
 console.log(/a/g.global);
 console.log(/a/g.ignoreCase);
 console.log(typeof [].concat);
