@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode, NewNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, Value} from "../Value";
-import {createValueFromCall, createValueFromNewCall, isBuiltIn} from "../BuiltIn";
+import {createValueFromCall, createValueFromNewCall, isBuiltIn, getObjectValue} from "../BuiltIn";
 import {hasTrueValue, getTrueValue} from "../Utils";
 import Map = require("../Map");
 
@@ -18,11 +18,35 @@ const UNSAFE_FUNCTIONS:Function[] = [
     Date.prototype.toLocaleTimeString
 ];
 
-function isUnsafeInSpecialCase(fn:Function, newCall:boolean, parameters:any[]):boolean {
+function isUnsafeInFunctionCall(fn:Function, context:any, parameters:any[]):boolean {
+    [fn, context] = getRealFunctionAndContext(fn, context, parameters);
+
     if (fn === Date) {
-        return newCall ? parameters.length === 0 : true;
+        return true;
+    } else if (fn === Object.prototype.toString) {
+        return context == null;
+    } else if (fn === Object.prototype.hasOwnProperty) {
+        if (isBuiltIn(context)) {
+            return !getObjectValue(context).hasProperty(parameters[0]);
+        } else if (context instanceof RegExp) {
+            return true;
+        }
     }
     return false;
+}
+
+function isUnsafeNewCall(fn:Function, parameters:any[]) {
+    if (fn === Date) {
+        return parameters.length === 0;
+    }
+    return false;
+}
+
+function getRealFunctionAndContext(fn:Function, context:any, parameters:any[]):[Function, any] {
+    if (fn === Function.prototype.apply || fn === Function.prototype.call) {
+        return [context, parameters[0]];
+    }
+    return [fn, context];
 }
 
 const MUTATING_METHODS:Function[] = [
@@ -60,9 +84,6 @@ export  = (nodeVisitor:NodeVisitor) => {
                 return;
             }
         }
-        if (isUnsafeInSpecialCase(fn, node instanceof NewNode, parameters)) {
-            return;
-        }
 
         let resultValue:Value;
         if (node instanceof CallNode) {
@@ -76,11 +97,17 @@ export  = (nodeVisitor:NodeVisitor) => {
                     return;
                 }
             }
+            if (isUnsafeInFunctionCall(fn, context, parameters)) {
+                return;
+            }
             if (canMutate(fn, context, parameters)) {
                 return;
             }
             resultValue = createValueFromCall(fn, context, parameters);
         } else {
+            if (isUnsafeNewCall(fn, parameters)) {
+                return;
+            }
             resultValue = createValueFromNewCall(fn, parameters);
         }
         node.setValue(resultValue);
@@ -88,10 +115,7 @@ export  = (nodeVisitor:NodeVisitor) => {
     }
 
     function canMutate(fn:Function, context:any, parameters:any[]) {
-        if (fn === Function.prototype.apply || fn === Function.prototype.call) {
-            fn = context;
-            context = parameters[0];
-        }
+        [fn, context] = getRealFunctionAndContext(fn, context, parameters);
         return MUTATING_METHODS.indexOf(fn) !== -1 && isBuiltIn(context);
     }
 };

@@ -302,8 +302,7 @@ export function getObjectValue(object:Object):ObjectValue {
         };
         if (propertyDescriptor.hasOwnProperty('value')) {
             propDescriptor.value = createValue((object as any)[propName]);
-        }
-        if (propertyDescriptor.hasOwnProperty('get')) {
+        }else if (propertyDescriptor.hasOwnProperty('get')) {
             propDescriptor.get = createValue(propertyDescriptor.get) as ObjectValue;
         }
         properties[propName] = propDescriptor;

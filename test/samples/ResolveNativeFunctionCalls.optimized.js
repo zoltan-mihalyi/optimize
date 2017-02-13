@@ -19,3 +19,9 @@ console.log(Array.prototype.push(1));
 console.log(Array.prototype.push.apply(Object.prototype, [1]));
 
 console.log(100);
+
+console.log(true);
+console.log(true);
+console.log(Object.hasOwnProperty('create'));
+console.log(Object.prototype.toString.call(null));
+console.log(/a/.hasOwnProperty('global'));

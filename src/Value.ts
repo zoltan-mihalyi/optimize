@@ -209,6 +209,10 @@ export class ObjectValue extends SingleValue {
         }
     }
 
+    hasProperty(name:string):boolean {
+        return Object.prototype.hasOwnProperty.call(this.properties, name);
+    }
+
     protected equalsInner(other:ObjectValue):boolean {
         return this.objectClass === other.objectClass;
     }
@@ -221,10 +225,6 @@ export class ObjectValue extends SingleValue {
             return this.proto.hasPropertyDeep(name);
         }
         return false;
-    }
-
-    private hasProperty(name:string):boolean {
-        return Object.prototype.hasOwnProperty.call(this.properties, name);
     }
 }
 
