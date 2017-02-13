@@ -72,6 +72,7 @@ gulp.task('test:cover', ['test:instrument'], function() {
                         'text-summary': null,
                         'json': 'coverage/coverage.json'
                     }
-                }));
+                }))
+                .pipe(clean());
         });
 });
