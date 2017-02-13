@@ -15,7 +15,8 @@ const UNSAFE_FUNCTIONS:Function[] = [
     Date.prototype.toTimeString,
     Date.prototype.toLocaleString,
     Date.prototype.toLocaleDateString,
-    Date.prototype.toLocaleTimeString
+    Date.prototype.toLocaleTimeString,
+    Function
 ];
 
 function isUnsafeInFunctionCall(fn:Function, context:any, parameters:any[]):boolean {

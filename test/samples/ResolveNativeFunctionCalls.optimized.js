@@ -25,3 +25,4 @@ console.log(true);
 console.log(Object.hasOwnProperty('create'));
 console.log(Object.prototype.toString.call(null));
 console.log(/a/.hasOwnProperty('global'));
+console.log(new Function('return typeof Object.create')());
