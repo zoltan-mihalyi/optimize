@@ -48,7 +48,7 @@ gulp.task('test:instrument', ['compile'], function() {
 });
 
 gulp.task('self-optimize', ['compile'], function() {
-    var optimize=require('./dist/optimize');
+    var optimize = require('./dist/optimize');
     return gulp.src('dist/**/*.js')
         .pipe(through2.obj(function(file, encoding, done) {
             file.contents = new Buffer(optimize(file.contents.toString('UTF-8')));
@@ -67,12 +67,28 @@ gulp.task('test:cover', ['test:instrument'], function() {
         .on('end', function() {
             return gulp.src('coverage/coverage-final.json')
                 .pipe(remapIstanbul({
+                    basePath: 'src',
                     reports: {
-                        'html': 'coverage/html',
-                        'text-summary': null,
                         'json': 'coverage/coverage.json'
                     }
                 }))
                 .pipe(clean());
+        });
+});
+
+gulp.task('test:cover-html', ['test:instrument'], function() {
+    return gulp.src('test/*.js', {read: false})
+        .pipe(mocha({timeout: 10000}))
+        .pipe(istanbul.writeReports({
+            reporters: ['json']
+        }))
+        .on('end', function() {
+            return gulp.src('coverage/coverage-final.json')
+                .pipe(remapIstanbul({
+                    reports: {
+                        'html': 'coverage/html',
+                        'text-summary': null
+                    }
+                }));
         });
 });
