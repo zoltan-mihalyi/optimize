@@ -6,6 +6,7 @@ import {hasTrueValue, getTrueValue} from "../Utils";
 import Map = require("../Map");
 
 const UNSAFE_FUNCTIONS:Function[] = [
+    eval,
     Object.prototype.toLocaleString,
     Array.prototype.toLocaleString,
     Number.prototype.toLocaleString,
