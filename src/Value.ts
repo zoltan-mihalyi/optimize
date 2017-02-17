@@ -110,6 +110,10 @@ class RegExpObjectClass extends ObjectObjectClass {
 }
 export const REG_EXP = new RegExpObjectClass();
 
+class ArgumentsObjectClass extends ObjectObjectClass {
+}
+export const ARGUMENTS = new ArgumentsObjectClass();
+
 export interface PropDescriptor {
     enumerable:boolean;
     value?:Value;

@@ -8,7 +8,8 @@ import {
     OBJECT,
     PropDescriptorMap,
     PropInfo,
-    UnknownValue
+    UnknownValue,
+    ARGUMENTS
 } from "./Value";
 import {createCustomFunctionValue, getObjectValue, createValue} from "./BuiltIn";
 import {equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
@@ -491,10 +492,15 @@ export class ForNode extends LoopNode {
 
 function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
     for (let i = 0; i < params.length; i++) {
-        scope.set(params[i].name, false, true).writes.push(params[i]);
+        scope.set(params[i].name, false, unknown).writes.push(params[i]);
     }
     if (addArguments) {
-        scope.set('arguments', false, true);
+        scope.set('arguments', false, new ObjectValue(ARGUMENTS, {
+            proto: getObjectValue(Object.prototype),
+            properties: {},
+            propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
+            trueValue: null
+        }));
     }
 }
 
@@ -506,9 +512,11 @@ export class FunctionDeclarationNode extends SemanticNode {
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
-        let variable = this.scope.set(this.id.name, false, true);
+        let variable = this.scope.set(this.id.name, false, unknown);
         variable.writes.push(this.id);
-        variable.constantValue = createCustomFunctionValue(this.params.length);
+        if (!this.scope.blockScope) { //TODO
+            variable.initialValue = createCustomFunctionValue(this.params.length);
+        }
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
@@ -563,7 +571,7 @@ export class IdentifierNode extends SemanticExpression {
         if (!variable) {
             return false;
         }
-        return variable.initialized;
+        return !!variable.initialValue;
     }
 
     getVariable():Variable {
@@ -628,8 +636,8 @@ export class IdentifierNode extends SemanticExpression {
         if (this.isRead()) {
             let variable = this.scope.getOrCreate(this.name);
             variable.reads.push(this);
-            if (variable.constantValue) {
-                this.setValue(variable.constantValue);
+            if (variable.initialValue) {
+                this.setValue(variable.initialValue);
             }
         }
     }
@@ -787,7 +795,7 @@ export class ProgramNode extends BlockNode {
     }
 
     private saveApi(name:string) {
-        this.scope.set(name, true, true).constantValue = createValue(global[name]);
+        this.scope.set(name, true, createValue(global[name]));
     }
 }
 
@@ -906,10 +914,10 @@ export class VariableDeclaratorNode extends SemanticNode {
         let variable;
         let isWrite;
         if (parent.parent instanceof ForEachNode) {
-            variable = parent.parent.body.scope.set(this.id.name, blockScoped, true);
+            variable = parent.parent.body.scope.set(this.id.name, blockScoped, unknown);
             isWrite = true;
         } else {
-            variable = this.scope.set(this.id.name, blockScoped, !blockScoped);
+            variable = this.scope.set(this.id.name, blockScoped, blockScoped ? null : unknown);
             isWrite = !!this.init;
         }
         if (isWrite) {

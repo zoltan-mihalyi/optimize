@@ -7,6 +7,5 @@ export interface Variable {
     writes:IdentifierNode[];
     reads:IdentifierNode[];
     name:string;
-    initialized:boolean;
-    constantValue:Value;
+    initialValue:Value;
 }

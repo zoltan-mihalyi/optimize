@@ -1,14 +1,17 @@
 import {createUnusedName} from "./Utils";
 import {Variable} from "./Variable";
+import {Value} from "./Value";
 
 interface Variables {
     [name:string]:Variable;
 }
 
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
 class Scope {
     private readonly variables:Variables = {};
 
-    constructor(private parent:Scope, private readonly blockScope:boolean) {
+    constructor(private parent:Scope, readonly blockScope:boolean) {
     }
 
     has(name:string):boolean {
@@ -24,7 +27,7 @@ class Scope {
     }
 
     get(name:string):Variable {
-        if (Object.prototype.hasOwnProperty.call(this.variables, name)) {
+        if (hasOwnProperty.call(this.variables, name)) {
             return this.variables[name];
         }
         if (this.parent) {
@@ -37,22 +40,21 @@ class Scope {
         if (this.parent) {
             return this.parent.setUnknownGlobal(name);
         }
-        return this.set(name, false, false);
+        return this.set(name, false, null);
     }
 
-    set(name:string, blockScope:boolean, initialized:boolean):Variable {
+    set(name:string, blockScope:boolean, initialValue:Value):Variable {
         if (!blockScope && this.blockScope) {
-            return this.parent.set(name, false, initialized);
+            return this.parent.set(name, false, initialValue);
         }
         return this.variables[name] = {
             blockScoped: blockScope,
             global: !this.parent,
-            initialized: initialized,
             name: name,
             usages: [], //todo remove
             writes: [],
             reads: [],
-            constantValue: null
+            initialValue: initialValue
         };
     }
 

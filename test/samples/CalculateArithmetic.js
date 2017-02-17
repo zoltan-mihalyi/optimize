@@ -21,7 +21,9 @@ console.log(typeof []);
 console.log(typeof {});
 console.log(typeof function(){});
 console.log(typeof fn);
-function fn(){}
+function fn() {
+    console.log(typeof arguments);
+}
 
 console.log(1 + a);
 console.log(0 || null || 2);

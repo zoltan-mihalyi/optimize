@@ -21,7 +21,9 @@ console.log("object");
 console.log("object");
 console.log("function");
 console.log("function");
-function fn(){}
+function fn() {
+    console.log("object");
+}
 
 console.log(1 + a);
 console.log(2);
