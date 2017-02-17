@@ -20,10 +20,8 @@ function fn() {
         })(j);
     }
 
-    var a1 = 1;
     x();
-    var a3 = void 0;
-    console.log(a1, a3);
+    console.log(1, void 0);
 }
 (function(x) {
     console.log(x);
@@ -34,7 +32,7 @@ function fn() {
 })(x);
 
 (function() {
-    var x = 1;
+    var x = u ? 1 : 0;
     console.log(x);
 })();
 
@@ -46,7 +44,7 @@ function fn() {
 })();
 
 {
-    let x = 1;
+    let x = u ? 1 : 0;
     console.log(x);
 }
 

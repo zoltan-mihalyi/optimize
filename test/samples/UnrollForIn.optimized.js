@@ -3,28 +3,20 @@ var b;
 console.log(a, b);
 
 var i = "x";
-console.log(i);
+console.log("x");
 var i = "y";
-console.log(i);
-{
-    let i = "0";
-    console.log(i);
-}
-
-{
-    let i = "1";
-    console.log(i);
-}
-
+console.log("y");
+console.log("0");
+console.log("1");
 i = "0";
-console.log(i);
+console.log("0");
 i = "1";
-console.log(i);
+console.log("1");
 i = "0";
-console.log(i);
+console.log("0");
 
 i = "1";
-console.log(i);
+console.log("1");
 
 function x() {
     function y() {

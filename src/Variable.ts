@@ -1,5 +1,7 @@
 import {SemanticNode, IdentifierNode} from "./SemanticNode";
 import {Value} from "./Value";
+import Scope = require("./Scope");
+
 export interface Variable {
     global:boolean;
     blockScoped:boolean;
@@ -8,4 +10,5 @@ export interface Variable {
     reads:IdentifierNode[];
     name:string;
     initialValue:Value;
+    scope:Scope;
 }

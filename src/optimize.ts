@@ -17,6 +17,7 @@ import ReduceSequenceExpression = require("./features/ReduceSequenceExpression")
 import UnrollForIn = require("./features/UnrollForIn");
 import InlineFunctionCall = require("./features/InlineFunctionCall");
 import RemoveUnused = require("./features/RemoveUnused");
+import TrackValues = require("./features/TrackValues");
 
 const nodeVisitor = new NodeVisitor();
 CalculateArithmetic(nodeVisitor);
@@ -32,6 +33,7 @@ ReduceSequenceExpression(nodeVisitor);
 UnrollForIn(nodeVisitor);
 InlineFunctionCall(nodeVisitor);
 RemoveUnused(nodeVisitor);
+TrackValues(nodeVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;

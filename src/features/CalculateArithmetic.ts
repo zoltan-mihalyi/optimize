@@ -1,15 +1,10 @@
 import NodeVisitor = require("../NodeVisitor");
 import {BinaryNode, UnaryNode} from "../SemanticNode";
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
-import {hasTrueValue, getTrueValue} from "../Utils";
+import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
 import {createValue} from "../BuiltIn";
 import Cache = require("../Cache");
 
-type BinaryFunction = (x:any, y:any) => any;
-
-const binaryCache = new Cache<string, BinaryFunction>(operator => {
-    return new Function('left,right', `return left ${operator} right;`) as BinaryFunction;
-});
 
 type UnaryFunction = (x:any) => any;
 

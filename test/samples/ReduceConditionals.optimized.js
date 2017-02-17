@@ -1,5 +1,5 @@
 {
-    let i = 1;
+    let i = u ? 1 : 0;
     console.log(i);
 }
 

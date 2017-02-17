@@ -9,14 +9,16 @@ import {
     PropDescriptorMap,
     PropInfo,
     UnknownValue,
-    ARGUMENTS
+    ARGUMENTS,
+    SingleValue
 } from "./Value";
 import {createCustomFunctionValue, getObjectValue, createValue} from "./BuiltIn";
-import {equals, hasTrueValue, getTrueValue, throwValue, map} from "./Utils";
+import {equals, hasTrueValue, getTrueValue, throwValue, map, binaryCache} from "./Utils";
 import {Variable} from "./Variable";
 import Scope = require("./Scope");
 import recast = require("recast");
 import Map = require("./Map");
+import EvaluationState = require("./EvaluationState");
 
 const builders = recast.types.builders;
 
@@ -261,6 +263,8 @@ export abstract class SemanticNode {
         }
         this.updated = true;
     }
+
+    abstract track(state:EvaluationState):void;
 }
 
 export abstract class SemanticExpression extends SemanticNode {
@@ -341,12 +345,23 @@ export abstract class ForEachNode extends LoopNode {
         this.innerScope = new Scope(scope, true);
         return super.createSubScopeIfNeeded(scope);
     }
+
+    track(state:EvaluationState) {
+        state.trackAsUnsure(state => {
+            const identifier = this.left instanceof IdentifierNode ? this.left : this.left.declarations[0].id;
+            state.setValue(identifier.getVariable(), unknown);
+            this.body.track(state)
+        });
+    }
 }
 
 abstract class Comment extends SemanticNode {
     leading:boolean;
     trailing:boolean;
     value:string;
+
+    track() {
+    }
 }
 
 function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
@@ -370,8 +385,7 @@ export abstract class AbstractFunctionExpressionNode extends SemanticExpression 
     innerScope:Scope;
     expression:boolean;
 
-    protected isCleanInner():boolean {
-        return true;
+    track() {
     }
 
     getReturnExpression():SemanticExpression {
@@ -385,6 +399,10 @@ export abstract class AbstractFunctionExpressionNode extends SemanticExpression 
             }
         }
         return null;
+    }
+
+    protected isCleanInner():boolean {
+        return true;
     }
 
     protected handleDeclarationsForNode() {
@@ -405,6 +423,13 @@ export abstract class AbstractFunctionExpressionNode extends SemanticExpression 
 
 export class ArrayNode extends SemanticExpression {
     elements:SemanticExpression[];
+
+    track(state:EvaluationState) {
+        for (let i = 0; i < this.elements.length; i++) {
+            const element = this.elements[i];
+            element.track(state);
+        }
+    }
 
     protected isCleanInner():boolean {
         for (let i = 0; i < this.elements.length; i++) {
@@ -457,6 +482,29 @@ export class AssignmentNode extends SemanticExpression {
     operator:string;
     right:SemanticExpression;
 
+    track(state:EvaluationState) {
+        if (!(this.left instanceof IdentifierNode)) {
+            return;
+        }
+        const rightValue = this.right.getValue();
+        const operator = this.operator;
+        if (operator === '=') {
+            state.setValue(this.left.getVariable(), rightValue);
+            return;
+        }
+
+        const variable = this.left.getVariable();
+        const leftValue = state.getValue(variable);
+
+        const evaluator = binaryCache.get(operator.substring(0, operator.length - 1));
+        state.setValue(variable, leftValue.product(rightValue, (left:SingleValue, right:SingleValue) => {
+            if (hasTrueValue(left) && hasTrueValue(right)) {
+                return createValue(evaluator(getTrueValue(left), getTrueValue(right)));
+            }
+            return unknown;
+        }));
+    }
+
     protected isCleanInner():boolean {
         return false;
     }
@@ -473,6 +521,11 @@ export class BinaryNode extends SemanticExpression {
     left:SemanticExpression;
     right:SemanticExpression;
 
+    track(state:EvaluationState) {
+        this.left.track(state);
+        this.right.track(state);
+    }
+
     protected isCleanInner():boolean {
         return false;
     }
@@ -484,6 +537,24 @@ export class BlockComment extends Comment {
 export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
+    track(state:EvaluationState) {
+        const blockState = new EvaluationState(state, this.scope);
+        for (let i = 0; i < this.body.length; i++) {
+            const node = this.body[i];
+            if (node instanceof FunctionDeclarationNode) {
+                node.track(blockState);
+            }
+        }
+        for (let i = 0; i < this.body.length; i++) {
+            const node = this.body[i];
+            if (!(node instanceof FunctionDeclarationNode)) {
+                node.track(blockState);
+            }
+        }
+        state.mergeBack(blockState);
+
+    }
+
     protected createSubScopeIfNeeded(scope:Scope):Scope {
         if (this.parent instanceof AbstractFunctionExpressionNode || this.parent instanceof FunctionDeclarationNode || this.parent instanceof ForEachNode) {
             return this.parent.innerScope;
@@ -493,11 +564,20 @@ export class BlockNode extends SemanticNode {
 }
 
 export class BreakNode extends SemanticNode {
+    track() {
+    }
 }
 
 export class CallNode extends SemanticExpression {
     callee:SemanticExpression;
     arguments:SemanticExpression[];
+
+    track(state:EvaluationState) {
+        this.callee.track(state);
+        for (let i = 0; i < this.arguments.length; i++) {
+            this.arguments[i].track(state);
+        }
+    }
 
     protected isCleanInner():boolean {
         return false;
@@ -507,6 +587,10 @@ export class CallNode extends SemanticExpression {
 export class CatchNode extends SemanticNode {
     param:IdentifierNode;
     body:BlockNode;
+
+    track(state:EvaluationState) {
+        this.body.track(state);
+    }
 }
 
 export class ConditionalNode extends SemanticExpression {
@@ -514,19 +598,40 @@ export class ConditionalNode extends SemanticExpression {
     consequent:SemanticExpression;
     alternate:SemanticExpression;
 
+    track(state:EvaluationState) {
+        this.test.track(state);
+        const consequentCtx = new EvaluationState(state, this.scope);
+        this.consequent.track(consequentCtx);
+        const alternateCtx = new EvaluationState(state, this.scope);
+        this.alternate.track(alternateCtx);
+        state.mergeOr(consequentCtx, alternateCtx);
+    }
+
     protected isCleanInner():boolean {
         return this.test.isClean() && this.consequent.isClean() && this.alternate.isClean();
     }
 }
 
 export class ContinueNode extends SemanticNode {
+
+    track() {
+    }
 }
 
 export class DoWhileNode extends LoopNode {
     test:SemanticExpression;
+
+    track(state:EvaluationState) {
+        state.trackAsUnsure(state => {
+            this.body.track(state);
+            this.test.track(state);
+        });
+    }
 }
 
 export class EmptyNode extends SemanticNode {
+    track() {
+    }
 }
 
 export class ExpressionStatementNode extends SemanticNode {
@@ -535,6 +640,10 @@ export class ExpressionStatementNode extends SemanticNode {
 
     isDirective():boolean {
         return typeof this.directive === 'string';
+    }
+
+    track(state:EvaluationState) {
+        this.expression.track(state);
     }
 }
 
@@ -548,6 +657,21 @@ export class ForNode extends LoopNode {
     init:SemanticNode;
     test:SemanticExpression;
     update:SemanticNode;
+
+    track(state:EvaluationState) {
+        if (this.init) {
+            this.init.track(state);
+        }
+        state.trackAsUnsure(state => {
+            if (this.test) {
+                this.test.track(state);
+            }
+            this.body.track(state);
+            if (this.update) {
+                this.update.track(state);
+            }
+        });
+    }
 }
 
 export class FunctionDeclarationNode extends SemanticNode {
@@ -556,13 +680,14 @@ export class FunctionDeclarationNode extends SemanticNode {
     body:BlockNode;
     innerScope:Scope;
 
+    track(state:EvaluationState) {
+        state.setValue(this.id.getVariable(), createCustomFunctionValue(this.params.length));
+    }
+
     protected handleDeclarationsForNode() {
         addParametersToScope(this.params, this.body.scope, true);
         let variable = this.scope.set(this.id.name, false, unknown);
         variable.writes.push(this.id);
-        if (!this.scope.blockScope) { //TODO
-            variable.initialValue = createCustomFunctionValue(this.params.length);
-        }
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
@@ -572,7 +697,7 @@ export class FunctionDeclarationNode extends SemanticNode {
 }
 
 export class FunctionExpressionNode extends AbstractFunctionExpressionNode {
-    protected isLambda():boolean{
+    protected isLambda():boolean {
         return false;
     }
 }
@@ -586,6 +711,14 @@ export class IdentifierNode extends SemanticExpression {
             return false;
         }
         return !!variable.initialValue;
+    }
+
+    track(state:EvaluationState) {
+        if (!this.isRead()) {
+            return;
+        }
+        let variable = this.getVariable();
+        this.setValue(state.getValue(variable));
     }
 
     getVariable():Variable {
@@ -661,11 +794,29 @@ export class IfNode extends SemanticNode {
     test:SemanticExpression;
     consequent:SemanticNode;
     alternate:SemanticNode;
+
+    track(state:EvaluationState) {
+        this.test.track(state);
+        const consequentCtx = new EvaluationState(state, this.scope);
+        this.consequent.track(consequentCtx);
+
+        if (this.alternate) {
+            const alternateCtx = new EvaluationState(state, this.scope);
+            this.alternate.track(alternateCtx);
+            state.mergeOr(consequentCtx, alternateCtx);
+        } else {
+            state.mergeOr(state, consequentCtx); //todo different method
+        }
+    }
 }
 
 export class LabeledNode extends SemanticNode {
     label:IdentifierNode;
     body:SemanticNode;
+
+    track(state:EvaluationState) {
+        state.trackAsUnsure(state => this.body.track(state));
+    }
 }
 
 export class LineComment extends Comment {
@@ -674,6 +825,9 @@ export class LineComment extends Comment {
 export class LiteralNode extends SemanticExpression {
     value:any;
     raw:string;
+
+    track() {
+    }
 
     protected isCleanInner():boolean {
         return true;
@@ -703,6 +857,11 @@ export class MemberNode extends SemanticExpression {
         return false; //todo
     }
 
+    track(state:EvaluationState) {
+        this.object.track(state);
+        this.property.track(state);
+    }
+
     getPropertyValue():Value {
         return !this.computed ? new KnownValue((this.property as IdentifierNode).name) : this.property.getValue();
     }
@@ -715,10 +874,25 @@ export class NewNode extends SemanticExpression {
     protected isCleanInner():boolean {
         return false;
     }
+
+    track(state:EvaluationState) {
+        this.callee.track(state);
+        for (let i = 0; i < this.arguments.length; i++) {
+            this.arguments[i].track(state);
+        }
+    }
+
 }
 
 export class ObjectNode extends SemanticExpression {
     properties:PropertyNode[];
+
+    track(state:EvaluationState) {
+        for (let i = 0; i < this.properties.length; i++) {
+            const obj = this.properties[i];
+            obj.track(state);
+        }
+    }
 
     protected isCleanInner():boolean {
         for (let i = 0; i < this.properties.length; i++) {
@@ -821,6 +995,13 @@ export class PropertyNode extends SemanticNode {
     shorthand:boolean;
     value:SemanticExpression;
 
+    track(state:EvaluationState) {
+        if (this.computed) {
+            this.key.track(state);
+        }
+        this.value.track(state);
+    }
+
     getKeyValue():Value {
         if (this.computed) {
             return this.key.getValue();
@@ -836,20 +1017,48 @@ export class PropertyNode extends SemanticNode {
 export class SwitchCaseNode extends SemanticNode {
     test:SemanticExpression;
     consequent:SemanticNode[];
+
+    track(state:EvaluationState) {
+        if (this.test) {
+            this.test.track(state);
+        }
+        for (let i = 0; i < this.consequent.length; i++) {
+            this.consequent[i].track(state);
+        }
+    }
 }
 
 export class SwitchStatementNode extends SemanticNode {
     discriminant:SemanticExpression;
     cases:SwitchCaseNode[];
+
+    track(state:EvaluationState) {
+        this.discriminant.track(state);
+        state.trackAsUnsure(state => {
+            for (let i = 0; i < this.cases.length; i++) {
+                this.cases[i].track(state);
+            }
+        });
+    }
 }
 
 export class ReturnNode extends SemanticNode {
     argument:SemanticExpression;
+
+    track(state:EvaluationState) {
+        if (this.argument) {
+            this.argument.track(state);
+        }
+    }
 }
 
 export class UnaryNode extends SemanticExpression {
     argument:SemanticExpression;
     operator:string;
+
+    track(state:EvaluationState) {
+        this.argument.track(state);
+    }
 
     protected isCleanInner():boolean {
         return (this.operator === 'void' || this.operator === 'typeof') && this.argument.isClean();
@@ -860,20 +1069,45 @@ export class ThisNode extends SemanticExpression {
     protected isCleanInner():boolean {
         return true;
     }
+
+    track(state:EvaluationState) {
+    }
 }
 
 export class ThrowNode extends SemanticNode {
     argument:SemanticExpression;
+
+    track(state:EvaluationState) {
+        this.argument.track(state);
+    }
 }
 
 export class TryNode extends SemanticNode {
     block:BlockNode;
     handler:CatchNode;
     finalizer:BlockNode;
+
+    track(state:EvaluationState) {
+        state.trackAsUnsure(state => {
+            this.block.track(state);
+            if (this.handler) {
+                this.handler.track(state)
+            }
+        });
+        if (this.finalizer) {
+            this.finalizer.track(state);
+        }
+    }
 }
 
 export class SequenceNode extends SemanticExpression {
     expressions:SemanticExpression[];
+
+    track(state:EvaluationState) {
+        for (let i = 0; i < this.expressions.length; i++) {
+            this.expressions[i].track(state);
+        }
+    }
 
     protected isCleanInner():boolean {
         for (let i = 0; i < this.expressions.length; i++) {
@@ -889,6 +1123,21 @@ export class UpdateNode extends SemanticExpression {
     argument:SemanticExpression;
     operator:string;
     prefix:boolean;
+
+    track(state:EvaluationState) {
+        if (!(this.argument instanceof IdentifierNode)) {
+            return;
+        }
+        const variable = this.argument.getVariable();
+        state.setValue(variable, state.getValue(variable).map((value:SingleValue) => {
+            if (hasTrueValue(value)) {
+                let numberValue:number = +getTrueValue(value);
+                return new KnownValue(this.operator === '++' ? numberValue + 1 : numberValue - 1);
+            } else {
+                return unknown;
+            }
+        }));
+    }
 
     protected isCleanInner():boolean {
         return false;
@@ -909,6 +1158,12 @@ export class VariableDeclarationNode extends SemanticNode {
         return this.kind !== 'var';
     }
 
+    track(state:EvaluationState) {
+        for (let i = 0; i < this.declarations.length; i++) {
+            this.declarations[i].track(state);
+        }
+    }
+
     protected createSubScopeIfNeeded(scope:Scope):Scope {
         if (this.parent instanceof ForEachNode) {
             return this.parent.innerScope;
@@ -920,7 +1175,13 @@ export class VariableDeclarationNode extends SemanticNode {
 export class VariableDeclaratorNode extends SemanticNode {
     parent:VariableDeclarationNode;
     id:IdentifierNode;
-    init:SemanticNode;
+    init:SemanticExpression;
+
+    track(state:EvaluationState) {
+        if (this.init) {
+            state.setValue(this.id.getVariable(), this.init.getValue());
+        }
+    }
 
     protected handleDeclarationsForNode() {
         const parent = this.parent;
@@ -942,6 +1203,13 @@ export class VariableDeclaratorNode extends SemanticNode {
 
 export class WhileNode extends LoopNode {
     test:SemanticExpression;
+
+    track(state:EvaluationState) {
+        state.trackAsUnsure(state => {
+            this.test.track(state);
+            this.body.track(state);
+        });
+    }
 }
 
 const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope) => SemanticNode} = {

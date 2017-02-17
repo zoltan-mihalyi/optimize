@@ -14,6 +14,16 @@ class Scope {
     constructor(private parent:Scope, readonly blockScope:boolean) {
     }
 
+    hasInFunction(name:string):boolean {
+        if (hasOwnProperty.call(this.variables, name)) {
+            return true;
+        }
+        if (this.parent && this.blockScope) {
+            return this.parent.hasInFunction(name);
+        }
+        return false;
+    }
+
     has(name:string):boolean {
         return !!this.get(name);
     }
@@ -43,6 +53,14 @@ class Scope {
         return this.set(name, false, null);
     }
 
+    each(callback:(name:string, variable:Variable) => void) {
+        for (const name in this.variables) {
+            if (hasOwnProperty.call(this.variables, name)) {
+                callback(name, this.variables[name]);
+            }
+        }
+    }
+
     set(name:string, blockScope:boolean, initialValue:Value):Variable {
         if (!blockScope && this.blockScope) {
             return this.parent.set(name, false, initialValue);
@@ -54,7 +72,8 @@ class Scope {
             usages: [], //todo remove
             writes: [],
             reads: [],
-            initialValue: initialValue
+            initialValue: initialValue,
+            scope: this
         };
     }
 
@@ -82,6 +101,13 @@ class Scope {
             }
         }
         return false;
+    }
+
+    findFunctionScope():Scope {
+        if (!this.blockScope) {
+            return this;
+        }
+        return this.parent.findFunctionScope();
     }
 }
 

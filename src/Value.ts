@@ -217,6 +217,15 @@ export class ObjectValue extends SingleValue {
         return Object.prototype.hasOwnProperty.call(this.properties, name);
     }
 
+    dirty() {
+        return new ObjectValue(this.objectClass, {
+            proto: null,
+            properties: {},
+            propertyInfo: PropInfo.MAY_HAVE_NEW,
+            trueValue: null
+        });
+    }
+
     protected equalsInner(other:ObjectValue):boolean {
         return this.objectClass === other.objectClass;
     }

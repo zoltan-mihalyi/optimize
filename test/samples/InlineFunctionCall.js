@@ -36,7 +36,7 @@ function fn() {
 })(x);
 
 (function() {
-    var x = 1;
+    var x = u ? 1 : 0;
     console.log(x);
 })();
 
@@ -48,7 +48,7 @@ function fn() {
 })();
 
 (function() {
-    let x = 1;
+    let x = u ? 1 : 0;
     console.log(x);
 })();
 

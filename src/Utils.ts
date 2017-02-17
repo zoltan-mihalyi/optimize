@@ -1,6 +1,9 @@
 import recast = require("recast");
 
-const builders = recast.types.builders;import {PropDescriptorMap, KnownValue, Value, PropDescriptor, unknown, ObjectValue} from "./Value";
+const builders = recast.types.builders;
+import {KnownValue, Value, PropDescriptor, unknown, ObjectValue} from "./Value";
+import Cache = require("./Cache");
+
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
     let i = 2;
@@ -10,6 +13,10 @@ export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     }
     return name;
 }
+
+export const binaryCache = new Cache<string, (x:any, y:any) => any>(operator => {
+    return new Function('left,right', `return left ${operator} right;`) as (x:any, y:any) => any;
+});
 
 export function nonEnumerable(value:Value):PropDescriptor {
     return {

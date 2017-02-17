@@ -38,6 +38,15 @@ class Map<K,V> {
             callback(this.keys[i], this.values[i]);
         }
     }
+
+    setOrUpdate(key:K, value:V) {
+        const idx = this.keys.indexOf(key);
+        if (idx === -1) {
+            this.set(key, value);
+        } else {
+            this.values[idx] = value;
+        }
+    }
 }
 
 export = Map;
