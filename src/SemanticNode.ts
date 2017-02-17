@@ -56,10 +56,10 @@ export abstract class SemanticNode {
         }
     }
 
-    getEnclosingFunction():FunctionDeclarationNode|FunctionExpressionNode {
+    getEnclosingFunction():FunctionDeclarationNode|AbstractFunctionExpressionNode {
         let parent = this.parent;
         while (parent) {
-            if (parent instanceof FunctionDeclarationNode || parent instanceof FunctionExpressionNode) {
+            if (parent instanceof FunctionDeclarationNode || parent instanceof AbstractFunctionExpressionNode) {
                 return parent;
             }
             parent = parent.parent;
@@ -349,6 +349,60 @@ abstract class Comment extends SemanticNode {
     value:string;
 }
 
+function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
+    for (let i = 0; i < params.length; i++) {
+        scope.set(params[i].name, false, unknown).writes.push(params[i]);
+    }
+    if (addArguments) {
+        scope.set('arguments', false, new ObjectValue(ARGUMENTS, {
+            proto: getObjectValue(Object.prototype),
+            properties: {},
+            propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
+            trueValue: null
+        }));
+    }
+}
+
+export abstract class AbstractFunctionExpressionNode extends SemanticExpression {
+    id:IdentifierNode;
+    params:IdentifierNode[];
+    body:SemanticExpression|BlockNode;
+    innerScope:Scope;
+    expression:boolean;
+
+    protected isCleanInner():boolean {
+        return true;
+    }
+
+    getReturnExpression():SemanticExpression {
+        let body = this.body;
+        if (this.expression) {
+            return body as SemanticExpression;
+        } else if (body instanceof BlockNode && body.body.length === 1) {
+            const statement = body.body[0];
+            if (statement instanceof ReturnNode) {
+                return statement.argument;
+            }
+        }
+        return null;
+    }
+
+    protected handleDeclarationsForNode() {
+        addParametersToScope(this.params, this.body.scope, !this.isLambda());
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope { //todo duplicate
+        this.innerScope = new Scope(scope, false);
+        return scope;
+    }
+
+    protected getInitialValue():Value {
+        return createCustomFunctionValue(this.params.length);
+    }
+
+    protected abstract isLambda():boolean;
+}
+
 export class ArrayNode extends SemanticExpression {
     elements:SemanticExpression[];
 
@@ -392,6 +446,12 @@ export class ArrayNode extends SemanticExpression {
     }
 }
 
+export class ArrowFunctionExpressionNode extends AbstractFunctionExpressionNode {
+    protected isLambda():boolean {
+        return true;
+    }
+}
+
 export class AssignmentNode extends SemanticExpression {
     left:SemanticExpression;
     operator:string;
@@ -425,7 +485,7 @@ export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
-        if (this.parent instanceof FunctionExpressionNode || this.parent instanceof FunctionDeclarationNode || this.parent instanceof ForEachNode) {
+        if (this.parent instanceof AbstractFunctionExpressionNode || this.parent instanceof FunctionDeclarationNode || this.parent instanceof ForEachNode) {
             return this.parent.innerScope;
         }
         return new Scope(scope, !!this.parent);
@@ -490,20 +550,6 @@ export class ForNode extends LoopNode {
     update:SemanticNode;
 }
 
-function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
-    for (let i = 0; i < params.length; i++) {
-        scope.set(params[i].name, false, unknown).writes.push(params[i]);
-    }
-    if (addArguments) {
-        scope.set('arguments', false, new ObjectValue(ARGUMENTS, {
-            proto: getObjectValue(Object.prototype),
-            properties: {},
-            propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
-            trueValue: null
-        }));
-    }
-}
-
 export class FunctionDeclarationNode extends SemanticNode {
     id:IdentifierNode;
     params:IdentifierNode[];
@@ -525,41 +571,9 @@ export class FunctionDeclarationNode extends SemanticNode {
     }
 }
 
-export class FunctionExpressionNode extends SemanticExpression {
-    id:IdentifierNode;
-    params:IdentifierNode[];
-    body:SemanticExpression|BlockNode;
-    innerScope:Scope;
-    expression:boolean;
-
-    protected isCleanInner():boolean {
-        return true;
-    }
-
-    getReturnExpression():SemanticExpression {
-        let body = this.body;
-        if (this.expression) {
-            return body as SemanticExpression;
-        } else if (body instanceof BlockNode && body.body.length === 1) {
-            const statement = body.body[0];
-            if (statement instanceof ReturnNode) {
-                return statement.argument;
-            }
-        }
-        return null;
-    }
-
-    protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, true);
-    }
-
-    protected createSubScopeIfNeeded(scope:Scope):Scope { //todo duplicate
-        this.innerScope = new Scope(scope, false);
-        return scope;
-    }
-
-    protected getInitialValue():Value {
-        return createCustomFunctionValue(this.params.length);
+export class FunctionExpressionNode extends AbstractFunctionExpressionNode {
+    protected isLambda():boolean{
+        return false;
     }
 }
 
@@ -579,7 +593,7 @@ export class IdentifierNode extends SemanticExpression {
     }
 
     isReal():boolean {
-        if (this.parent instanceof FunctionExpressionNode && this.parent.id === this) {
+        if (this.parent instanceof AbstractFunctionExpressionNode && this.parent.id === this) {
             return false;
         }
         if (this.parent instanceof LabeledNode || this.parent instanceof BreakNode || this.parent instanceof ContinueNode) {
@@ -606,7 +620,7 @@ export class IdentifierNode extends SemanticExpression {
         if (this.parent instanceof VariableDeclaratorNode && this.parent.id === this) {
             return false; //just initializing
         }
-        if (this.parent instanceof FunctionDeclarationNode || this.parent instanceof FunctionExpressionNode) {
+        if (this.parent instanceof FunctionDeclarationNode || this.parent instanceof AbstractFunctionExpressionNode) {
             return false; //function declaration/parameter
         }
         //noinspection RedundantIfStatementJS
@@ -624,7 +638,7 @@ export class IdentifierNode extends SemanticExpression {
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
-        if (this.parent instanceof FunctionDeclarationNode || this.parent instanceof FunctionExpressionNode) {
+        if (this.parent instanceof FunctionDeclarationNode || this.parent instanceof AbstractFunctionExpressionNode) {
             if (this.parentProperty !== "id") {
                 return this.parent.innerScope;
             }
@@ -932,6 +946,7 @@ export class WhileNode extends LoopNode {
 
 const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope) => SemanticNode} = {
     'ArrayExpression': ArrayNode,
+    'ArrowFunctionExpression': ArrowFunctionExpressionNode,
     'AssignmentExpression': AssignmentNode,
     'BinaryExpression': BinaryNode,
     'Block': BlockComment,

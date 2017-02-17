@@ -2,7 +2,6 @@ var assert = require('assert');
 var recast = require('recast');
 var node = require('../dist/SemanticNode');
 
-
 describe('Semantic node test', function() {
 
     it('parse basic', function() {
@@ -79,6 +78,13 @@ describe('Semantic node test', function() {
         var varArguments = semanticNode.body[0].body.scope.variables['arguments'];
         assert.equal(varArguments.reads.length, 0);
         assert.equal(varArguments.writes.length, 0);
+    });
+
+    it('arrow function expression arguments', function() {
+        var ast = recast.parse('a=>a+1').program;
+        var semanticNode = node.semantic(ast);
+        var varArguments = semanticNode.body[0].expression.body.scope.variables['arguments'];
+        assert.equal(varArguments, null);
     });
 
     it('declaration writes', function() {

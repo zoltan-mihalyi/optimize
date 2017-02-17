@@ -24,6 +24,7 @@ console.log("function");
 function fn() {
     console.log("object");
 }
+console.log(typeof arguments);
 
 console.log(1 + a);
 console.log(2);

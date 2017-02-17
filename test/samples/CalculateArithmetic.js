@@ -24,6 +24,7 @@ console.log(typeof fn);
 function fn() {
     console.log(typeof arguments);
 }
+console.log(typeof arguments);
 
 console.log(1 + a);
 console.log(0 || null || 2);

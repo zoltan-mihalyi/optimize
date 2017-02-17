@@ -1,14 +1,13 @@
 import NodeVisitor = require("../NodeVisitor");
 import {
     CallNode,
-    FunctionExpressionNode,
+    AbstractFunctionExpressionNode,
     SemanticNode,
     IdentifierNode,
     ExpressionStatementNode,
     LoopNode,
     ReturnNode,
     SemanticExpression,
-    LiteralNode
 } from "../SemanticNode";
 import {Variable} from "../Variable";
 import {void0} from "../Utils";
@@ -20,7 +19,7 @@ const builders = recast.types.builders;
 export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(CallNode, (callNode:CallNode) => {
         let callee = callNode.callee;
-        if (!(callee instanceof FunctionExpressionNode)) {
+        if (!(callee instanceof AbstractFunctionExpressionNode)) {
             return;
         }
 
@@ -41,7 +40,7 @@ export = (nodeVisitor:NodeVisitor) => {
         }
     });
 
-    function reduceStatement(callNode:CallNode, callee:FunctionExpressionNode) {
+    function reduceStatement(callNode:CallNode, callee:AbstractFunctionExpressionNode) {
         if (!(callNode.parent instanceof ExpressionStatementNode)) {
             return;
         }
@@ -97,7 +96,7 @@ export = (nodeVisitor:NodeVisitor) => {
         callNode.replaceWith([returnExpression.toAst()]);
     }
 
-    function canSubstituteParameters(node:CallNode, callee:FunctionExpressionNode) {
+    function canSubstituteParameters(node:CallNode, callee:AbstractFunctionExpressionNode) {
         if (callee.params.length > 0) {
             return false;
         }
