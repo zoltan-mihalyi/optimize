@@ -39,4 +39,12 @@ function fn() {
     used();
 }
 
-fn();
+function removeMoreUnused() {
+    var i, j, k;
+    i = 1;
+}
+
+function keepInit() {
+    var i, j = u(), k;
+    k = 1;
+}

@@ -1,41 +1,57 @@
 import NodeVisitor = require("../NodeVisitor");
-import {VariableDeclaratorNode, FunctionDeclarationNode, ForEachNode, SemanticNode} from "../SemanticNode";
-import {map} from "../Utils";
+import {
+    VariableDeclaratorNode,
+    FunctionDeclarationNode,
+    ForEachNode,
+    SemanticNode,
+    VariableDeclarationNode
+} from "../SemanticNode";
 import {Variable} from "../Variable";
 import recast = require("recast");
 
 const builders = recast.types.builders;
 
 export  = (nodeVisitor:NodeVisitor) => {
-    nodeVisitor.on(VariableDeclaratorNode, (node:VariableDeclaratorNode) => {
-        if (node.parent.parent instanceof ForEachNode) {
-            return;
-        }
-        let variable = node.scope.get(node.id.name);
-        if (canBeUsed(variable)) {
-            return;
-        }
-        if (hasWriteWithoutDeclaration(variable)) {
+    nodeVisitor.on(VariableDeclarationNode, (declarationNode:VariableDeclarationNode) => {
+        if (declarationNode.parent instanceof ForEachNode) {
             return;
         }
 
-        const parentNode = node.parent;
-        const index = parentNode.declarations.indexOf(node);
-        const before = parentNode.declarations.slice(0, index);
-        const after = parentNode.declarations.slice(index + 1);
+        function flushDeclarations() {
+            if (currentDeclarations) {
+                result.push(builders.variableDeclaration(declarationNode.kind, currentDeclarations));
+                currentDeclarations = null;
+            }
+        }
 
         const result:Expression[] = [];
-        if (before.length) {
-            result.push(builders.variableDeclaration(parentNode.kind, map(before, node => node.toAst())));
+        let currentDeclarations:Expression[] = null;
+        let keepUnchanged = true;
+        for (var i = 0; i < declarationNode.declarations.length; i++) {
+            const node = declarationNode.declarations[i];
+
+            let variable = node.scope.get(node.id.name);
+            if (canBeUsed(variable) || hasWriteWithoutDeclaration(variable)) {
+                if (currentDeclarations) {
+                    currentDeclarations.push(node.toAst());
+                } else {
+                    currentDeclarations = [node.toAst()];
+                }
+            } else {
+                keepUnchanged = false;
+                if (node.init) {
+                    flushDeclarations();
+                    result.push(builders.expressionStatement(node.init.toAst()));
+                }
+            }
         }
-        if (node.init) {
-            result.push(builders.expressionStatement(node.init.toAst()));
-        }
-        if (after.length) {
-            result.push(builders.variableDeclaration(parentNode.kind, map(after, node => node.toAst())));
+        if (keepUnchanged) {
+            return;
         }
 
-        node.parent.replaceWith(result);
+        flushDeclarations();
+
+        declarationNode.replaceWith(result);
     });
 
     nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
