@@ -43,6 +43,22 @@ describe('Semantic node test', function() {
         assert.strictEqual(varD.writes.length, 1);
     });
 
+    it('Update and assignment writes and reads', function() {
+        var ast = recast.parse('var a=1, b=2, c=3; a++; b+=1; c=4;').program;
+        var semanticNode = node.semantic(ast);
+        var varA = semanticNode.scope.variables['a'];
+        assert.strictEqual(varA.reads.length, 1);
+        assert.strictEqual(varA.writes.length, 2);
+
+        var varB = semanticNode.scope.variables['b'];
+        assert.strictEqual(varB.reads.length, 1);
+        assert.strictEqual(varB.writes.length, 2);
+
+        var varC = semanticNode.scope.variables['c'];
+        assert.strictEqual(varC.reads.length, 0);
+        assert.strictEqual(varC.writes.length, 2);
+    });
+
     it('Unknown variables are global', function() {
         var ast = recast.parse('function fn(){log(a)}').program;
         var semanticNode = node.semantic(ast);

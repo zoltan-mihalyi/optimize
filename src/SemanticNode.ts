@@ -763,13 +763,13 @@ export class IdentifierNode extends SemanticExpression {
         }
         //noinspection RedundantIfStatementJS
         if (this.parent instanceof AssignmentNode && this.parent.left === this) {
-            return false; //assignment
+            return this.parent.operator !== '=';
         }
         return true;
     }
 
     isWrite():boolean {
-        if (this.parent instanceof UpdateNode) {
+        if (this.parent instanceof UpdateNode || (this.parent instanceof AssignmentNode && this.parent.left === this)) {
             return true;
         }
         return !this.isRead();
