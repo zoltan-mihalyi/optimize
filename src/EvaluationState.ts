@@ -50,6 +50,12 @@ class EvaluationState {
         });
     }
 
+    mergeMaybe(state:EvaluationState) {
+        state.variableValues.each((variable, value) => {
+            this.variableValues.setOrUpdate(variable, this.getValue(variable).or(value));
+        });
+    }
+
     mergeBack(state:EvaluationState) {
         state.variableValues.each((variable:Variable, value:Value) => {
             if (this.hasValue(variable)) {

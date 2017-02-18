@@ -805,7 +805,7 @@ export class IfNode extends SemanticNode {
             this.alternate.track(alternateCtx);
             state.mergeOr(consequentCtx, alternateCtx);
         } else {
-            state.mergeOr(state, consequentCtx); //todo different method
+            state.mergeMaybe(consequentCtx);
         }
     }
 }
