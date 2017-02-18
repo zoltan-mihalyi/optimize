@@ -46,13 +46,6 @@ class Scope {
         return null;
     }
 
-    private setUnknownGlobal(name:string):Variable {
-        if (this.parent) {
-            return this.parent.setUnknownGlobal(name);
-        }
-        return this.set(name, false, null);
-    }
-
     each(callback:(name:string, variable:Variable) => void) {
         for (const name in this.variables) {
             if (hasOwnProperty.call(this.variables, name)) {
@@ -84,9 +77,11 @@ class Scope {
     getFunctionScopedVariables():Variable[] {
         const result:Variable[] = [];
         for (const name in this.variables) {
-            const variable = this.variables[name];
-            if (!variable.blockScoped) {
-                result.push(variable);
+            if (hasOwnProperty.call(this.variables, name)) {
+                const variable = this.variables[name];
+                if (!variable.blockScoped) {
+                    result.push(variable);
+                }
             }
         }
         return result;
@@ -108,6 +103,13 @@ class Scope {
             return this;
         }
         return this.parent.findFunctionScope();
+    }
+
+    private setUnknownGlobal(name:string):Variable {
+        if (this.parent) {
+            return this.parent.setUnknownGlobal(name);
+        }
+        return this.set(name, false, null);
     }
 }
 

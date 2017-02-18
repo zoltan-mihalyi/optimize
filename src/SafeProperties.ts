@@ -1,5 +1,4 @@
 import Map = require("./Map");
-import Cache = require("./Cache");
 
 const SafeProperties:Map<Object,string[]> = new Map<Object, string[]>();
 SafeProperties.set(Object.prototype, [

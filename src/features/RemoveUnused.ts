@@ -17,13 +17,6 @@ export  = (nodeVisitor:NodeVisitor) => {
             return;
         }
 
-        function flushDeclarations() {
-            if (currentDeclarations) {
-                result.push(builders.variableDeclaration(declarationNode.kind, currentDeclarations));
-                currentDeclarations = null;
-            }
-        }
-
         const result:Expression[] = [];
         let currentDeclarations:Expression[] = null;
         let keepUnchanged = true;
@@ -52,6 +45,13 @@ export  = (nodeVisitor:NodeVisitor) => {
         flushDeclarations();
 
         declarationNode.replaceWith(result);
+
+        function flushDeclarations() {
+            if (currentDeclarations) {
+                result.push(builders.variableDeclaration(declarationNode.kind, currentDeclarations));
+                currentDeclarations = null;
+            }
+        }
     });
 
     nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {

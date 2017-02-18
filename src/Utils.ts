@@ -22,7 +22,7 @@ export function nonEnumerable(value:Value):PropDescriptor {
     return {
         enumerable: false,
         value: value
-    }
+    };
 }
 
 export function isPrimitive(value:any):value is number|string|boolean|null {

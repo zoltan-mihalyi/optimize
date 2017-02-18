@@ -1,4 +1,7 @@
 import {equals} from "./Utils";
+
+export let unknown:UnknownValue;
+
 export abstract class Value {
     abstract map(mapper:(value:SingleValue) => Value):Value;
 
@@ -20,7 +23,7 @@ export abstract class IterableValue extends Value {
     abstract each(callback:(value:SingleValue) => void):void;
 }
 
-export const enum ComparisonResult{
+export const enum ComparisonResult {
     TRUE,
     FALSE,
     UNKNOWN
@@ -61,6 +64,7 @@ export class KnownValue extends SingleValue {
 
     compareTo(other:SingleValue, strict:boolean):ComparisonResult {
         if (other instanceof KnownValue) {
+            // tslint:disable-next-line:triple-equals
             let equals = strict ? (this.value === other.value) : (this.value == other.value);
             return fromBoolean(equals);
         } else {
@@ -136,10 +140,10 @@ interface ObjectParameters {
 }
 
 export class ObjectValue extends SingleValue {
+    readonly trueValue:Object|null;
     private proto:ObjectValue;
     private properties:PropDescriptorMap;
     private propertyInfo:PropInfo;
-    readonly trueValue:Object|null;
 
     constructor(readonly objectClass:ObjectClass, parameters:ObjectParameters) {
         super();
@@ -157,6 +161,7 @@ export class ObjectValue extends SingleValue {
             return ComparisonResult.FALSE;
         }
         if (this.trueValue) {
+            // tslint:disable-next-line:triple-equals
             return fromBoolean(this.trueValue == (other as KnownValue).value);
         }
         return ComparisonResult.UNKNOWN;
@@ -178,9 +183,8 @@ export class ObjectValue extends SingleValue {
             case PropInfo.KNOWS_ALL:
                 if (this.proto) {
                     return this.proto.resolveProperty(name, getterEvaluator);
-                } else {
-                    return new KnownValue(void 0);
                 }
+                return new KnownValue(void 0);
             case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
                 if (this.proto && this.proto.hasPropertyDeep(name)) {
                     return this.proto.resolveProperty(name, getterEvaluator);
@@ -364,4 +368,4 @@ export class UnknownValue extends Value {
     }
 }
 
-export const unknown:UnknownValue = new UnknownValue();
+unknown = new UnknownValue();

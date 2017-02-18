@@ -2,7 +2,6 @@ import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode, NewNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, Value} from "../Value";
 import {hasTrueValue, getTrueValue} from "../Utils";
-import Map = require("../Map");
 
 const UNSAFE_FUNCTIONS:Function[] = [
     eval,

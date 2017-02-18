@@ -59,7 +59,7 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
     }
     if (!labelName) {
         labelName = createUnusedName('x', name => {
-            return enclosingFunction.contains(node => node instanceof LabeledNode && node.label.name === name)
+            return enclosingFunction.contains(node => node instanceof LabeledNode && node.label.name === name);
         });
     }
 

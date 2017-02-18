@@ -1,3 +1,3 @@
-declare module 'recast'{
+declare module 'recast' {
     export = 0 as any;
 }

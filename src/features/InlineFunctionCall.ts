@@ -81,7 +81,7 @@ export = (nodeVisitor:NodeVisitor) => {
             const paramId = calleeAst.params[i];
             let paramValue;
             if (callNode.arguments.length <= i) {
-                paramValue = builders.unaryExpression('void', builders.literal(0)); //todo util
+                paramValue = void0();
             } else {
                 paramValue = callNode.arguments[i].toAst();
             }
