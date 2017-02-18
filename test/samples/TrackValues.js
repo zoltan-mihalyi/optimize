@@ -134,6 +134,26 @@ function trackVarInLoop() {
     }
 }
 
+function trackInsideAssignment() {
+    var i = 1;
+    u[i] = log(i);
+    var j = 2;
+    u(j = 3).x++;
+    log(j);
+}
+
+function trackForeachObject() {
+    var i = 1;
+    for (var j in {x: i++}) {
+    }
+    console.log(i);
+}
+
+function trackDeclarators() {
+    var i = 1, j = i++;
+    console.log(i, j);
+}
+
 (function trackInFunctionExpression() {
     var z = 2;
     console.log(z);

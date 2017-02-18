@@ -349,6 +349,7 @@ export abstract class ForEachNode extends LoopNode {
     }
 
     track(state:EvaluationState) {
+        this.right.track(state);
         state.trackAsUnsure(state => {
             const identifier = this.left instanceof IdentifierNode ? this.left : this.left.declarations[0].id;
             state.setValue(identifier.getVariable(), unknown);
@@ -485,6 +486,8 @@ export class AssignmentNode extends SemanticExpression {
     right:SemanticExpression;
 
     track(state:EvaluationState) {
+        this.left.track(state);
+        this.right.track(state);
         if (!(this.left instanceof IdentifierNode)) {
             return;
         }
@@ -716,7 +719,7 @@ export class IdentifierNode extends SemanticExpression {
     }
 
     track(state:EvaluationState) {
-        if (!this.isRead()) {
+        if (this.isWrite()) {
             return;
         }
         let variable = this.getVariable();
@@ -763,6 +766,13 @@ export class IdentifierNode extends SemanticExpression {
             return false; //assignment
         }
         return true;
+    }
+
+    isWrite():boolean {
+        if (this.parent instanceof UpdateNode) {
+            return true;
+        }
+        return !this.isRead();
     }
 
     refersToSame(identifier:IdentifierNode):boolean {
@@ -1127,6 +1137,7 @@ export class UpdateNode extends SemanticExpression {
     prefix:boolean;
 
     track(state:EvaluationState) {
+        this.argument.track(state);
         if (!(this.argument instanceof IdentifierNode)) {
             return;
         }
@@ -1181,6 +1192,7 @@ export class VariableDeclaratorNode extends SemanticNode {
 
     track(state:EvaluationState) {
         if (this.init) {
+            this.init.track(state);
             state.setValue(this.id.getVariable(), this.init.getValue());
         }
     }

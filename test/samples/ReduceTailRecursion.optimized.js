@@ -23,8 +23,7 @@ function calledMultipleTimes(a) {
             a = new_a;
             continue x;
         } else if (a === 0) {
-            var new_a2 = void 0;
-            a = new_a2;
+            a = void 0;
             new_a = void 0;
             continue x;
         } else {
@@ -87,8 +86,7 @@ function hasVars(x) {
         if (a) {
             console.log(a);
         }
-        var new_x = void 0;
-        x = new_x;
+        x = void 0;
         a = void 0;
         continue x;
         return;
