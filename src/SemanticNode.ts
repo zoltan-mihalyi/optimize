@@ -185,10 +185,12 @@ export abstract class SemanticNode {
                 }
             } else if (Array.isArray(sub)) {
                 for (let j = 0; j < sub.length; j++) {
+                    const lengthBefore = sub.length;
                     let result:T = (sub[j] as SemanticNode).walk(before);
                     if (result) {
                         return result;
                     }
+                    j -= lengthBefore - sub.length;
                 }
             }
         }
