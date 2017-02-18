@@ -1,8 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {MemberNode} from "../SemanticNode";
 import {SingleValue, KnownValue, unknown} from "../Value";
-import {createValueFromCall, canWrapObjectValue, wrapObjectValue} from "../BuiltIn";
-import {throwValue} from "../Utils";
+import {throwValue, canWrapObjectValue} from "../Utils";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {
@@ -12,9 +11,9 @@ export  = (nodeVisitor:NodeVisitor) => {
             }
 
             if (canWrapObjectValue(left)) {
-                let object = wrapObjectValue(left);
+                let object = node.context.wrapObjectValue(left);
                 return object.resolveProperty('' + property.value, (fn:Function) => {
-                    return createValueFromCall(fn, object.trueValue, []);
+                    return node.context.createValueFromCall(fn, object.trueValue, []);
                 });
             } else {
                 return throwValue(`ACCESSING PROPERTY ${property.value} ON ${(left as KnownValue).value}`);

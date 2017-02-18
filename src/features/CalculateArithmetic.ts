@@ -2,7 +2,6 @@ import NodeVisitor = require("../NodeVisitor");
 import {BinaryNode, UnaryNode} from "../SemanticNode";
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
 import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
-import {createValue} from "../BuiltIn";
 import Cache = require("../Cache");
 
 
@@ -29,7 +28,7 @@ export = (nodeVisitor:NodeVisitor) => {
             }
 
             if (hasTrueValue(leftValue) && hasTrueValue(rightValue)) {
-                return createValue(evaluator(getTrueValue(leftValue), getTrueValue(rightValue)));
+                return node.context.createValue(evaluator(getTrueValue(leftValue), getTrueValue(rightValue)));
             }
             return unknown;
         }));
@@ -53,7 +52,7 @@ export = (nodeVisitor:NodeVisitor) => {
         const mapper = unaryCache.get(node.operator);
         node.setValue(valueInformation.map(value => {
             if (hasTrueValue(value)) {
-                return createValue(mapper(getTrueValue(value)));
+                return node.context.createValue(mapper(getTrueValue(value)));
             } else if (value instanceof ObjectValue) {
                 if (node.operator === '!') {
                     return new KnownValue(false);

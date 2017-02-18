@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
 import {ForInNode, VariableDeclarationNode, BlockNode} from "../SemanticNode";
 import {SingleValue} from "../Value";
-import {canWrapObjectValue, wrapObjectValue} from "../BuiltIn";
+import {canWrapObjectValue} from "../Utils";
 import recast = require("recast");
 
 const builders = recast.types.builders;
@@ -20,7 +20,7 @@ export  = (nodeVisitor:NodeVisitor) => {
         const unrolled:Expression[] = [];
 
         if (canWrapObjectValue(rightValue)) {
-            const object = wrapObjectValue(rightValue);
+            const object = node.context.wrapObjectValue(rightValue);
 
             if (!object.canIterate()) {
                 return;

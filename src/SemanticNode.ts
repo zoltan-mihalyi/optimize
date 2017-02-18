@@ -12,9 +12,9 @@ import {
     ARGUMENTS,
     SingleValue
 } from "./Value";
-import {createCustomFunctionValue, getObjectValue, createValue} from "./BuiltIn";
 import {equals, hasTrueValue, getTrueValue, throwValue, map, binaryCache} from "./Utils";
 import {Variable} from "./Variable";
+import Context from "./Context";
 import Scope = require("./Scope");
 import recast = require("recast");
 import Map = require("./Map");
@@ -34,7 +34,7 @@ export abstract class SemanticNode {
     private comments?:Comment[];
 
     constructor(source:Expression, public readonly parent:SemanticNode,
-                private readonly parentObject:{[idx:string]:any}, protected readonly parentProperty:string, scope:Scope) {
+                private readonly parentObject:{[idx:string]:any}, protected readonly parentProperty:string, scope:Scope, readonly context:Context) {
         scope = this.createSubScopeIfNeeded(scope);
         this.scope = scope;
 
@@ -46,12 +46,12 @@ export abstract class SemanticNode {
 
                 const semanticArray = [];
                 for (let i = 0; i < sourceChild.length; i++) {
-                    semanticArray.push(toSemanticNode(sourceChild[i], this, semanticArray, i + '', scope));
+                    semanticArray.push(toSemanticNode(sourceChild[i], this, semanticArray, i + '', scope, context));
                 }
 
                 (this as any)[childKey] = semanticArray;
             } else if (sourceChild && sourceChild.type) {
-                (this as any)[childKey] = toSemanticNode(sourceChild, this, this, childKey, scope);
+                (this as any)[childKey] = toSemanticNode(sourceChild, this, this, childKey, scope, context);
             } else {
                 (this as any)[childKey] = sourceChild;
             }
@@ -102,7 +102,7 @@ export abstract class SemanticNode {
             throw new Error('Parent does not exist.');
         }
 
-        const nodes:SemanticNode[] = map(expressions, e => toSemanticNode(e, this.parent, this.parentObject, this.parentProperty, this.scope));
+        const nodes:SemanticNode[] = map(expressions, e => toSemanticNode(e, this.parent, this.parentObject, this.parentProperty, this.scope, this.context));
 
         const removedCommentsByOriginal:Map<Expression,Comment> = new Map<Expression,Comment>();
         this.walk((node:SemanticNode) => {
@@ -367,13 +367,15 @@ abstract class Comment extends SemanticNode {
     }
 }
 
-function addParametersToScope(params:IdentifierNode[], scope:Scope, addArguments:boolean) {
+function addParametersToScope(node:FunctionDeclarationNode|AbstractFunctionExpressionNode, addArguments:boolean) {
+    const params = node.params;
+    const scope = node.body.scope;
     for (let i = 0; i < params.length; i++) {
         scope.set(params[i].name, false, unknown).writes.push(params[i]);
     }
     if (addArguments) {
         scope.set('arguments', false, new ObjectValue(ARGUMENTS, {
-            proto: getObjectValue(Object.prototype),
+            proto: node.context.getObjectValue(Object.prototype),
             properties: {},
             propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
             trueValue: null
@@ -409,7 +411,7 @@ export abstract class AbstractFunctionExpressionNode extends SemanticExpression 
     }
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, !this.isLambda());
+        addParametersToScope(this, !this.isLambda());
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope { //todo duplicate
@@ -418,7 +420,7 @@ export abstract class AbstractFunctionExpressionNode extends SemanticExpression 
     }
 
     protected getInitialValue():Value {
-        return createCustomFunctionValue(this.params.length);
+        return this.context.createCustomFunctionValue(this.params.length);
     }
 
     protected abstract isLambda():boolean;
@@ -466,7 +468,7 @@ export class ArrayNode extends SemanticExpression {
             }
         }
         return new ObjectValue(ARRAY, {
-            proto: getObjectValue(Array.prototype),
+            proto: this.context.getObjectValue(Array.prototype),
             properties: properties,
             propertyInfo: PropInfo.KNOWS_ALL,
             trueValue: trueValue
@@ -504,7 +506,7 @@ export class AssignmentNode extends SemanticExpression {
         const evaluator = binaryCache.get(operator.substring(0, operator.length - 1));
         state.setValue(variable, leftValue.product(rightValue, (left:SingleValue, right:SingleValue) => {
             if (hasTrueValue(left) && hasTrueValue(right)) {
-                return createValue(evaluator(getTrueValue(left), getTrueValue(right)));
+                return this.context.createValue(evaluator(getTrueValue(left), getTrueValue(right)));
             }
             return unknown;
         }));
@@ -686,11 +688,11 @@ export class FunctionDeclarationNode extends SemanticNode {
     innerScope:Scope;
 
     track(state:EvaluationState) {
-        state.setValue(this.id.getVariable(), createCustomFunctionValue(this.params.length));
+        state.setValue(this.id.getVariable(), this.context.createCustomFunctionValue(this.params.length));
     }
 
     protected handleDeclarationsForNode() {
-        addParametersToScope(this.params, this.body.scope, true);
+        addParametersToScope(this, true);
         let variable = this.scope.set(this.id.name, false, unknown);
         variable.writes.push(this.id);
     }
@@ -849,7 +851,7 @@ export class LiteralNode extends SemanticExpression {
         if (typeof this.value !== 'object' || this.value === null) {
             return new KnownValue(this.value);
         } else {
-            return getObjectValue(this.value);
+            return this.context.getObjectValue(this.value);
         }
     }
 }
@@ -951,7 +953,7 @@ export class ObjectNode extends SemanticExpression {
             }
         }
         return new ObjectValue(OBJECT, {
-            proto: getObjectValue(Object.prototype),
+            proto: this.context.getObjectValue(Object.prototype),
             properties: properties,
             propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
             trueValue: trueValue
@@ -995,7 +997,7 @@ export class ProgramNode extends BlockNode {
     }
 
     private saveApi(name:string) {
-        this.scope.set(name, true, createValue(global[name]));
+        this.scope.set(name, true, this.context.createValue(global[name]));
     }
 }
 
@@ -1226,7 +1228,11 @@ export class WhileNode extends LoopNode {
     }
 }
 
-const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope) => SemanticNode} = {
+interface SemanticNodeConstructor {
+    new(e:Expression, parent:SemanticNode, parentObject:any, property:string, scope:Scope, context:Context):SemanticNode
+}
+
+const typeToNodeMap:{[type:string]:SemanticNodeConstructor} = {
     'ArrayExpression': ArrayNode,
     'ArrowFunctionExpression': ArrowFunctionExpressionNode,
     'AssignmentExpression': AssignmentNode,
@@ -1271,10 +1277,10 @@ const typeToNodeMap:{[type:string]:new(e:Expression, parent:SemanticNode, parent
     'WhileStatement': WhileNode
 };
 
-function toSemanticNode(expression:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope):SemanticNode {
+function toSemanticNode(expression:Expression, parent:SemanticNode, parentObject:any, parentProperty:string, scope:Scope, context:Context):SemanticNode {
     let Node = typeToNodeMap[expression.type];
     if (Node) {
-        return new Node(expression, parent, parentObject, parentProperty, scope);
+        return new Node(expression, parent, parentObject, parentProperty, scope, context);
     } else {
         throw new Error('Unknown node:' + expression.type);
     }
@@ -1284,7 +1290,7 @@ export function semantic(expression:Expression):SemanticNode {
     if ((expression as any).errors && (expression as any).errors.length) {
         throw (expression as any).errors[0];
     }
-    const node = toSemanticNode(expression, null, null, null, null);
+    const node = toSemanticNode(expression, null, null, null, null, new Context());
     node.initialize();
     return node;
 }

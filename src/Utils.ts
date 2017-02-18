@@ -1,7 +1,7 @@
 import recast = require("recast");
 
 const builders = recast.types.builders;
-import {KnownValue, Value, PropDescriptor, unknown, ObjectValue} from "./Value";
+import {KnownValue, Value, PropDescriptor, unknown, ObjectValue, SingleValue} from "./Value";
 import Cache = require("./Cache");
 
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
@@ -64,4 +64,8 @@ export function map<S,T>(data:S[], transform:(source:S) => T):T[] {
 
 export function void0():Expression {
     return builders.unaryExpression('void', builders.literal(0));
+}
+
+export function canWrapObjectValue(value:SingleValue):boolean {
+    return value instanceof ObjectValue || (value as KnownValue).value != null;
 }

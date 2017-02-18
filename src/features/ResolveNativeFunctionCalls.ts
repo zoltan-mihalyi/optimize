@@ -1,7 +1,6 @@
 import NodeVisitor = require("../NodeVisitor");
 import {CallNode, MemberNode, NewNode} from "../SemanticNode";
 import {ObjectValue, FUNCTION, Value} from "../Value";
-import {createValueFromCall, createValueFromNewCall, isBuiltIn, getObjectValue} from "../BuiltIn";
 import {hasTrueValue, getTrueValue} from "../Utils";
 import Map = require("../Map");
 
@@ -19,23 +18,6 @@ const UNSAFE_FUNCTIONS:Function[] = [
     Date.prototype.toLocaleTimeString,
     Function
 ];
-
-function isUnsafeInFunctionCall(fn:Function, context:any, parameters:any[]):boolean {
-    [fn, context] = getRealFunctionAndContext(fn, context, parameters);
-
-    if (fn === Date) {
-        return true;
-    } else if (fn === Object.prototype.toString) {
-        return context == null;
-    } else if (fn === Object.prototype.hasOwnProperty) {
-        if (isBuiltIn(context)) {
-            return !getObjectValue(context).hasProperty(parameters[0]);
-        } else if (context instanceof RegExp) {
-            return true;
-        }
-    }
-    return false;
-}
 
 function isUnsafeNewCall(fn:Function, parameters:any[]) {
     if (fn === Date) {
@@ -105,19 +87,36 @@ export  = (nodeVisitor:NodeVisitor) => {
             if (canMutate(fn, context, parameters)) {
                 return;
             }
-            resultValue = createValueFromCall(fn, context, parameters);
+            resultValue = node.context.createValueFromCall(fn, context, parameters);
         } else {
             if (isUnsafeNewCall(fn, parameters)) {
                 return;
             }
-            resultValue = createValueFromNewCall(fn, parameters);
+            resultValue = node.context.createValueFromNewCall(fn, parameters);
         }
         node.setValue(resultValue);
 
-    }
 
-    function canMutate(fn:Function, context:any, parameters:any[]) {
-        [fn, context] = getRealFunctionAndContext(fn, context, parameters);
-        return MUTATING_METHODS.indexOf(fn) !== -1 && isBuiltIn(context);
+        function isUnsafeInFunctionCall(fn:Function, context:any, parameters:any[]):boolean {
+            [fn, context] = getRealFunctionAndContext(fn, context, parameters);
+
+            if (fn === Date) {
+                return true;
+            } else if (fn === Object.prototype.toString) {
+                return context == null;
+            } else if (fn === Object.prototype.hasOwnProperty) {
+                if (node.context.isBuiltIn(context)) {
+                    return !node.context.getObjectValue(context).hasProperty(parameters[0]);
+                } else if (context instanceof RegExp) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function canMutate(fn:Function, context:any, parameters:any[]) {
+            [fn, context] = getRealFunctionAndContext(fn, context, parameters);
+            return MUTATING_METHODS.indexOf(fn) !== -1 && node.context.isBuiltIn(context);
+        }
     }
 };
