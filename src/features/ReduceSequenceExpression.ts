@@ -1,6 +1,6 @@
-import {SequenceNode} from "../Nodes";
 import NodeVisitor = require("../NodeVisitor");
 import recast = require("recast");
+import {SequenceNode} from "../node/Others";
 
 const builders = recast.types.builders;
 

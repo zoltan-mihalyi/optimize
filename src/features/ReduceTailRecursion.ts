@@ -1,20 +1,17 @@
 import NodeVisitor = require("../NodeVisitor");
-import {
-    CallNode,
-    ReturnNode,
-    IdentifierNode,
-    FunctionDeclarationNode,
-    LabeledNode,
-    WhileNode,
-    LiteralNode,
-    BlockNode,
-    VariableDeclarationNode
-} from "../Nodes";
 import {createUnusedName, void0} from "../Utils";
-import Scope = require("../Scope");
-import recast = require("recast");
 import {unknown} from "../Value";
 import {SemanticNode} from "../node/SemanticNode";
+import {FunctionDeclarationNode} from "../node/Functions";
+import {CallNode} from "../node/CallNodes";
+import {ReturnNode, LabeledNode} from "../node/JumpNodes";
+import {IdentifierNode} from "../node/IdentifierNode";
+import {LiteralNode} from "../node/Literal";
+import {WhileNode} from "../node/Loops";
+import {BlockNode} from "../node/Blocks";
+import {VariableDeclarationNode} from "../node/Variables";
+import Scope = require("../Scope");
+import recast = require("recast");
 
 const builders = recast.types.builders;
 

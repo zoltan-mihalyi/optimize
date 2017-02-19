@@ -2,7 +2,13 @@ import recast = require("recast");
 
 const builders = recast.types.builders;
 import {KnownValue, Value, PropDescriptor, unknown, ObjectValue, SingleValue} from "./Value";
+import {SemanticNode} from "./node/SemanticNode";
 import Cache = require("./Cache");
+import Scope = require("./Scope");
+
+export interface InnerScoped extends SemanticNode {
+    innerScope:Scope;
+}
 
 export function createUnusedName(base:string, isUsed:(name:string) => boolean) {
     let name = base;
@@ -68,4 +74,9 @@ export function void0():Expression {
 
 export function canWrapObjectValue(value:SingleValue):boolean {
     return value instanceof ObjectValue || (value as KnownValue).value != null;
+}
+
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+export function isInnerScoped(node:SemanticNode):node is InnerScoped {
+    return node !== null && hasOwnProperty.call(node, 'innerScope');
 }

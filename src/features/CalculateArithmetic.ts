@@ -1,8 +1,8 @@
 import NodeVisitor = require("../NodeVisitor");
-import {BinaryNode, UnaryNode} from "../Nodes";
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
 import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
 import Cache = require("../Cache");
+import {BinaryNode, UnaryNode} from "../node/Operators";
 
 
 type UnaryFunction = (x:any) => any;

@@ -1,10 +1,8 @@
-import Map = require("../Map");
-import EvaluationState = require("../EvaluationState");
 import recast = require("recast");
 import {Value, unknown, UnknownValue, KnownValue} from "../Value";
-import {UnaryNode, LiteralNode} from "../Nodes";
 import {equals} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
+import {LiteralNode, UnaryNode} from "./Later";
 
 const builders = recast.types.builders;
 

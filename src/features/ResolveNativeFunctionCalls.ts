@@ -1,7 +1,8 @@
 import NodeVisitor = require("../NodeVisitor");
-import {CallNode, MemberNode, NewNode} from "../Nodes";
 import {ObjectValue, FUNCTION, Value} from "../Value";
 import {hasTrueValue, getTrueValue} from "../Utils";
+import {NewNode, CallNode} from "../node/CallNodes";
+import {MemberNode} from "../node/Others";
 
 const UNSAFE_FUNCTIONS:Function[] = [
     eval,

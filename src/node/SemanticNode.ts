@@ -1,14 +1,11 @@
 import Scope = require("../Scope");
 import Context from "../Context";
-import {
-    toSemanticNode,
-    FunctionDeclarationNode,
-    AbstractFunctionExpressionNode,
-    Comment,
-    BlockNode,
-    VariableDeclarationNode
-} from "../Nodes";
+import {toSemanticNode} from "../Nodes";
 import {map} from "../Utils";
+import {FunctionDeclarationNode, AbstractFunctionExpressionNode} from "./Functions";
+import {Comment} from "./Comments";
+import Later = require("./Later");
+
 import recast = require("recast");
 import Map = require("../Map");
 import EvaluationState = require("../EvaluationState");
@@ -59,7 +56,7 @@ export abstract class SemanticNode {
     getEnclosingFunction():FunctionDeclarationNode|AbstractFunctionExpressionNode {
         let parent = this.parent;
         while (parent) {
-            if (parent instanceof FunctionDeclarationNode || parent instanceof AbstractFunctionExpressionNode) {
+            if (parent instanceof Later.FunctionDeclarationNode || parent instanceof Later.AbstractFunctionExpressionNode) {
                 return parent;
             }
             parent = parent.parent;
@@ -106,7 +103,7 @@ export abstract class SemanticNode {
 
         const removedCommentsByOriginal:Map<Expression,Comment> = new Map<Expression,Comment>();
         this.walk((node:SemanticNode) => {
-            if (node instanceof Comment) {
+            if (node instanceof Later.Comment) {
                 removedCommentsByOriginal.set(node.original, node);
             }
         });
@@ -114,7 +111,7 @@ export abstract class SemanticNode {
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
             node.walk((node:SemanticNode) => {
-                if (node instanceof Comment) {
+                if (node instanceof Later.Comment) {
                     removedCommentsByOriginal.remove(node.original);
                 }
             });
@@ -217,17 +214,17 @@ export abstract class SemanticNode {
     }
 
     getDeclarations():Expression[] {
-        if (!(this instanceof BlockNode)) {
+        if (!(this instanceof Later.BlockNode)) {
             return [];
         }
         const enclosingFunction = this.getEnclosingFunction();
         const result:Expression[] = [];
         this.walk((node:SemanticNode) => {
-            if (node instanceof FunctionDeclarationNode) {
+            if (node instanceof Later.FunctionDeclarationNode) {
                 if (node.getEnclosingFunction() === enclosingFunction) {
                     result.push(node.toAst());
                 }
-            } else if (node instanceof VariableDeclarationNode && !node.isBlockScoped()) {
+            } else if (node instanceof Later.VariableDeclarationNode && !node.isBlockScoped()) {
                 if (node.getEnclosingFunction() === enclosingFunction) {
                     let declaration = node.toAst() as any;
                     for (let i = 0; i < declaration.declarations.length; i++) {

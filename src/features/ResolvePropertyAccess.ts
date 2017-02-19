@@ -1,7 +1,7 @@
 import NodeVisitor = require("../NodeVisitor");
-import {MemberNode} from "../Nodes";
 import {SingleValue, KnownValue, unknown} from "../Value";
 import {throwValue, canWrapObjectValue} from "../Utils";
+import {MemberNode} from "../node/Others";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {

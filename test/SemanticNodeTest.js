@@ -1,6 +1,8 @@
 var assert = require('assert');
 var recast = require('recast');
 var Nodes = require('../dist/Nodes');
+var Blocks = require('../dist/node/Blocks');
+var Functions = require('../dist/node/Functions');
 
 describe('Semantic node test', function() {
 
@@ -8,8 +10,8 @@ describe('Semantic node test', function() {
         var ast = recast.parse('var a = 1;  function b (){console.log(a)}').program;
         var semanticNode = Nodes.semantic(ast);
 
-        assert(semanticNode instanceof Nodes.ProgramNode);
-        assert(semanticNode.body[1] instanceof Nodes.FunctionDeclarationNode);
+        assert(semanticNode instanceof Blocks.ProgramNode);
+        assert(semanticNode.body[1] instanceof Functions.FunctionDeclarationNode);
     });
 
     it('Hiding', function() {

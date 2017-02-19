@@ -1,8 +1,10 @@
 import NodeVisitor = require("../NodeVisitor");
-import {ForInNode, VariableDeclarationNode, BlockNode} from "../Nodes";
 import {SingleValue} from "../Value";
 import {canWrapObjectValue} from "../Utils";
 import recast = require("recast");
+import {ForInNode} from "../node/Loops";
+import {VariableDeclarationNode} from "../node/Variables";
+import {BlockNode} from "../node/Blocks";
 
 const builders = recast.types.builders;
 
