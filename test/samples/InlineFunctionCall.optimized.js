@@ -64,3 +64,7 @@ console.log(a * a);
 console.log((function(a) {
     return a * a
 })(a));
+
+console.log((function() {
+    return 1;
+})(1, a));

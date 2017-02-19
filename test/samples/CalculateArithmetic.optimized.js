@@ -8,6 +8,7 @@ console.log(false);
 console.log(1);
 console.log(1);
 console.log("undefined");
+console.log(1 + function() {});
 
 console.log(false);
 console.log(1);
@@ -20,6 +21,9 @@ console.log(void 0);
 console.log("object");
 console.log("object");
 console.log("function");
+console.log(false);
+console.log(void 0);
+console.log(+function() {});
 console.log("function");
 function fn() {
     console.log("object");

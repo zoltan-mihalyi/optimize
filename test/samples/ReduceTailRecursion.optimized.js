@@ -94,3 +94,25 @@ function hasVars(x) {
 }
 
 hasVars(1);
+
+var notADeclaration = function() {
+    return notADeclaration();
+}
+
+function noBlock(n) {
+    x:while (1) {
+        var new_n = n - 1;
+        n = new_n;
+        continue x;
+    }
+}
+
+function noLoop() {
+    x2:
+    while (1) {
+        x:if (u) {
+            continue x2;
+        }
+        return;
+    }
+}

@@ -8,6 +8,7 @@ console.log(2 === '2');
 console.log(null + 1);
 console.log(1.2 >> 0);
 console.log('' + void 42);
+console.log(1 + function() {});
 
 console.log(!1);
 console.log(+'1');
@@ -19,7 +20,10 @@ console.log(![err()]);
 console.log(void []);
 console.log(typeof []);
 console.log(typeof {});
-console.log(typeof function(){});
+console.log(typeof function() {});
+console.log(!function() {});
+console.log(void function() {});
+console.log(+function() {});
 console.log(typeof fn);
 function fn() {
     console.log(typeof arguments);
@@ -30,7 +34,7 @@ console.log(1 + a);
 console.log(0 || null || 2);
 
 console.log(1 + ({}).constructor(2));
-console.log(2-[]);
+console.log(2 - []);
 console.log(-u);
 
 console.log(1 === {});

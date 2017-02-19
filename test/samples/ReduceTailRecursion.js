@@ -60,3 +60,18 @@ function hasVars(x) {
 }
 
 hasVars(1);
+
+var notADeclaration = function() {
+    return notADeclaration();
+}
+
+function noBlock(n) {
+    x:while (1)
+        return noBlock(n - 1);
+}
+
+function noLoop() {
+    x:if (u) {
+        return noLoop();
+    }
+}

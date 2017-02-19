@@ -48,7 +48,7 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
         let statement = body[0];
         if (statement instanceof LabeledNode) {
             let labelBody = statement.body;
-            if (labelBody instanceof WhileNode && isTrue(labelBody.test) && labelBody.body instanceof BlockNode) {
+            if (labelBody instanceof WhileNode && isTrue(labelBody.test)) {
                 labelName = statement.label.name;
                 hasWrappedBody = true;
             }
@@ -60,10 +60,12 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
         });
     }
 
-    node.parent.replaceWith([ //change params and goto
-        ...swapVars(node.scope, enclosingFunction.params, node.arguments),
-        ...resetUnsafeVars(enclosingFunction.body),
-        builders.continueStatement(builders.identifier(labelName))
+    node.parent.replaceWith([
+        builders.blockStatement([ //change params and goto
+            ...swapVars(node.scope, enclosingFunction.params, node.arguments),
+            ...resetUnsafeVars(enclosingFunction.body),
+            builders.continueStatement(builders.identifier(labelName))
+        ])
     ]);
 
     if (!hasWrappedBody) {
