@@ -166,6 +166,12 @@ describe('Semantic node test', function() {
         assert(semanticNode.body[1].expression.body.scope.get('a').initialValue);
     });
 
+    it('catch parameter is a variable', function() {
+        var ast = recast.parse('try{}catch(e){}').program;
+        var semanticNode = Nodes.semantic(ast);
+        assert(semanticNode.body[0].handler.body.scope.get('e').initialValue);
+    });
+
     it('replace root', function() {
         var ast = recast.parse('log(1)').program;
         var semanticNode = Nodes.semantic(ast);

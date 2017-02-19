@@ -3,6 +3,7 @@ import {ExpressionNode} from "./ExpressionNode";
 import {IdentifierNode} from "./IdentifierNode";
 import {BlockNode} from "./Blocks";
 import EvaluationState = require("../EvaluationState");
+import {unknown} from "../Value";
 
 export class CatchNode extends SemanticNode {
     param:IdentifierNode;
@@ -10,6 +11,10 @@ export class CatchNode extends SemanticNode {
 
     track(state:EvaluationState) {
         this.body.track(state);
+    }
+
+    protected handleDeclarationsForNode() {
+        this.body.scope.set(this.param.name, false, unknown).writes.push(this.param);
     }
 }
 
