@@ -1,5 +1,5 @@
 import NodeVisitor = require("../NodeVisitor");
-import {MemberNode} from "../SemanticNode";
+import {MemberNode} from "../Nodes";
 import {SingleValue, KnownValue} from "../Value";
 import {throwValue, hasTrueValue, getTrueValue} from "../Utils";
 

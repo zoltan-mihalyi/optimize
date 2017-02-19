@@ -3,11 +3,11 @@ import {
     VariableDeclaratorNode,
     FunctionDeclarationNode,
     ForEachNode,
-    SemanticNode,
     VariableDeclarationNode
-} from "../SemanticNode";
+} from "../Nodes";
 import {Variable} from "../Variable";
 import recast = require("recast");
+import {SemanticNode} from "../node/SemanticNode";
 
 const builders = recast.types.builders;
 

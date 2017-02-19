@@ -1,5 +1,5 @@
 import NodeVisitor = require("../NodeVisitor");
-import {ExpressionStatementNode} from "../SemanticNode";
+import {ExpressionStatementNode} from "../Nodes";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(ExpressionStatementNode, (node:ExpressionStatementNode) => {

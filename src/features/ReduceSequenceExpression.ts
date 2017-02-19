@@ -1,4 +1,4 @@
-import {SequenceNode} from "../SemanticNode";
+import {SequenceNode} from "../Nodes";
 import NodeVisitor = require("../NodeVisitor");
 import recast = require("recast");
 

@@ -3,18 +3,18 @@ import {
     CallNode,
     ReturnNode,
     IdentifierNode,
-    SemanticNode,
     FunctionDeclarationNode,
     LabeledNode,
     WhileNode,
     LiteralNode,
     BlockNode,
     VariableDeclarationNode
-} from "../SemanticNode";
+} from "../Nodes";
 import {createUnusedName, void0} from "../Utils";
 import Scope = require("../Scope");
 import recast = require("recast");
 import {unknown} from "../Value";
+import {SemanticNode} from "../node/SemanticNode";
 
 const builders = recast.types.builders;
 

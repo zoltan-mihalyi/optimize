@@ -1,4 +1,4 @@
-import {SemanticNode} from "./SemanticNode";
+import {SemanticNode} from "./node/SemanticNode";
 
 type Constructor<T> = new(...args:any[]) => T;
 type Callback<T extends SemanticNode> = (node:T) => void;

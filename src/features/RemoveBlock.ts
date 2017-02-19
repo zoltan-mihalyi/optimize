@@ -1,5 +1,5 @@
 import NodeVisitor = require("../NodeVisitor");
-import {BlockNode, VariableDeclarationNode} from "../SemanticNode";
+import {BlockNode, VariableDeclarationNode} from "../Nodes";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(BlockNode, (node:BlockNode) => {

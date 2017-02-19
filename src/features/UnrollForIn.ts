@@ -1,5 +1,5 @@
 import NodeVisitor = require("../NodeVisitor");
-import {ForInNode, VariableDeclarationNode, BlockNode} from "../SemanticNode";
+import {ForInNode, VariableDeclarationNode, BlockNode} from "../Nodes";
 import {SingleValue} from "../Value";
 import {canWrapObjectValue} from "../Utils";
 import recast = require("recast");

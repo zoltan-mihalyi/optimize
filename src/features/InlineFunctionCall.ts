@@ -2,17 +2,17 @@ import NodeVisitor = require("../NodeVisitor");
 import {
     CallNode,
     AbstractFunctionExpressionNode,
-    SemanticNode,
     IdentifierNode,
     ExpressionStatementNode,
     LoopNode,
     ReturnNode,
-    SemanticExpression,
-} from "../SemanticNode";
+} from "../Nodes";
 import {Variable} from "../Variable";
 import {void0} from "../Utils";
 import recast = require("recast");
 import Map = require("../Map");
+import {SemanticNode} from "../node/SemanticNode";
+import {ExpressionNode} from "../node/ExpressionNode";
 
 const builders = recast.types.builders;
 
@@ -92,7 +92,7 @@ export = (nodeVisitor:NodeVisitor) => {
         callNode.parent.replaceWith([builders.blockStatement(body)]);
     }
 
-    function reduceExpression(returnExpression:SemanticExpression, callNode:CallNode) {
+    function reduceExpression(returnExpression:ExpressionNode, callNode:CallNode) {
         callNode.replaceWith([returnExpression.toAst()]);
     }
 

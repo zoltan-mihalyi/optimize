@@ -1,5 +1,6 @@
-import {SemanticNode, IdentifierNode} from "./SemanticNode";
+import {IdentifierNode} from "./Nodes";
 import {Value} from "./Value";
+import {SemanticNode} from "./node/SemanticNode";
 import Scope = require("./Scope");
 
 export interface Variable {

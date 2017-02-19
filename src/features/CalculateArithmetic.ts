@@ -1,5 +1,5 @@
 import NodeVisitor = require("../NodeVisitor");
-import {BinaryNode, UnaryNode} from "../SemanticNode";
+import {BinaryNode, UnaryNode} from "../Nodes";
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
 import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
 import Cache = require("../Cache");

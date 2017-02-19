@@ -1,6 +1,6 @@
 ///<reference path="Expression.ts"/>
 import recast = require('recast');
-import {semantic} from "./SemanticNode";
+import {semantic} from "./Nodes";
 import NodeVisitor = require("./NodeVisitor");
 
 import CalculateArithmetic = require("./features/CalculateArithmetic");

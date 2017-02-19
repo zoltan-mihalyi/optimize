@@ -1,6 +1,6 @@
 import NodeVisitor = require("../NodeVisitor");
 import EvaluationState = require("../EvaluationState");
-import {FunctionDeclarationNode, BlockNode, ProgramNode, AbstractFunctionExpressionNode} from "../SemanticNode";
+import {FunctionDeclarationNode, BlockNode, ProgramNode, AbstractFunctionExpressionNode} from "../Nodes";
 export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
         track(node.body);

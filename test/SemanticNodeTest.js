@@ -1,20 +1,20 @@
 var assert = require('assert');
 var recast = require('recast');
-var node = require('../dist/SemanticNode');
+var Nodes = require('../dist/Nodes');
 
 describe('Semantic node test', function() {
 
     it('parse basic', function() {
         var ast = recast.parse('var a = 1;  function b (){console.log(a)}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
 
-        assert(semanticNode instanceof node.ProgramNode);
-        assert(semanticNode.body[1] instanceof node.FunctionDeclarationNode);
+        assert(semanticNode instanceof Nodes.ProgramNode);
+        assert(semanticNode.body[1] instanceof Nodes.FunctionDeclarationNode);
     });
 
     it('Hiding', function() {
         var ast = recast.parse('var a = 1, b = 1, c; function d (a) {var b=2; console.log(a, b, c, d); var c;}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varA = semanticNode.scope.variables['a'];
         assert.strictEqual(varA.reads.length, 0);
 
@@ -27,7 +27,7 @@ describe('Semantic node test', function() {
 
     it('Writes', function() {
         var ast = recast.parse('var a = 1, b = 2, c, d; b = 1; d = 1;').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varA = semanticNode.scope.variables['a'];
         assert.strictEqual(varA.reads.length, 0);
         assert.strictEqual(varA.writes.length, 1);
@@ -45,7 +45,7 @@ describe('Semantic node test', function() {
 
     it('Update and assignment writes and reads', function() {
         var ast = recast.parse('var a=1, b=2, c=3; a++; b+=1; c=4;').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varA = semanticNode.scope.variables['a'];
         assert.strictEqual(varA.reads.length, 1);
         assert.strictEqual(varA.writes.length, 2);
@@ -61,14 +61,14 @@ describe('Semantic node test', function() {
 
     it('Unknown variables are global', function() {
         var ast = recast.parse('function fn(){log(a)}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varA = semanticNode.scope.variables['a'];
         assert(varA);
     });
 
     it('Parameter scope', function() {
         var ast = recast.parse('function fn(a){} (function(b){})').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var outerVarA = semanticNode.scope.variables['a'];
         assert.equal(outerVarA, void 0);
 
@@ -78,7 +78,7 @@ describe('Semantic node test', function() {
 
     it('Parameter writes', function() {
         var ast = recast.parse('function fn(a){log(a)} (function(b){})').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varA = semanticNode.body[0].body.scope.variables['a'];
         assert.equal(varA.reads.length, 1);
         assert.equal(varA.writes.length, 1);
@@ -90,7 +90,7 @@ describe('Semantic node test', function() {
 
     it('arguments writes', function() {
         var ast = recast.parse('function fn(){}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varArguments = semanticNode.body[0].body.scope.variables['arguments'];
         assert.equal(varArguments.reads.length, 0);
         assert.equal(varArguments.writes.length, 0);
@@ -98,14 +98,14 @@ describe('Semantic node test', function() {
 
     it('arrow function expression arguments', function() {
         var ast = recast.parse('a=>a+1').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varArguments = semanticNode.body[0].expression.body.scope.variables['arguments'];
         assert.equal(varArguments, null);
     });
 
     it('declaration writes', function() {
         var ast = recast.parse('function fn(){}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varFn = semanticNode.scope.variables['fn'];
         assert.equal(varFn.reads.length, 0);
         assert.equal(varFn.writes.length, 1);
@@ -113,7 +113,7 @@ describe('Semantic node test', function() {
 
     it('function and block scope vars', function() {
         var ast = recast.parse('while(1){let x; var y;}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varX = semanticNode.scope.variables['x'];
         assert.equal(varX, void 0);
 
@@ -123,7 +123,7 @@ describe('Semantic node test', function() {
 
     it('foreach loop variable writes and reads', function() {
         var ast = recast.parse('for(var i1 in x){} for(let i2 in x){} for(i3 in x){}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         var varI1 = semanticNode.scope.variables['i1'];
         assert.equal(varI1.reads.length, 0);
         assert.equal(varI1.writes.length, 1);
@@ -138,7 +138,7 @@ describe('Semantic node test', function() {
 
     it('function parameter and foreach variable scopes', function() {
         var ast = recast.parse('for(let i2 in x){} for(i3 in x){} function fn(i4){}').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
 
         assert(semanticNode.body[0].left.scope === semanticNode.body[0].body.scope);
 
@@ -150,7 +150,7 @@ describe('Semantic node test', function() {
 
     it('not every id is real', function() {
         var ast = recast.parse('var i = 0; i:while(1){continue i; break i;};(function i(){})').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
 
         var varI = semanticNode.scope.get('i');
         assert.strictEqual(varI.reads.length, 0);
@@ -159,14 +159,14 @@ describe('Semantic node test', function() {
 
     it('function parameters are initialized', function() {
         var ast = recast.parse('function fn(a){} (function(a){})').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         assert(semanticNode.body[0].body.scope.get('a').initialValue);
         assert(semanticNode.body[1].expression.body.scope.get('a').initialValue);
     });
 
     it('replace root', function() {
         var ast = recast.parse('log(1)').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         assert.throws(function() {
             semanticNode.replaceWith([]);
         });
@@ -174,7 +174,7 @@ describe('Semantic node test', function() {
 
     it('replace non-array', function() {
         var ast = recast.parse('1+1').program;
-        var semanticNode = node.semantic(ast);
+        var semanticNode = Nodes.semantic(ast);
         assert.throws(function() {
             semanticNode.body[0].expression.remove();
         });
@@ -184,7 +184,7 @@ describe('Semantic node test', function() {
         var ast = recast.parse('return;').program;
 
         assert.throws(function() {
-            node.semantic(ast);
+            Nodes.semantic(ast);
         });
     });
 });

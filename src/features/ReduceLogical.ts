@@ -1,5 +1,5 @@
 import {KnownValue} from "../Value";
-import {LogicalNode} from "../SemanticNode";
+import {LogicalNode} from "../Nodes";
 import NodeVisitor = require("../NodeVisitor");
 
 export = (nodeVisitor:NodeVisitor) => {
