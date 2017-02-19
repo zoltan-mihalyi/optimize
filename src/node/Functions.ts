@@ -10,7 +10,7 @@ import {BlockNode} from "./Blocks";
 
 function addParametersToScope(node:FunctionDeclarationNode|AbstractFunctionExpressionNode, addArguments:boolean) {
     const params = node.params;
-    const scope = node.body.scope;
+    const scope = node.innerScope;
     for (let i = 0; i < params.length; i++) {
         scope.set(params[i].name, false, unknown).writes.push(params[i]);
     }

@@ -43,6 +43,7 @@ console.log(false);
 
 console.log(false);
 console.log(false);
+console.log(function(){} == 1);
 
 console.log(typeof {
     x: console.log()

@@ -19,6 +19,7 @@ console.log(Array.prototype.push(1));
 console.log(Array.prototype.push.apply(Object.prototype, [1]));
 
 console.log(new Date(100).getTime());
+console.log(new Date().getTime());
 
 console.log(Object.hasOwnProperty('prototype'));
 console.log(({x: 1}).hasOwnProperty('x'));
@@ -27,3 +28,6 @@ console.log(Object.prototype.toString.call(null));
 console.log(/a/.hasOwnProperty('global'));
 console.log(new Function('return typeof Object.create')());
 console.log(eval('1+1'));
+
+console.log(Function.prototype.apply.call(function(){}));
+console.log((function(){}).apply(Date));

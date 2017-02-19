@@ -43,6 +43,7 @@ console.log({} === []);
 
 console.log(1 == {});
 console.log(Math == 1);
+console.log(function(){} == 1);
 
 console.log(typeof {
     x: console.log()

@@ -1,8 +1,8 @@
 import NodeVisitor = require("../NodeVisitor");
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
 import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
-import Cache = require("../Cache");
 import {BinaryNode, UnaryNode} from "../node/Operators";
+import Cache = require("../Cache");
 
 
 type UnaryFunction = (x:any) => any;
@@ -53,13 +53,13 @@ export = (nodeVisitor:NodeVisitor) => {
         node.setValue(valueInformation.map(value => {
             if (hasTrueValue(value)) {
                 return node.context.createValue(mapper(getTrueValue(value)));
-            } else if (value instanceof ObjectValue) {
+            } else {
                 if (node.operator === '!') {
                     return new KnownValue(false);
                 } else if (node.operator === 'void') {
                     return new KnownValue(void 0);
                 } else if (node.operator === 'typeof') {
-                    return new KnownValue(value.objectClass.getTypeof());
+                    return new KnownValue((value as ObjectValue).objectClass.getTypeof());
                 }
             }
             return unknown;

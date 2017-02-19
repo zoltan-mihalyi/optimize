@@ -151,3 +151,14 @@ function trackDeclarators() {
 }
 
 console.log(2);
+
+function trackArrow() {
+    if (u) {
+        return x => (x = 1, console.log(1));
+    } else {
+        return x => {
+            x = 1;
+            console.log(1);
+        };
+    }
+}

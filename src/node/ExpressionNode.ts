@@ -2,7 +2,8 @@ import recast = require("recast");
 import {Value, unknown, UnknownValue, KnownValue} from "../Value";
 import {equals} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
-import {LiteralNode, UnaryNode} from "./Later";
+import {LiteralNode, UnaryNode, AbstractFunctionExpressionNode} from "./Later";
+import Scope = require("../Scope");
 
 const builders = recast.types.builders;
 
@@ -81,6 +82,13 @@ export abstract class ExpressionNode extends SemanticNode {
 
     protected getInitialValue():Value {
         return unknown;
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        if (this.parent instanceof AbstractFunctionExpressionNode && this.parentProperty === 'body') {
+            return this.parent.innerScope;
+        }
+        return super.createSubScopeIfNeeded(scope);
     }
 
     protected abstract isCleanInner():boolean;
