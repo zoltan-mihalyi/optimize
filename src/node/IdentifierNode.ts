@@ -16,11 +16,10 @@ export class IdentifierNode extends ExpressionNode {
     }
 
     track(state:EvaluationState) {
-        if (this.isWrite()) {
-            return;
+        if (this.isOnlyRead()) {
+            let variable = this.getVariable();
+            this.setValue(state.getValue(variable));
         }
-        let variable = this.getVariable();
-        this.setValue(state.getValue(variable));
     }
 
     getVariable():Variable {
@@ -71,14 +70,14 @@ export class IdentifierNode extends ExpressionNode {
         return true;
     }
 
-    isWrite():boolean {
+    isOnlyRead():boolean {
         if (this.parent instanceof Later.UpdateNode) {
-            return true;
+            return false;
         }
         if (this.parent instanceof Later.AssignmentNode && this.parent.left === this) {
-            return true;
+            return false;
         }
-        return !this.isRead();
+        return this.isRead();
     }
 
     refersToSame(identifier:IdentifierNode):boolean {
