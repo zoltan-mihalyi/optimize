@@ -1,7 +1,7 @@
 import Scope = require("../Scope");
 import Context from "../Context";
 import {toSemanticNode} from "../Nodes";
-import {map} from "../Utils";
+import {map, hasOwnProperty} from "../Utils";
 import {FunctionDeclarationNode, AbstractFunctionExpressionNode} from "./Functions";
 import {Comment} from "./Comments";
 import Later = require("./Later");
@@ -9,8 +9,6 @@ import Later = require("./Later");
 import recast = require("recast");
 import Map = require("../Map");
 import EvaluationState = require("../EvaluationState");
-
-const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 export abstract class SemanticNode {
     readonly type:string;
@@ -33,7 +31,7 @@ export abstract class SemanticNode {
 
         this.original = source.original;
         for (let childKey in source) {
-            if (hasOwnProperty.call(source, childKey)) {
+            if (hasOwnProperty(source, childKey)) {
                 this.childKeys.push(childKey);
                 let sourceChild:any = (source as any)[childKey];
                 if (Array.isArray(sourceChild)) {

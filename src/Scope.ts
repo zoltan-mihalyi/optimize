@@ -1,12 +1,10 @@
-import {createUnusedName} from "./Utils";
+import {createUnusedName, hasOwnProperty} from "./Utils";
 import {Variable} from "./Variable";
 import {Value} from "./Value";
 
 interface Variables {
     [name:string]:Variable;
 }
-
-const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 class Scope {
     private readonly variables:Variables = {};
@@ -28,7 +26,7 @@ class Scope {
 
     get(name:string):Variable {
         /* istanbul ignore else */
-        if (hasOwnProperty.call(this.variables, name)) {
+        if (hasOwnProperty(this.variables, name)) {
             return this.variables[name];
         }
         if (this.parent) {
@@ -39,7 +37,7 @@ class Scope {
 
     each(callback:(name:string, variable:Variable) => void) {
         for (const name in this.variables) {
-            if (hasOwnProperty.call(this.variables, name)) {
+            if (hasOwnProperty(this.variables, name)) {
                 callback(name, this.variables[name]);
             }
         }
@@ -69,7 +67,7 @@ class Scope {
         const result:Variable[] = [];
         for (const name in this.variables) {
             /* istanbul ignore else */
-            if (hasOwnProperty.call(this.variables, name)) {
+            if (hasOwnProperty(this.variables, name)) {
                 const variable = this.variables[name];
                 if (!variable.blockScoped) {
                     result.push(variable);

@@ -76,7 +76,11 @@ export function canWrapObjectValue(value:SingleValue):boolean {
     return value instanceof ObjectValue || (value as KnownValue).value != null;
 }
 
-const hasOwnProperty = Object.prototype.hasOwnProperty;
 export function isInnerScoped(node:SemanticNode):node is InnerScoped {
-    return node !== null && hasOwnProperty.call(node, 'innerScope');
+    return node !== null && hasOwnProperty(node, 'innerScope');
+}
+
+const hasOwnProp = Object.prototype.hasOwnProperty;
+export function hasOwnProperty(object:Object, property:string):boolean {
+    return hasOwnProp.call(object, property);
 }

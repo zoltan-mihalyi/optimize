@@ -16,7 +16,7 @@ import {
     NUMBER,
     PropDescriptor
 } from "./Value";
-import {throwValue, isPrimitive, nonEnumerable} from "./Utils";
+import {throwValue, isPrimitive, nonEnumerable, hasOwnProperty} from "./Utils";
 import Map = require("./Map");
 import Cache = require("./Cache");
 import SafeProperties = require("./SafeProperties");
@@ -148,9 +148,9 @@ export default class Context {
             const propDescriptor:PropDescriptor = {
                 enumerable: propertyDescriptor.enumerable
             };
-            if (propertyDescriptor.hasOwnProperty('value')) {
+            if (hasOwnProperty(propertyDescriptor,'value')) {
                 propDescriptor.value = this.createValue((object as any)[propName]);
-            } else if (propertyDescriptor.hasOwnProperty('get')) {
+            } else if (hasOwnProperty(propertyDescriptor,'get')) {
                 propDescriptor.get = this.createValue(propertyDescriptor.get) as ObjectValue;
             }
             properties[propName] = propDescriptor;

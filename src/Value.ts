@@ -1,4 +1,4 @@
-import {equals} from "./Utils";
+import {equals, hasOwnProperty} from "./Utils";
 
 export let unknown:UnknownValue;
 
@@ -206,7 +206,7 @@ export class ObjectValue extends SingleValue {
     iterate(callback:(key:string) => void) {
         for (const i in this.properties) {
             /* istanbul ignore else */
-            if (Object.prototype.hasOwnProperty.call(this.properties, i)) {
+            if (hasOwnProperty(this.properties, i)) {
                 const property = this.properties[i];
                 if (property.enumerable) {
                     callback(i);
@@ -219,7 +219,7 @@ export class ObjectValue extends SingleValue {
     }
 
     hasProperty(name:string):boolean {
-        return Object.prototype.hasOwnProperty.call(this.properties, name);
+        return hasOwnProperty(this.properties, name);
     }
 
     dirty() {
