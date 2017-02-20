@@ -55,9 +55,11 @@ console.log(typeof ({
     x:function() {
     }
 }).x);
+console.log(typeof [function() {}][0]);
 console.log(typeof ({
     [function() {}]: 1
 }));
+console.log(typeof {x: this});
 
 console.log(-0);
 console.log(-[]);

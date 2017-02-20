@@ -24,7 +24,7 @@ export = (nodeVisitor:NodeVisitor) => {
         const returnExpression = callee.getReturnExpression();
         const canReduceToExpression = returnExpression && canSubstituteParameters(callNode, callee);
 
-        if (callee.innerScope.get('arguments').reads.length > 0) { //todo util
+        if (!callee.isLambda() && callee.innerScope.get('arguments').reads.length > 0) { //todo util
             return;
         }
         if (callNode.hasParent(node => node instanceof LoopNode)) {

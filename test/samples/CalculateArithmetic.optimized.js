@@ -52,6 +52,8 @@ console.log(typeof {
     [console.log()]: 1
 });
 console.log("function");
+console.log("function");
+console.log("object");
 console.log("object");
 
 console.log(-0);

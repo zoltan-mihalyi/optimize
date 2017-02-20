@@ -48,7 +48,7 @@ export class ThisNode extends ExpressionNode {
         return true;
     }
 
-    track(state:EvaluationState) {
+    track() {
     }
 }
 

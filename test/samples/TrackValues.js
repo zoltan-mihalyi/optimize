@@ -76,6 +76,13 @@ function trackLoopBody() {
     }
     console.log(i);
     console.log(x);
+
+    var y = 1;
+    for (; ;) {
+        y++;
+        break;
+    }
+    console.log(y);
 }
 
 function trackLoopTest() {
@@ -98,6 +105,11 @@ function trackLoopTest() {
     for (; x4 > 0; x4++) {
     }
     console.log(x4);
+
+    var x5 = 1;
+    do {
+    } while (x5--);
+    console.log(x5);
 }
 
 function trackTryCatch() {
@@ -109,6 +121,7 @@ function trackTryCatch() {
 
     }
     console.log(x);
+    throw (x = 3, console.log(x), new Error("!"));
 }
 
 function trackTryFinally() {

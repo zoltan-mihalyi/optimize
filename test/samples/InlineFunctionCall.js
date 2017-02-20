@@ -74,3 +74,5 @@ console.log((function(a) {
 console.log((function() {
     return 1;
 })(1, a));
+
+console.log((() => a * a)());

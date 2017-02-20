@@ -64,12 +64,12 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
         return this.context.createCustomFunctionValue(this.params.length);
     }
 
-    protected abstract isLambda():boolean;
+    abstract isLambda():boolean;
 }
 Later.AbstractFunctionExpressionNode = AbstractFunctionExpressionNode;
 
 export class ArrowFunctionExpressionNode extends AbstractFunctionExpressionNode {
-    protected isLambda():boolean {
+    isLambda():boolean {
         return true;
     }
 }
@@ -98,7 +98,7 @@ export class FunctionDeclarationNode extends SemanticNode implements InnerScoped
 Later.FunctionDeclarationNode = FunctionDeclarationNode;
 
 export class FunctionExpressionNode extends AbstractFunctionExpressionNode {
-    protected isLambda():boolean {
+    isLambda():boolean {
         return false;
     }
 }
