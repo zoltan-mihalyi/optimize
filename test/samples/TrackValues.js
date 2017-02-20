@@ -14,6 +14,21 @@ function trackUpdate() {
     var x = 1;
     x++;
     console.log(x);
+    x--;
+    console.log(x);
+    x=function() {
+    };
+    x++;
+    console.log(x);
+}
+
+function trackUpdate2() {
+    var x = 1;
+    x+=1;
+    console.log(x);
+    x+=function() {
+    };
+    console.log(x);
 }
 
 function trackObject() {
@@ -183,4 +198,18 @@ function mergeElse() {
     }
 
     console.log(x, y);
+}
+
+function trackSwithc() {
+    var i = 1, j = 2, k = 3;
+    switch (u) {
+        case 1:
+            i++;
+        case 2:
+            j = 3;
+            break;
+        default:
+            k = 4;
+    }
+    console.log(i, j, k);
 }

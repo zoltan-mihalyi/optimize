@@ -205,6 +205,7 @@ export class ObjectValue extends SingleValue {
 
     iterate(callback:(key:string) => void) {
         for (const i in this.properties) {
+            /* istanbul ignore else */
             if (Object.prototype.hasOwnProperty.call(this.properties, i)) {
                 const property = this.properties[i];
                 if (property.enumerable) {

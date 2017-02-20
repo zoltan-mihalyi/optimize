@@ -14,16 +14,6 @@ class Scope {
     constructor(private parent:Scope, readonly blockScope:boolean) {
     }
 
-    hasInFunction(name:string):boolean {
-        if (hasOwnProperty.call(this.variables, name)) {
-            return true;
-        }
-        if (this.parent && this.blockScope) {
-            return this.parent.hasInFunction(name);
-        }
-        return false;
-    }
-
     has(name:string):boolean {
         return !!this.get(name);
     }
@@ -37,6 +27,7 @@ class Scope {
     }
 
     get(name:string):Variable {
+        /* istanbul ignore else */
         if (hasOwnProperty.call(this.variables, name)) {
             return this.variables[name];
         }
@@ -77,6 +68,7 @@ class Scope {
     getFunctionScopedVariables():Variable[] {
         const result:Variable[] = [];
         for (const name in this.variables) {
+            /* istanbul ignore else */
             if (hasOwnProperty.call(this.variables, name)) {
                 const variable = this.variables[name];
                 if (!variable.blockScoped) {
