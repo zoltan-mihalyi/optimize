@@ -37,22 +37,18 @@ class EvaluationState {
     mergeOr(state1:EvaluationState, state2:EvaluationState) {
         const map1 = state1.variableValues;
         state1.variableValues.each((variable, value) => {
-            if (state2.hasValue(variable)) {
-                this.setValueIfHas(variable, value.or(state2.getValue(variable)));
-            } else {
-                this.setValueIfHas(variable, value);
-            }
+            this.variableValues.setOrUpdate(variable, value.or(state2.getValue(variable)));
         });
         state2.variableValues.each((variable, value) => {
             if (!map1.has(variable)) {
-                this.setValueIfHas(variable, value);
+                this.orWith(variable, value);
             }
         });
     }
 
     mergeMaybe(state:EvaluationState) {
         state.variableValues.each((variable, value) => {
-            this.variableValues.setOrUpdate(variable, this.getValue(variable).or(value));
+            this.orWith(variable, value);
         });
     }
 
@@ -93,10 +89,8 @@ class EvaluationState {
         return false;
     }
 
-    private setValueIfHas(variable:Variable, value:Value) {
-        if (this.hasValue(variable)) {
-            this.setValue(variable, value);
-        }
+    private orWith(variable:Variable, value:Value) {
+        this.variableValues.setOrUpdate(variable, this.getValue(variable).or(value));
     }
 }
 

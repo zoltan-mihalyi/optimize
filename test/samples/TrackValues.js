@@ -169,3 +169,18 @@ function trackArrow() {
         };
     }
 }
+
+function mergeElse() {
+    var x;
+    if (u) {
+        if (u) {
+            u();
+        } else {
+            x = true;
+        }
+    } else {
+        x = true;
+    }
+
+    console.log(x, y);
+}
