@@ -35,3 +35,7 @@ console.log("function");
 console.log(null.x);
 
 console.log({}[function() {}]);
+
+Math.PI = 3;
+Math.PI -= 3;
+Math.PI++;

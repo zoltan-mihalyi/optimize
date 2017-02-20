@@ -37,6 +37,18 @@ export class MemberNode extends ExpressionNode {
         this.property.track(state);
     }
 
+    isReadOnly():boolean {
+        if (this.parent instanceof Later.UpdateNode) {
+            return false;
+        }
+        //noinspection RedundantIfStatementJS
+        if (this.parent instanceof Later.AssignmentNode && this.parent.left === this) {
+            return false;
+        }
+        return true;
+    }
+
+
     getPropertyValue():Value {
         return !this.computed ? new KnownValue((this.property as IdentifierNode).name) : this.property.getValue();
     }

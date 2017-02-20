@@ -5,6 +5,9 @@ import {MemberNode} from "../node/Others";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {
+        if (!node.isReadOnly()) {
+            return;
+        }
         const resolved = node.object.getValue().product(node.getPropertyValue(), (left:SingleValue, property:SingleValue) => {
             if (!(property instanceof KnownValue)) {
                 return unknown;
