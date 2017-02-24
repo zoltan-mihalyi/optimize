@@ -1,7 +1,7 @@
-import NodeVisitor = require("../NodeVisitor");
 import {KnownValue, unknown, ObjectValue, ComparisonResult} from "../Value";
 import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
 import {BinaryNode, UnaryNode} from "../node/Operators";
+import {TrackingVisitor} from "../NodeVisitor";
 import Cache = require("../Cache");
 
 
@@ -11,7 +11,7 @@ const unaryCache = new Cache<string, UnaryFunction>(operator => {
     return new Function('arg', `return ${operator} arg;`) as UnaryFunction;
 });
 
-export = (nodeVisitor:NodeVisitor) => {
+export = (nodeVisitor:TrackingVisitor) => {
 
     nodeVisitor.on(BinaryNode, (node:BinaryNode) => {
         const rightValue = node.right.getValue();

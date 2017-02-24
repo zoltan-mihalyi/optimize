@@ -1,10 +1,10 @@
-import NodeVisitor = require("../NodeVisitor");
 import {Variable} from "../Variable";
 import recast = require("recast");
 import {SemanticNode} from "../node/SemanticNode";
 import {FunctionDeclarationNode} from "../node/Functions";
 import {VariableDeclarationNode, VariableDeclaratorNode} from "../node/Variables";
 import {ForEachNode} from "../node/Loops";
+import {NodeVisitor} from "../NodeVisitor";
 
 const builders = recast.types.builders;
 

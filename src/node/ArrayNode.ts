@@ -1,15 +1,16 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {Value, PropDescriptorMap, KnownValue, ObjectValue, ARRAY, PropInfo} from "../Value";
 import {hasTrueValue, getTrueValue} from "../Utils";
+import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 
 export class ArrayNode extends ExpressionNode {
     elements:ExpressionNode[];
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, trackingVisitor:TrackingVisitor) {
         for (let i = 0; i < this.elements.length; i++) {
             const element = this.elements[i];
-            element.track(state);
+            element.track(state, trackingVisitor);
         }
     }
 

@@ -1,14 +1,15 @@
 import {ExpressionNode} from "./ExpressionNode";
+import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 
 export class CallNode extends ExpressionNode {
     callee:ExpressionNode;
     arguments:ExpressionNode[];
 
-    track(state:EvaluationState) {
-        this.callee.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.callee.track(state, visitor);
         for (let i = 0; i < this.arguments.length; i++) {
-            this.arguments[i].track(state);
+            this.arguments[i].track(state, visitor);
         }
     }
 
@@ -25,10 +26,10 @@ export class NewNode extends ExpressionNode {
         return false;
     }
 
-    track(state:EvaluationState) {
-        this.callee.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.callee.track(state, visitor);
         for (let i = 0; i < this.arguments.length; i++) {
-            this.arguments[i].track(state);
+            this.arguments[i].track(state, visitor);
         }
     }
 

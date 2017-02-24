@@ -4,14 +4,15 @@ import {hasTrueValue, getTrueValue, throwValue} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
+import {TrackingVisitor} from "../NodeVisitor";
 
 export class ObjectNode extends ExpressionNode {
     properties:PropertyNode[];
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         for (let i = 0; i < this.properties.length; i++) {
             const obj = this.properties[i];
-            obj.track(state);
+            obj.track(state, visitor);
         }
     }
 
@@ -76,11 +77,11 @@ export class PropertyNode extends SemanticNode {
     shorthand:boolean;
     value:ExpressionNode;
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         if (this.computed) {
-            this.key.track(state);
+            this.key.track(state, visitor);
         }
-        this.value.track(state);
+        this.value.track(state, visitor);
     }
 
     getKeyValue():Value {

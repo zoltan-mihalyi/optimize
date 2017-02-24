@@ -1,6 +1,6 @@
-import NodeVisitor = require("../NodeVisitor");
 import {BlockNode} from "../node/Blocks";
 import {VariableDeclarationNode} from "../node/Variables";
+import {NodeVisitor} from "../NodeVisitor";
 
 export  = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(BlockNode, (node:BlockNode) => {

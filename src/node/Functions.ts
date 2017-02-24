@@ -31,7 +31,7 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
     innerScope:Scope;
     expression:boolean;
 
-    track() {
+    onTrack() {
     }
 
     getReturnExpression():ExpressionNode {
@@ -80,7 +80,7 @@ export class FunctionDeclarationNode extends SemanticNode implements InnerScoped
     body:BlockNode;
     innerScope:Scope;
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState) {
         state.setValue(this.id.getVariable(), this.context.createCustomFunctionValue(this.params.length));
     }
 

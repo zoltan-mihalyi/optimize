@@ -1,7 +1,7 @@
 ///<reference path="Expression.ts"/>
 import recast = require('recast');
 import {semantic} from "./Nodes";
-import NodeVisitor = require("./NodeVisitor");
+import {NodeVisitor, TrackingVisitor} from "./NodeVisitor";
 
 import CalculateArithmetic = require("./features/CalculateArithmetic");
 import ReduceConditionals = require("./features/ReduceConditionals");
@@ -19,20 +19,22 @@ import RemoveUnused = require("./features/RemoveUnused");
 import TrackValues = require("./features/TrackValues");
 
 const nodeVisitor = new NodeVisitor();
-CalculateArithmetic(nodeVisitor);
 ReduceConditionals(nodeVisitor);
 ReduceLogical(nodeVisitor);
 ReduceTailRecursion(nodeVisitor);
 RemoveBlock(nodeVisitor);
 RemoveExpressionStatements(nodeVisitor);
-ResolvePropertyName(nodeVisitor);
-ResolvePropertyAccess(nodeVisitor);
-ResolveNativeFunctionCalls(nodeVisitor);
 ReduceSequenceExpression(nodeVisitor);
 UnrollForIn(nodeVisitor);
 InlineFunctionCall(nodeVisitor);
 RemoveUnused(nodeVisitor);
-TrackValues(nodeVisitor);
+
+const trackingVisitor = new TrackingVisitor();
+TrackValues(nodeVisitor, trackingVisitor);
+CalculateArithmetic(trackingVisitor);
+ResolveNativeFunctionCalls(trackingVisitor);
+ResolvePropertyAccess(trackingVisitor);
+ResolvePropertyName(trackingVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;

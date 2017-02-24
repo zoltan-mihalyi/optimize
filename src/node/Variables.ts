@@ -5,6 +5,7 @@ import {unknown} from "../Value";
 import Later = require("./Later");
 import {IdentifierNode} from "./IdentifierNode";
 import {ExpressionNode} from "./ExpressionNode";
+import {TrackingVisitor} from "../NodeVisitor";
 
 export class VariableDeclarationNode extends SemanticNode {
     declarations:VariableDeclaratorNode[];
@@ -14,9 +15,9 @@ export class VariableDeclarationNode extends SemanticNode {
         return this.kind !== 'var';
     }
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         for (let i = 0; i < this.declarations.length; i++) {
-            this.declarations[i].track(state);
+            this.declarations[i].track(state, visitor);
         }
     }
 
@@ -34,9 +35,9 @@ export class VariableDeclaratorNode extends SemanticNode {
     id:IdentifierNode;
     init:ExpressionNode;
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         if (this.init) {
-            this.init.track(state);
+            this.init.track(state, visitor);
             state.setValue(this.id.getVariable(), this.init.getValue());
         }
     }

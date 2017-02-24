@@ -3,23 +3,24 @@ import {SemanticNode} from "./SemanticNode";
 import EvaluationState = require("../EvaluationState");
 import {isInnerScoped} from "../Utils";
 import Later = require("./Later");
+import {TrackingVisitor} from "../NodeVisitor";
 const global = new Function('return this')();
 
 export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         const blockState = new EvaluationState(state, this.scope);
         for (let i = 0; i < this.body.length; i++) {
             const node = this.body[i];
             if (node instanceof Later.FunctionDeclarationNode) {
-                node.track(blockState);
+                node.track(blockState, visitor);
             }
         }
         for (let i = 0; i < this.body.length; i++) {
             const node = this.body[i];
             if (!(node instanceof Later.FunctionDeclarationNode)) {
-                node.track(blockState);
+                node.track(blockState, visitor);
             }
         }
         state.mergeBack(blockState);

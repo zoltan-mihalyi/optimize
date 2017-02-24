@@ -6,7 +6,7 @@ export class LiteralNode extends ExpressionNode {
     value:any;
     raw:string;
 
-    track() {
+    onTrack() {
     }
 
     protected isCleanInner():boolean {

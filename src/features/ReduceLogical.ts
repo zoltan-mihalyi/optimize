@@ -1,6 +1,6 @@
 import {KnownValue} from "../Value";
-import NodeVisitor = require("../NodeVisitor");
 import {LogicalNode} from "../node/Operators";
+import {NodeVisitor} from "../NodeVisitor";
 
 export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(LogicalNode, (node:LogicalNode) => {

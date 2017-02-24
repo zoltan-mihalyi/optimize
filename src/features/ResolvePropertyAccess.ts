@@ -1,10 +1,11 @@
-import NodeVisitor = require("../NodeVisitor");
 import {SingleValue, KnownValue, unknown} from "../Value";
 import {throwValue, canWrapObjectValue} from "../Utils";
 import {MemberNode} from "../node/Others";
+import {TrackingVisitor} from "../NodeVisitor";
+import EvaluationState = require("../EvaluationState");
 
-export  = (nodeVisitor:NodeVisitor) => {
-    nodeVisitor.on(MemberNode, (node:MemberNode) => {
+export  = (trackingVisitor:TrackingVisitor) => {
+    trackingVisitor.on(MemberNode, (node:MemberNode, state:EvaluationState) => {
         if (!node.isReadOnly()) {
             return;
         }

@@ -1,4 +1,3 @@
-import NodeVisitor = require("../NodeVisitor");
 import {createUnusedName, void0} from "../Utils";
 import {unknown} from "../Value";
 import {SemanticNode} from "../node/SemanticNode";
@@ -12,6 +11,7 @@ import {BlockNode} from "../node/Blocks";
 import {VariableDeclarationNode} from "../node/Variables";
 import Scope = require("../Scope");
 import recast = require("recast");
+import {NodeVisitor} from "../NodeVisitor";
 
 const builders = recast.types.builders;
 

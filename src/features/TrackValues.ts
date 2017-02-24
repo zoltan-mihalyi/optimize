@@ -1,10 +1,10 @@
-import NodeVisitor = require("../NodeVisitor");
 import EvaluationState = require("../EvaluationState");
 import {FunctionDeclarationNode, AbstractFunctionExpressionNode} from "../node/Functions";
 import {SemanticNode} from "../node/SemanticNode";
 import {ProgramNode} from "../node/Blocks";
+import {TrackingVisitor, NodeVisitor} from "../NodeVisitor";
 
-export = (nodeVisitor:NodeVisitor) => {
+export = (nodeVisitor:NodeVisitor, trackingVisitor:TrackingVisitor) => {
     nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
         track(node.body);
     });
@@ -14,6 +14,6 @@ export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(ProgramNode, track);
 
     function track(node:SemanticNode) {
-        node.track(new EvaluationState(null, node.scope));
+        node.track(new EvaluationState(null, node.scope), trackingVisitor);
     }
 };

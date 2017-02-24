@@ -4,6 +4,7 @@ import {toSemanticNode} from "../Nodes";
 import {map, hasOwnProperty} from "../Utils";
 import {FunctionDeclarationNode, AbstractFunctionExpressionNode} from "./Functions";
 import {Comment} from "./Comments";
+import {TrackingVisitor} from "../NodeVisitor";
 import Later = require("./Later");
 
 import recast = require("recast");
@@ -235,6 +236,11 @@ export abstract class SemanticNode {
         return result;
     }
 
+    track(state:EvaluationState, visitor:TrackingVisitor) {
+        visitor.callAll(this, state);
+        this.onTrack(state, visitor);
+    }
+
     protected handleDeclarationsForNode() {
     }
 
@@ -263,5 +269,5 @@ export abstract class SemanticNode {
         this.updated = true;
     }
 
-    abstract track(state:EvaluationState):void;
+    protected abstract onTrack(state:EvaluationState, visitor:TrackingVisitor):void;
 }

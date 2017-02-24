@@ -1,7 +1,7 @@
 import {KnownValue, SingleValue} from "../Value";
-import NodeVisitor = require("../NodeVisitor");
 import {ConditionalNode} from "../node/Operators";
 import {IfNode} from "../node/Branches";
+import {NodeVisitor} from "../NodeVisitor";
 
 export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(IfNode, reduceConditional);

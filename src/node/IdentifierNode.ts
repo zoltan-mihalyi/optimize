@@ -15,7 +15,7 @@ export class IdentifierNode extends ExpressionNode {
         return !!variable.initialValue;
     }
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState) {
         if (this.isOnlyRead()) {
             let variable = this.getVariable();
             this.setValue(state.getValue(variable));

@@ -1,20 +1,21 @@
 import {SemanticNode} from "./SemanticNode";
-import EvaluationState = require("../EvaluationState");
 import {ExpressionNode} from "./ExpressionNode";
+import {TrackingVisitor} from "../NodeVisitor";
+import EvaluationState = require("../EvaluationState");
 
 export class IfNode extends SemanticNode {
     test:ExpressionNode;
     consequent:SemanticNode;
     alternate:SemanticNode;
 
-    track(state:EvaluationState) {
-        this.test.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.test.track(state, visitor);
         const consequentCtx = new EvaluationState(state, this.scope);
-        this.consequent.track(consequentCtx);
+        this.consequent.track(consequentCtx, visitor);
 
         if (this.alternate) {
             const alternateCtx = new EvaluationState(state, this.scope);
-            this.alternate.track(alternateCtx);
+            this.alternate.track(alternateCtx, visitor);
             state.mergeOr(consequentCtx, alternateCtx);
         } else {
             state.mergeMaybe(consequentCtx);
@@ -26,12 +27,12 @@ export class SwitchCaseNode extends SemanticNode {
     test:ExpressionNode;
     consequent:SemanticNode[];
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         if (this.test) {
-            this.test.track(state);
+            this.test.track(state, visitor);
         }
         for (let i = 0; i < this.consequent.length; i++) {
-            this.consequent[i].track(state);
+            this.consequent[i].track(state, visitor);
         }
     }
 }
@@ -40,11 +41,11 @@ export class SwitchStatementNode extends SemanticNode {
     discriminant:ExpressionNode;
     cases:SwitchCaseNode[];
 
-    track(state:EvaluationState) {
-        this.discriminant.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.discriminant.track(state, visitor);
         state.trackAsUnsure(state => {
             for (let i = 0; i < this.cases.length; i++) {
-                this.cases[i].track(state);
+                this.cases[i].track(state, visitor);
             }
         });
     }

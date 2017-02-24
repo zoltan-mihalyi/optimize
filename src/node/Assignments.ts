@@ -1,6 +1,7 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {binaryCache, hasTrueValue, getTrueValue} from "../Utils";
 import {SingleValue, unknown, KnownValue} from "../Value";
+import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
 
@@ -9,9 +10,9 @@ export class AssignmentNode extends ExpressionNode {
     operator:string;
     right:ExpressionNode;
 
-    track(state:EvaluationState) {
-        this.left.track(state);
-        this.right.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.left.track(state, visitor);
+        this.right.track(state, visitor);
         if (!(this.left instanceof Later.IdentifierNode)) {
             return;
         }
@@ -51,8 +52,8 @@ export class UpdateNode extends ExpressionNode {
     operator:string;
     prefix:boolean;
 
-    track(state:EvaluationState) {
-        this.argument.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.argument.track(state, visitor);
         if (!(this.argument instanceof Later.IdentifierNode)) {
             return;
         }

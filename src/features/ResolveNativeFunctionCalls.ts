@@ -1,8 +1,8 @@
-import NodeVisitor = require("../NodeVisitor");
 import {ObjectValue, FUNCTION, Value} from "../Value";
 import {hasTrueValue, getTrueValue} from "../Utils";
 import {NewNode, CallNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
+import {NodeVisitor, TrackingVisitor} from "../NodeVisitor";
 
 const UNSAFE_FUNCTIONS:Function[] = [
     eval,
@@ -43,9 +43,9 @@ const MUTATING_METHODS:Function[] = [
     Array.prototype.splice
 ];
 
-export  = (nodeVisitor:NodeVisitor) => {
-    nodeVisitor.on(CallNode, resolveCall);
-    nodeVisitor.on(NewNode, resolveCall);
+export  = (visitor:TrackingVisitor) => {
+    visitor.on(CallNode, resolveCall);
+    visitor.on(NewNode, resolveCall);
 
     function resolveCall(node:CallNode|NewNode) {
         let callee = node.callee;

@@ -1,4 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
+import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
 
@@ -7,9 +8,9 @@ export class BinaryNode extends ExpressionNode {
     left:ExpressionNode;
     right:ExpressionNode;
 
-    track(state:EvaluationState) {
-        this.left.track(state);
-        this.right.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.left.track(state, visitor);
+        this.right.track(state, visitor);
     }
 
     protected isCleanInner():boolean {
@@ -22,12 +23,12 @@ export class ConditionalNode extends ExpressionNode {
     consequent:ExpressionNode;
     alternate:ExpressionNode;
 
-    track(state:EvaluationState) {
-        this.test.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.test.track(state, visitor);
         const consequentCtx = new EvaluationState(state, this.scope);
-        this.consequent.track(consequentCtx);
+        this.consequent.track(consequentCtx, visitor);
         const alternateCtx = new EvaluationState(state, this.scope);
-        this.alternate.track(alternateCtx);
+        this.alternate.track(alternateCtx, visitor);
         state.mergeOr(consequentCtx, alternateCtx);
     }
 
@@ -46,8 +47,8 @@ export class UnaryNode extends ExpressionNode {
     argument:ExpressionNode;
     operator:string;
 
-    track(state:EvaluationState) {
-        this.argument.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.argument.track(state, visitor);
     }
 
     protected isCleanInner():boolean {

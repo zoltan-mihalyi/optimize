@@ -1,4 +1,3 @@
-import NodeVisitor = require("../NodeVisitor");
 import {Variable} from "../Variable";
 import {void0} from "../Utils";
 import recast = require("recast");
@@ -11,6 +10,7 @@ import {LoopNode} from "../node/Loops";
 import {ExpressionStatementNode} from "../node/Others";
 import {ReturnNode} from "../node/JumpNodes";
 import {IdentifierNode} from "../node/IdentifierNode";
+import {NodeVisitor} from "../NodeVisitor";
 
 const builders = recast.types.builders;
 

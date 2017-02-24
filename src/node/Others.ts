@@ -4,9 +4,10 @@ import {SemanticNode} from "./SemanticNode";
 import {KnownValue, Value} from "../Value";
 import {IdentifierNode} from "./IdentifierNode";
 import Later = require("./Later");
+import {TrackingVisitor} from "../NodeVisitor";
 
 export class EmptyNode extends SemanticNode {
-    track() {
+    onTrack() {
     }
 }
 
@@ -18,8 +19,8 @@ export class ExpressionStatementNode extends SemanticNode {
         return typeof this.directive === 'string';
     }
 
-    track(state:EvaluationState) {
-        this.expression.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.expression.track(state, visitor);
     }
 }
 
@@ -32,9 +33,9 @@ export class MemberNode extends ExpressionNode {
         return false; //todo
     }
 
-    track(state:EvaluationState) {
-        this.object.track(state);
-        this.property.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.object.track(state, visitor);
+        this.property.track(state, visitor);
     }
 
     isReadOnly():boolean {
@@ -60,16 +61,16 @@ export class ThisNode extends ExpressionNode {
         return true;
     }
 
-    track() {
+    onTrack() {
     }
 }
 
 export class SequenceNode extends ExpressionNode {
     expressions:ExpressionNode[];
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         for (let i = 0; i < this.expressions.length; i++) {
-            this.expressions[i].track(state);
+            this.expressions[i].track(state, visitor);
         }
     }
 

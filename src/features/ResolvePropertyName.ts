@@ -1,9 +1,9 @@
-import NodeVisitor = require("../NodeVisitor");
 import {SingleValue, KnownValue} from "../Value";
 import {throwValue, hasTrueValue, getTrueValue} from "../Utils";
 import {MemberNode} from "../node/Others";
+import {TrackingVisitor} from "../NodeVisitor";
 
-export  = (nodeVisitor:NodeVisitor) => {
+export  = (nodeVisitor:TrackingVisitor) => {
     nodeVisitor.on(MemberNode, (node:MemberNode) => {
         if (!node.computed) {
             return;

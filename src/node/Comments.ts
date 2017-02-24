@@ -6,7 +6,7 @@ export abstract class Comment extends SemanticNode {
     trailing:boolean;
     value:string;
 
-    track() {
+    onTrack() {
     }
 }
 Later.Comment = Comment;

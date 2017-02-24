@@ -4,13 +4,14 @@ import {IdentifierNode} from "./IdentifierNode";
 import {BlockNode} from "./Blocks";
 import EvaluationState = require("../EvaluationState");
 import {unknown} from "../Value";
+import {TrackingVisitor} from "../NodeVisitor";
 
 export class CatchNode extends SemanticNode {
     param:IdentifierNode;
     body:BlockNode;
 
-    track(state:EvaluationState) {
-        this.body.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.body.track(state, visitor);
     }
 
     protected handleDeclarationsForNode() {
@@ -21,8 +22,8 @@ export class CatchNode extends SemanticNode {
 export class ThrowNode extends SemanticNode {
     argument:ExpressionNode;
 
-    track(state:EvaluationState) {
-        this.argument.track(state);
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.argument.track(state, visitor);
     }
 }
 
@@ -31,15 +32,15 @@ export class TryNode extends SemanticNode {
     handler:CatchNode;
     finalizer:BlockNode;
 
-    track(state:EvaluationState) {
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         state.trackAsUnsure(state => {
-            this.block.track(state);
+            this.block.track(state, visitor);
             if (this.handler) {
-                this.handler.track(state);
+                this.handler.track(state, visitor);
             }
         });
         if (this.finalizer) {
-            this.finalizer.track(state);
+            this.finalizer.track(state, visitor);
         }
     }
 }
