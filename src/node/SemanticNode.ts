@@ -169,7 +169,11 @@ export abstract class SemanticNode {
     }
 
     walk<T>(before:(node:this) => T):T {
+        const wasChangedBefore = this.isChanged();
         let result:T = before(this);
+        if (!wasChangedBefore && this.isChanged()) {
+            return;
+        }
         if (result) {
             return result;
         }
