@@ -1,12 +1,12 @@
 import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {unknown, ObjectValue, ARGUMENTS, PropInfo, Value} from "../Value";
+import {unknown, ARGUMENTS, PropInfo, HeapObject} from "../Value";
 import {InnerScoped} from "../Utils";
+import {IdentifierNode} from "./IdentifierNode";
+import {BlockNode} from "./Blocks";
 import Scope = require("../Scope");
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
-import {IdentifierNode} from "./IdentifierNode";
-import {BlockNode} from "./Blocks";
 
 function addParametersToScope(node:FunctionDeclarationNode|AbstractFunctionExpressionNode, addArguments:boolean) {
     const params = node.params;
@@ -15,13 +15,18 @@ function addParametersToScope(node:FunctionDeclarationNode|AbstractFunctionExpre
         scope.set(params[i].name, false, unknown).writes.push(params[i]);
     }
     if (addArguments) {
-        scope.set('arguments', false, new ObjectValue(ARGUMENTS, {
-            proto: node.context.getObjectValue(Object.prototype),
-            properties: {},
-            propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
-            trueValue: null
-        }));
+        scope.set('arguments', false, unknown);
     }
+}
+
+function addArgumentsValue(node:FunctionDeclarationNode|AbstractFunctionExpressionNode, state:EvaluationState) {
+    const argumentsRef = state.saveObject(new HeapObject(ARGUMENTS, {
+        proto: state.getReferenceValue(Object.prototype),
+        properties: {},
+        propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
+        trueValue: null
+    }));
+    state.setValue(node.innerScope.get('arguments'), argumentsRef);
 }
 
 export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements InnerScoped {
@@ -31,7 +36,14 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
     innerScope:Scope;
     expression:boolean;
 
-    onTrack() {
+    onTrack(state:EvaluationState) {
+        this.setValue(state.createCustomFunctionReference(this.params.length));
+    }
+
+    addArgumentsIfNeeded(state:EvaluationState) {
+        if (!this.isLambda()) {
+            addArgumentsValue(this, state);
+        }
     }
 
     getReturnExpression():ExpressionNode {
@@ -60,10 +72,6 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
         return scope;
     }
 
-    protected getInitialValue():Value {
-        return this.context.createCustomFunctionValue(this.params.length);
-    }
-
     abstract isLambda():boolean;
 }
 Later.AbstractFunctionExpressionNode = AbstractFunctionExpressionNode;
@@ -81,7 +89,11 @@ export class FunctionDeclarationNode extends SemanticNode implements InnerScoped
     innerScope:Scope;
 
     onTrack(state:EvaluationState) {
-        state.setValue(this.id.getVariable(), this.context.createCustomFunctionValue(this.params.length));
+        state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this.params.length));
+    }
+
+    addArgumentsIfNeeded(state:EvaluationState){
+        addArgumentsValue(this, state);
     }
 
     protected handleDeclarationsForNode() {

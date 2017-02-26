@@ -1,10 +1,11 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PropDescriptorMap, ObjectValue, OBJECT, PropInfo, KnownValue} from "../Value";
+import {Value, PropDescriptorMap, OBJECT, PropInfo, PrimitiveValue, HeapObject} from "../Value";
 import {hasTrueValue, getTrueValue, throwValue} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
+import {TrackingVisitor} from "../NodeVisitor";
+import {IdentifierNode} from "./IdentifierNode";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
-import {TrackingVisitor} from "../NodeVisitor";
 
 export class ObjectNode extends ExpressionNode {
     properties:PropertyNode[];
@@ -14,6 +15,46 @@ export class ObjectNode extends ExpressionNode {
             const obj = this.properties[i];
             obj.track(state, visitor);
         }
+
+        if (!this.isClean()) {
+            return;
+        }
+        let properties:PropDescriptorMap = {};
+        let knowsAll = true;
+        let trueValue:{[idx:string]:any} = {};
+        for (let i = 0; i < this.properties.length; i++) {
+            const property = this.properties[i];
+            let value = property.getKeyValue();
+            if (hasTrueValue(value, state)) {
+                const propertyValue = property.value.getValue();
+                let key;
+                try {
+                    key = '' + getTrueValue(value, state);
+                } catch (e) {
+                    return throwValue('CANNOT RESOLVE DYNAMIC PROPERTY' + e);
+                }
+                properties[key] = {
+                    enumerable: true,
+                    value: propertyValue
+                };
+                if (trueValue && hasTrueValue(propertyValue, state)) {
+                    trueValue[key] = getTrueValue(propertyValue, state);
+                } else {
+                    trueValue = null;
+                }
+            } else {
+                properties = {};
+                knowsAll = false;
+                trueValue = null;
+                break;
+            }
+        }
+        this.setValue(state.saveObject(new HeapObject(OBJECT, {
+            proto: state.getReferenceValue(Object.prototype),
+            properties: properties,
+            propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
+            trueValue: trueValue
+        })));
     }
 
     protected isCleanInner():boolean {
@@ -28,45 +69,6 @@ export class ObjectNode extends ExpressionNode {
         }
         return true;
     }
-
-    protected getInitialValue():Value {
-        let properties:PropDescriptorMap = {};
-        let knowsAll = true;
-        let trueValue:{[idx:string]:any} = {};
-        for (let i = 0; i < this.properties.length; i++) {
-            const property = this.properties[i];
-            let value = property.getKeyValue();
-            if (hasTrueValue(value)) {
-                const propertyValue = property.value.getValue();
-                let key;
-                try {
-                    key = '' + getTrueValue(value);
-                } catch (e) {
-                    return throwValue('CANNOT RESOLVE DYNAMIC PROPERTY' + e);
-                }
-                properties[key] = {
-                    enumerable: true,
-                    value: propertyValue
-                };
-                if (trueValue && hasTrueValue(propertyValue)) {
-                    trueValue[key] = getTrueValue(propertyValue);
-                } else {
-                    trueValue = null;
-                }
-            } else {
-                properties = {};
-                knowsAll = false;
-                trueValue = null;
-                break;
-            }
-        }
-        return new ObjectValue(OBJECT, {
-            proto: this.context.getObjectValue(Object.prototype),
-            properties: properties,
-            propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
-            trueValue: trueValue
-        });
-    }
 }
 
 export class PropertyNode extends SemanticNode {
@@ -78,7 +80,7 @@ export class PropertyNode extends SemanticNode {
     value:ExpressionNode;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        if (this.computed) {
+        if (this.computed || !(this.key instanceof IdentifierNode)) {
             this.key.track(state, visitor);
         }
         this.value.track(state, visitor);
@@ -89,7 +91,7 @@ export class PropertyNode extends SemanticNode {
             return this.key.getValue();
         }
         if (this.key instanceof Later.IdentifierNode) {
-            return new KnownValue(this.key.name);
+            return new PrimitiveValue(this.key.name);
         } else {
             return this.key.getValue();
         }

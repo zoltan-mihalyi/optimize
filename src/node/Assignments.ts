@@ -1,6 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {binaryCache, hasTrueValue, getTrueValue} from "../Utils";
-import {SingleValue, unknown, KnownValue} from "../Value";
+import {SingleValue, unknown, PrimitiveValue} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
@@ -28,8 +28,8 @@ export class AssignmentNode extends ExpressionNode {
 
         const evaluator = binaryCache.get(operator.substring(0, operator.length - 1));
         state.setValue(variable, leftValue.product(rightValue, (left:SingleValue, right:SingleValue) => {
-            if (hasTrueValue(left) && hasTrueValue(right)) {
-                return this.context.createValue(evaluator(getTrueValue(left), getTrueValue(right)));
+            if (hasTrueValue(left, state) && hasTrueValue(right, state)) {
+                return state.createValue(evaluator(getTrueValue(left, state), getTrueValue(right, state)));
             }
             return unknown;
         }));
@@ -59,9 +59,9 @@ export class UpdateNode extends ExpressionNode {
         }
         const variable = this.argument.getVariable();
         state.setValue(variable, state.getValue(variable).map((value:SingleValue) => {
-            if (hasTrueValue(value)) {
-                let numberValue:number = +getTrueValue(value);
-                return new KnownValue(this.operator === '++' ? numberValue + 1 : numberValue - 1);
+            if (hasTrueValue(value, state)) {
+                let numberValue:number = +getTrueValue(value, state);
+                return new PrimitiveValue(this.operator === '++' ? numberValue + 1 : numberValue - 1);
             } else {
                 return unknown;
             }

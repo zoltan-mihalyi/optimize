@@ -1,8 +1,10 @@
-import {ObjectValue, FUNCTION, Value} from "../Value";
+import NodeVisitor = require("../NodeVisitor");
+import {ReferenceValue, FUNCTION, Value} from "../Value";
 import {hasTrueValue, getTrueValue} from "../Utils";
 import {NewNode, CallNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
-import {NodeVisitor, TrackingVisitor} from "../NodeVisitor";
+import {TrackingVisitor} from "../NodeVisitor";
+import EvaluationState = require("../EvaluationState");
 
 const UNSAFE_FUNCTIONS:Function[] = [
     eval,
@@ -47,13 +49,13 @@ export  = (visitor:TrackingVisitor) => {
     visitor.on(CallNode, resolveCall);
     visitor.on(NewNode, resolveCall);
 
-    function resolveCall(node:CallNode|NewNode) {
+    function resolveCall(node:CallNode|NewNode, state:EvaluationState) {
         let callee = node.callee;
         let value = callee.getValue();
-        if (!(value instanceof ObjectValue) || value.objectClass !== FUNCTION) {
+        if (!(value instanceof ReferenceValue) || state.dereference(value).objectClass !== FUNCTION) {
             return;
         }
-        const fn = value.trueValue as Function;
+        const fn = state.dereference(value).trueValue as Function;
         if (!fn || UNSAFE_FUNCTIONS.indexOf(fn as any) !== -1) {
             return;
         }
@@ -62,8 +64,8 @@ export  = (visitor:TrackingVisitor) => {
         for (let i = 0; i < node.arguments.length; i++) {
             const argument = node.arguments[i];
             let parameter = argument.getValue();
-            if (hasTrueValue(parameter)) {
-                parameters.push(getTrueValue(parameter));
+            if (hasTrueValue(parameter, state)) {
+                parameters.push(getTrueValue(parameter, state));
             } else {
                 return;
             }
@@ -75,8 +77,8 @@ export  = (visitor:TrackingVisitor) => {
             let context = null;
             if (callee instanceof MemberNode) {
                 const contextValue = callee.object.getValue();
-                if (hasTrueValue(contextValue)) {
-                    context = getTrueValue(contextValue);
+                if (hasTrueValue(contextValue, state)) {
+                    context = getTrueValue(contextValue, state);
                 } else {
                     return;
                 }
@@ -87,12 +89,12 @@ export  = (visitor:TrackingVisitor) => {
             if (canMutate(fn, context, parameters)) {
                 return;
             }
-            resultValue = node.context.createValueFromCall(fn, context, parameters);
+            resultValue = state.createValueFromCall(fn, context, parameters);
         } else {
             if (isUnsafeNewCall(fn, parameters)) {
                 return;
             }
-            resultValue = node.context.createValueFromNewCall(fn, parameters);
+            resultValue = state.createValueFromNewCall(fn, parameters);
         }
         node.setValue(resultValue);
 
@@ -105,8 +107,8 @@ export  = (visitor:TrackingVisitor) => {
             } else if (fn === Object.prototype.toString) {
                 return context == null;
             } else if (fn === Object.prototype.hasOwnProperty) {
-                if (node.context.isBuiltIn(context)) {
-                    return !node.context.getObjectValue(context).hasProperty(parameters[0]);
+                if (state.isBuiltIn(context)) {
+                    return !state.dereference(state.getReferenceValue(context)).hasProperty(parameters[0]); //todo simplify
                 } else if (context instanceof RegExp) {
                     return true;
                 }
@@ -116,7 +118,7 @@ export  = (visitor:TrackingVisitor) => {
 
         function canMutate(fn:Function, context:any, parameters:any[]) {
             [fn, context] = getRealFunctionAndContext(fn, context, parameters);
-            return MUTATING_METHODS.indexOf(fn) !== -1 && node.context.isBuiltIn(context);
+            return MUTATING_METHODS.indexOf(fn) !== -1 && state.isBuiltIn(context);
         }
     }
 };

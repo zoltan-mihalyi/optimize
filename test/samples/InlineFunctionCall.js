@@ -5,7 +5,7 @@ function fn() {
             callback(i, obj[i]);
         }
         log(g);
-    })({x: 1}, function(key, value) {
+    })({x: function() {}}, function(key, value) {
         console.log(obj, key, value);
     }, x());
 

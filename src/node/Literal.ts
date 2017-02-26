@@ -1,24 +1,24 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, KnownValue} from "../Value";
+import {Value, PrimitiveValue} from "../Value";
 import Later = require("./Later");
+import EvaluationState = require("../EvaluationState");
 
 export class LiteralNode extends ExpressionNode {
     value:any;
     raw:string;
 
-    onTrack() {
+    onTrack(state:EvaluationState) {
+        let value:Value;
+        if (typeof this.value !== 'object' || this.value === null) {
+            value = new PrimitiveValue(this.value);
+        } else {
+            value = state.getReferenceValue(this.value);
+        }
+        this.setValue(value);
     }
 
     protected isCleanInner():boolean {
         return true;
-    }
-
-    protected getInitialValue():Value {
-        if (typeof this.value !== 'object' || this.value === null) {
-            return new KnownValue(this.value);
-        } else {
-            return this.context.getObjectValue(this.value);
-        }
     }
 }
 Later.LiteralNode = LiteralNode;

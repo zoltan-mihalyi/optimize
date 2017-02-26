@@ -1,4 +1,6 @@
 import {equals, hasOwnProperty} from "./Utils";
+import Map = require("./Map");
+import EvaluationState = require("./EvaluationState");
 
 export let unknown:UnknownValue;
 
@@ -54,25 +56,25 @@ export abstract class SingleValue extends IterableValue {
         return other.map(rval => mapper(this, rval));
     }
 
-    abstract compareTo(other:SingleValue, strict:boolean):ComparisonResult;
+    abstract compareTo(state:EvaluationState, other:SingleValue, strict:boolean):ComparisonResult;
 }
 
-export class KnownValue extends SingleValue {
+export class PrimitiveValue extends SingleValue {
     constructor(public value:string|boolean|number) {
         super();
     }
 
-    compareTo(other:SingleValue, strict:boolean):ComparisonResult {
-        if (other instanceof KnownValue) {
+    compareTo(state:EvaluationState, other:SingleValue, strict:boolean):ComparisonResult {
+        if (other instanceof PrimitiveValue) {
             // tslint:disable-next-line:triple-equals
             let equals = strict ? (this.value === other.value) : (this.value == other.value);
             return fromBoolean(equals);
         } else {
-            return (other as ObjectValue).compareTo(this, strict);
+            return (other as ReferenceValue).compareTo(state, this, strict);
         }
     }
 
-    protected equalsInner(other:KnownValue):boolean {
+    protected equalsInner(other:PrimitiveValue):boolean {
         return equals(this.value, other.value);
     }
 }
@@ -121,7 +123,7 @@ export const ARGUMENTS = new ArgumentsObjectClass();
 export interface PropDescriptor {
     enumerable:boolean;
     value?:Value;
-    get?:ObjectValue;
+    get?:ReferenceValue;
 }
 
 export interface PropDescriptorMap {
@@ -133,45 +135,52 @@ export const enum PropInfo {
 }
 
 interface ObjectParameters {
-    proto:ObjectValue;
+    proto:ReferenceValue;
     properties:PropDescriptorMap;
     propertyInfo:PropInfo;
     trueValue:Object|null;
 }
 
-export class ObjectValue extends SingleValue {
+export class ReferenceValue extends SingleValue {
+    compareTo(state:EvaluationState, other:SingleValue, strict:boolean):ComparisonResult {
+        if (other instanceof ReferenceValue) {
+            return fromBoolean(this === other);
+        }
+        if (strict) {
+            return ComparisonResult.FALSE;
+        }
+        let heapObject = state.dereference(this);
+        if (heapObject.trueValue) {
+            // tslint:disable-next-line:triple-equals
+            return fromBoolean(heapObject.trueValue == (other as PrimitiveValue).value);
+        }
+        return ComparisonResult.UNKNOWN;
+    }
+
+    protected equalsInner(other:ReferenceValue):boolean {
+        return this === other;
+    }
+
+}
+
+export class HeapObject {
     readonly trueValue:Object|null;
-    private proto:ObjectValue;
+    private proto:ReferenceValue;
     private properties:PropDescriptorMap;
     private propertyInfo:PropInfo;
 
     constructor(readonly objectClass:ObjectClass, parameters:ObjectParameters) {
-        super();
         this.proto = parameters.proto;
         this.properties = parameters.properties;
         this.propertyInfo = parameters.propertyInfo;
         this.trueValue = parameters.trueValue;
     }
 
-    compareTo(other:SingleValue, strict:boolean):ComparisonResult {
-        if (other instanceof ObjectValue) {
-            return fromBoolean(this === other);
-        }
-        if (strict) {
-            return ComparisonResult.FALSE;
-        }
-        if (this.trueValue) {
-            // tslint:disable-next-line:triple-equals
-            return fromBoolean(this.trueValue == (other as KnownValue).value);
-        }
-        return ComparisonResult.UNKNOWN;
-    }
-
-    resolveProperty(name:string, getterEvaluator:(fn:Function) => Value):Value {
+    resolveProperty(state:EvaluationState, name:string, context:Object):Value {
         if (this.hasProperty(name)) {
             let property = this.properties[name];
             if (property.get) {
-                return getterEvaluator(property.get.trueValue as Function);
+                return state.createValueFromCall(state.dereference(property.get).trueValue as Function, context, []);
             } else {
                 return property.value;
             }
@@ -182,28 +191,51 @@ export class ObjectValue extends SingleValue {
                 return unknown;
             case PropInfo.KNOWS_ALL:
                 if (this.proto) {
-                    return this.proto.resolveProperty(name, getterEvaluator);
+                    return state.dereference(this.proto).resolveProperty(state, name, context);
                 }
-                return new KnownValue(void 0);
+                return new PrimitiveValue(void 0);
             case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
-                if (this.proto && this.proto.hasPropertyDeep(name)) {
-                    return this.proto.resolveProperty(name, getterEvaluator);
+                if (this.proto) {
+                    let protoObject = state.dereference(this.proto);
+                    if (protoObject.hasPropertyDeep(state, name)) {
+                        return protoObject.resolveProperty(state, name, context);
+                    }
                 }
                 return unknown;
         }
     }
 
-    canIterate():boolean {
+    withProperty(name:string, newValue:Value):HeapObject {
+
+        const properties:PropDescriptorMap = {};
+
+        for (const i in this.properties) {
+            properties[i] = this.properties[i];
+        }
+        properties[name] = {
+            enumerable: true,
+            value: newValue
+        };
+
+        return new HeapObject(this.objectClass, {
+            proto: this.proto,
+            properties: properties,
+            propertyInfo: this.propertyInfo,
+            trueValue: null //todo
+        });
+    }
+
+    canIterate(state:EvaluationState):boolean {
         if (this.propertyInfo === PropInfo.MAY_HAVE_NEW) {
             return false;
         }
         if (this.proto) {
-            return this.proto.canIterate();
+            return state.dereference(this.proto).canIterate(state);
         }
         return true;
     }
 
-    iterate(callback:(key:string) => void) {
+    iterate(state:EvaluationState, callback:(key:string) => void) {
         for (const i in this.properties) {
             /* istanbul ignore else */
             if (hasOwnProperty(this.properties, i)) {
@@ -214,7 +246,7 @@ export class ObjectValue extends SingleValue {
             }
         }
         if (this.proto) {
-            this.proto.iterate(callback);
+            state.dereference(this.proto).iterate(state, callback);
         }
     }
 
@@ -222,8 +254,8 @@ export class ObjectValue extends SingleValue {
         return hasOwnProperty(this.properties, name);
     }
 
-    dirty() {
-        return new ObjectValue(this.objectClass, {
+    dirty() { //todo used?
+        return new HeapObject(this.objectClass, {
             proto: null,
             properties: {},
             propertyInfo: PropInfo.MAY_HAVE_NEW,
@@ -231,16 +263,29 @@ export class ObjectValue extends SingleValue {
         });
     }
 
-    protected equalsInner(other:ObjectValue):boolean {
-        return this.objectClass === other.objectClass;
+    or(other:HeapObject):HeapObject { //todo use param...
+        const properties:PropDescriptorMap = {};
+        for (const propName in this.properties) {
+            if (hasOwnProperty(this.properties, propName)) {
+                properties[propName] = this.properties[propName];
+            }
+        }
+
+
+        return new HeapObject(this.objectClass, {
+            proto: this.proto, //todo handle proto change
+            properties: properties,
+            propertyInfo: PropInfo.MAY_HAVE_NEW,
+            trueValue: null
+        });
     }
 
-    private hasPropertyDeep(name:string):boolean {
+    private hasPropertyDeep(state:EvaluationState, name:string):boolean {
         if (this.hasProperty(name)) {
             return true;
         }
         if (this.proto) {
-            return this.proto.hasPropertyDeep(name);
+            return state.dereference(this.proto).hasPropertyDeep(state, name);
         }
         return false;
     }

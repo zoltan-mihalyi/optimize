@@ -1,9 +1,9 @@
 import Scope = require("../Scope");
 import {SemanticNode} from "./SemanticNode";
-import EvaluationState = require("../EvaluationState");
 import {isInnerScoped} from "../Utils";
-import Later = require("./Later");
 import {TrackingVisitor} from "../NodeVisitor";
+import EvaluationState = require("../EvaluationState");
+import Later = require("./Later");
 const global = new Function('return this')();
 
 export class BlockNode extends SemanticNode {
@@ -11,6 +11,9 @@ export class BlockNode extends SemanticNode {
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         const blockState = new EvaluationState(state, this.scope);
+        if (this.parent instanceof Later.FunctionDeclarationNode || this.parent instanceof Later.AbstractFunctionExpressionNode) {
+            this.parent.addArgumentsIfNeeded(state);
+        }
         for (let i = 0; i < this.body.length; i++) {
             const node = this.body[i];
             if (node instanceof Later.FunctionDeclarationNode) {
@@ -41,38 +44,43 @@ export class ProgramNode extends BlockNode {
     errors:any[];
     sourceType:string;
 
-    protected handleDeclarationsForNode() {
-        this.saveApi('undefined');
-        this.saveApi('Infinity');
-        this.saveApi('NaN');
-        this.saveApi('eval');
-        this.saveApi('isNaN');
-        this.saveApi('parseFloat');
-        this.saveApi('parseInt');
-        this.saveApi('decodeURI');
-        this.saveApi('decodeURIComponent');
-        this.saveApi('encodeURI');
-        this.saveApi('encodeURIComponent');
-        this.saveApi('Object');
-        this.saveApi('Function');
-        this.saveApi('Array');
-        this.saveApi('Boolean');
-        this.saveApi('Error');
-        this.saveApi('EvalError');
-        this.saveApi('RangeError');
-        this.saveApi('ReferenceError');
-        this.saveApi('SyntaxError');
-        this.saveApi('TypeError');
-        this.saveApi('URIError');
-        this.saveApi('Number');
-        this.saveApi('String');
-        this.saveApi('Boolean');
-        this.saveApi('RegExp');
-        this.saveApi('Math');
-        this.saveApi('Date');
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.saveApi('undefined', state);
+        this.saveApi('Infinity', state);
+        this.saveApi('NaN', state);
+        this.saveApi('eval', state);
+        this.saveApi('isNaN', state);
+        this.saveApi('parseFloat', state);
+        this.saveApi('parseInt', state);
+        this.saveApi('decodeURI', state);
+        this.saveApi('decodeURIComponent', state);
+        this.saveApi('encodeURI', state);
+        this.saveApi('encodeURIComponent', state);
+        this.saveApi('Object', state);
+        this.saveApi('Function', state);
+        this.saveApi('Array', state);
+        this.saveApi('Boolean', state);
+        this.saveApi('Error', state);
+        this.saveApi('EvalError', state);
+        this.saveApi('RangeError', state);
+        this.saveApi('ReferenceError', state);
+        this.saveApi('SyntaxError', state);
+        this.saveApi('TypeError', state);
+        this.saveApi('URIError', state);
+        this.saveApi('Number', state);
+        this.saveApi('String', state);
+        this.saveApi('Boolean', state);
+        this.saveApi('RegExp', state);
+        this.saveApi('Math', state);
+        this.saveApi('Date', state);
+
+        super.onTrack(state, visitor);
     }
 
-    private saveApi(name:string) {
-        this.scope.set(name, true, this.context.createValue(global[name]));
+    protected handleDeclarationsForNode() {
+    }
+
+    private saveApi(name:string, state:EvaluationState) {
+        this.scope.set(name, true, state.createValue(global[name]));
     }
 }

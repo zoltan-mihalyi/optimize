@@ -25,7 +25,6 @@ ReduceTailRecursion(nodeVisitor);
 RemoveBlock(nodeVisitor);
 RemoveExpressionStatements(nodeVisitor);
 ReduceSequenceExpression(nodeVisitor);
-UnrollForIn(nodeVisitor);
 InlineFunctionCall(nodeVisitor);
 RemoveUnused(nodeVisitor);
 
@@ -35,6 +34,7 @@ CalculateArithmetic(trackingVisitor);
 ResolveNativeFunctionCalls(trackingVisitor);
 ResolvePropertyAccess(trackingVisitor);
 ResolvePropertyName(trackingVisitor);
+UnrollForIn(trackingVisitor);
 
 export = function (code:string):string {
     let ast:Expression = recast.parse(code).program;

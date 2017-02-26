@@ -1,10 +1,10 @@
 import EvaluationState = require("../EvaluationState");
 import {ExpressionNode} from "./ExpressionNode";
 import {SemanticNode} from "./SemanticNode";
-import {KnownValue, Value} from "../Value";
+import {PrimitiveValue, Value, IterableValue, SingleValue, ReferenceValue} from "../Value";
 import {IdentifierNode} from "./IdentifierNode";
-import Later = require("./Later");
 import {TrackingVisitor} from "../NodeVisitor";
+import Later = require("./Later");
 
 export class EmptyNode extends SemanticNode {
     onTrack() {
@@ -51,7 +51,7 @@ export class MemberNode extends ExpressionNode {
 
 
     getPropertyValue():Value {
-        return !this.computed ? new KnownValue((this.property as IdentifierNode).name) : this.property.getValue();
+        return !this.computed ? new PrimitiveValue((this.property as IdentifierNode).name) : this.property.getValue();
     }
 }
 Later.MemberNode = MemberNode;

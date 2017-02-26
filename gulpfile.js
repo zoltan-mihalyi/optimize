@@ -49,7 +49,7 @@ gulp.task('test:instrument', ['compile'], function() {
 
 gulp.task('self-optimize', ['compile'], function() {
     var optimize = require('./dist/optimize');
-    return gulp.src('dist/**/*.js')
+    return gulp.src('angular.js')
         .pipe(through2.obj(function(file, encoding, done) {
             file.contents = new Buffer(optimize(file.contents.toString('UTF-8')));
             this.push(file);

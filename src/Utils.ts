@@ -1,10 +1,11 @@
 import recast = require("recast");
 
 const builders = recast.types.builders;
-import {KnownValue, Value, PropDescriptor, unknown, ObjectValue, SingleValue} from "./Value";
+import {PrimitiveValue, Value, PropDescriptor, unknown, ReferenceValue, SingleValue} from "./Value";
 import {SemanticNode} from "./node/SemanticNode";
 import Cache = require("./Cache");
 import Scope = require("./Scope");
+import EvaluationState = require("./EvaluationState");
 
 export interface InnerScoped extends SemanticNode {
     innerScope:Scope;
@@ -47,15 +48,18 @@ export function equals(a:any, b:any):boolean {
     return a === b || (a !== a && b !== b);
 }
 
-export function hasTrueValue(value:Value):boolean {
-    return value instanceof KnownValue || (value instanceof ObjectValue && !!value.trueValue);
+export function hasTrueValue(value:Value, state:EvaluationState):boolean {
+    return value instanceof PrimitiveValue || (value instanceof ReferenceValue && !!state.dereference(value).trueValue);
 }
 
-export function getTrueValue(value:Value):any {
-    if (value instanceof KnownValue) {
+export function getTrueValue(value:Value, state:EvaluationState):any { //todo move to state
+    if (value instanceof PrimitiveValue) {
         return value.value;
-    } else if (value instanceof ObjectValue && value.trueValue) {
-        return value.trueValue;
+    } else if (value instanceof ReferenceValue) {
+        const trueValue = state.dereference(value).trueValue;
+        if (trueValue) {
+            return trueValue;
+        }
     }
     throw new Error('no true value');
 }
@@ -72,8 +76,8 @@ export function void0():Expression {
     return builders.unaryExpression('void', builders.literal(0));
 }
 
-export function canWrapObjectValue(value:SingleValue):boolean {
-    return value instanceof ObjectValue || (value as KnownValue).value != null;
+export function canWrap(value:SingleValue):boolean {
+    return value instanceof ReferenceValue || (value as PrimitiveValue).value != null;
 }
 
 export function isInnerScoped(node:SemanticNode):node is InnerScoped {

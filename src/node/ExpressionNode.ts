@@ -1,9 +1,10 @@
 import recast = require("recast");
-import {Value, unknown, UnknownValue, KnownValue} from "../Value";
+import {Value, unknown, UnknownValue, PrimitiveValue, FiniteSetOfValues} from "../Value";
 import {equals} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
 import {LiteralNode, UnaryNode, AbstractFunctionExpressionNode} from "./Later";
 import Scope = require("../Scope");
+import EvaluationState = require("../EvaluationState");
 
 const builders = recast.types.builders;
 
@@ -29,7 +30,7 @@ function isNegatedNumber(expression:ExpressionNode, primitiveValue:number):boole
 
 
 export abstract class ExpressionNode extends SemanticNode {
-    protected calculatedValue:Value = this.isClean() ? this.getInitialValue() : unknown;
+    protected calculatedValue:Value = unknown;
 
     isClean():boolean {
         if (this.calculatedValue && !(this.calculatedValue instanceof UnknownValue)) {
@@ -47,7 +48,7 @@ export abstract class ExpressionNode extends SemanticNode {
         if (value instanceof UnknownValue) {
             return;
         }
-        if (value instanceof KnownValue) {
+        if (value instanceof PrimitiveValue) {
             let primitiveValue = value.value;
             if (primitiveValue === void 0) {
                 if (!isVoid0(this)) {
@@ -65,23 +66,14 @@ export abstract class ExpressionNode extends SemanticNode {
             }
         }
 
-        if (this.calculatedValue.equals(value)) {
+        if (this.calculatedValue.equals(value) || !(this.calculatedValue instanceof FiniteSetOfValues)) { //is
+            this.calculatedValue = value; //for reference update. todo rearrange
             return;
         }
 
         this.calculatedValue = value;
+
         this.markUpdated();
-    }
-
-    protected markUpdated() {
-        super.markUpdated();
-        if (this.calculatedValue instanceof UnknownValue && this.isClean()) {
-            this.calculatedValue = this.getInitialValue();
-        }
-    }
-
-    protected getInitialValue():Value {
-        return unknown;
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {

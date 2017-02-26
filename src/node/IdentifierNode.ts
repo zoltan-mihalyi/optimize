@@ -100,9 +100,6 @@ export class IdentifierNode extends ExpressionNode {
         if (this.isRead()) {
             let variable = this.scope.getOrCreate(this.name);
             variable.reads.push(this);
-            if (variable.initialValue) {
-                this.setValue(variable.initialValue);
-            }
         }
     }
 }

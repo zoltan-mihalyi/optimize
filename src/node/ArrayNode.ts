@@ -1,5 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PropDescriptorMap, KnownValue, ObjectValue, ARRAY, PropInfo} from "../Value";
+import {Value, PropDescriptorMap, PrimitiveValue, ReferenceValue, ARRAY, PropInfo, HeapObject} from "../Value";
 import {hasTrueValue, getTrueValue} from "../Utils";
 import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
@@ -12,23 +12,14 @@ export class ArrayNode extends ExpressionNode {
             const element = this.elements[i];
             element.track(state, trackingVisitor);
         }
-    }
 
-    protected isCleanInner():boolean {
-        for (let i = 0; i < this.elements.length; i++) {
-            const element = this.elements[i];
-            if (!element.isClean()) {
-                return false;
-            }
+        if(!this.isClean()){
+            return;
         }
-        return true;
-    }
-
-    protected getInitialValue():Value {
         const properties:PropDescriptorMap = {
             length: {
                 enumerable: false,
-                value: new KnownValue(this.elements.length)
+                value: new PrimitiveValue(this.elements.length)
             }
         };
         let trueValue:any[] = [];
@@ -39,17 +30,28 @@ export class ArrayNode extends ExpressionNode {
                 enumerable: true,
                 value: value
             };
-            if (trueValue && hasTrueValue(value)) {
-                trueValue.push(getTrueValue(value));
+            if (trueValue && hasTrueValue(value, state)) {
+                trueValue.push(getTrueValue(value, state));
             } else {
                 trueValue = null;
             }
         }
-        return new ObjectValue(ARRAY, {
-            proto: this.context.getObjectValue(Array.prototype),
+
+        this.setValue(state.saveObject(new HeapObject(ARRAY, {
+            proto: state.getReferenceValue(Array.prototype),
             properties: properties,
             propertyInfo: PropInfo.KNOWS_ALL,
             trueValue: trueValue
-        });
+        })));
+    }
+
+    protected isCleanInner():boolean {
+        for (let i = 0; i < this.elements.length; i++) {
+            const element = this.elements[i];
+            if (!element.isClean()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

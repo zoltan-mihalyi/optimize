@@ -29,12 +29,6 @@ function trackUpdate2() {
     console.log(x);
 }
 
-function trackObject() {
-    var o1 = {x: 1};
-    console.log("object");
-    console.log(o1.x);
-}
-
 function trackBranch1() {
     var x = 1;
     if (u) {

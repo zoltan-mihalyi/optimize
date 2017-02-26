@@ -14,6 +14,6 @@ export = (nodeVisitor:NodeVisitor, trackingVisitor:TrackingVisitor) => {
     nodeVisitor.on(ProgramNode, track);
 
     function track(node:SemanticNode) {
-        node.track(new EvaluationState(null, node.scope), trackingVisitor);
+        node.track(new EvaluationState(EvaluationState.rootState, node.scope), trackingVisitor);
     }
 };

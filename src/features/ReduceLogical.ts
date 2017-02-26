@@ -1,4 +1,4 @@
-import {KnownValue} from "../Value";
+import {PrimitiveValue} from "../Value";
 import {LogicalNode} from "../node/Operators";
 import {NodeVisitor} from "../NodeVisitor";
 
@@ -7,13 +7,13 @@ export = (nodeVisitor:NodeVisitor) => {
         const leftValue = node.left.getValue();
 
         const leftAsBoolean = leftValue.map(value => {
-            if (value instanceof KnownValue) {
-                return new KnownValue(!!value.value);
+            if (value instanceof PrimitiveValue) {
+                return new PrimitiveValue(!!value.value);
             } else {
-                return new KnownValue(true);
+                return new PrimitiveValue(true);
             }
         });
-        if (leftAsBoolean instanceof KnownValue) {
+        if (leftAsBoolean instanceof PrimitiveValue) {
             let useLeft = leftAsBoolean.value;
             if (node.operator === '&&') {
                 useLeft = !useLeft;

@@ -1,4 +1,4 @@
-import {KnownValue, SingleValue} from "../Value";
+import {PrimitiveValue, SingleValue} from "../Value";
 import {ConditionalNode} from "../node/Operators";
 import {IfNode} from "../node/Branches";
 import {NodeVisitor} from "../NodeVisitor";
@@ -10,13 +10,13 @@ export = (nodeVisitor:NodeVisitor) => {
     function reduceConditional(node:IfNode|ConditionalNode) {
         const value = node.test.getValue();
         const boolValue = value.map((value:SingleValue) => {
-            if (value instanceof KnownValue) {
-                return new KnownValue(!!value.value);
-            } else { //ObjectValue
-                return new KnownValue(true);
+            if (value instanceof PrimitiveValue) {
+                return new PrimitiveValue(!!value.value);
+            } else { //ReferenceValue
+                return new PrimitiveValue(true);
             }
         });
-        if (boolValue instanceof KnownValue) {
+        if (boolValue instanceof PrimitiveValue) {
             const usedBranch = boolValue.value ? node.consequent : node.alternate;
             const unUsedBranch = boolValue.value ? node.alternate : node.consequent;
 

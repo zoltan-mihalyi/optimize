@@ -1,15 +1,16 @@
 import {SingleValue} from "../Value";
-import {canWrapObjectValue} from "../Utils";
-import recast = require("recast");
+import {canWrap} from "../Utils";
 import {ForInNode} from "../node/Loops";
 import {VariableDeclarationNode} from "../node/Variables";
 import {BlockNode} from "../node/Blocks";
-import {NodeVisitor} from "../NodeVisitor";
+import {TrackingVisitor} from "../NodeVisitor";
+import recast = require("recast");
+import EvaluationState = require("../EvaluationState");
 
 const builders = recast.types.builders;
 
-export  = (nodeVisitor:NodeVisitor) => {
-    nodeVisitor.on(ForInNode, (node:ForInNode) => {
+export  = (visitor:TrackingVisitor) => {
+    visitor.on(ForInNode, (node:ForInNode, state:EvaluationState) => {
         const rightValue = node.right.getValue();
         const body = node.body;
 
@@ -21,14 +22,15 @@ export  = (nodeVisitor:NodeVisitor) => {
         let left = node.left;
         const unrolled:Expression[] = [];
 
-        if (canWrapObjectValue(rightValue)) {
-            const object = node.context.wrapObjectValue(rightValue);
+        if (canWrap(rightValue)) {
+            const ref = state.wrapReferenceValue(rightValue);
+            const object = state.dereference(ref);
 
-            if (!object.canIterate()) {
+            if (!object.canIterate(state)) {
                 return;
             }
 
-            object.iterate((key:string) => {
+            object.iterate(state, (key:string) => {
                 let setLoopVariable:Expression;
                 let initialExpression = builders.literal(key);
                 if (left instanceof VariableDeclarationNode) {
