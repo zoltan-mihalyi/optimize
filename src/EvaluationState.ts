@@ -15,7 +15,8 @@ import {
     STRING,
     BOOLEAN,
     NUMBER,
-    PropDescriptor
+    PropDescriptor,
+    IterableValue
 } from "./Value";
 import {Variable} from "./Variable";
 import {nonEnumerable, hasOwnProperty, isPrimitive, throwValue} from "./Utils";
@@ -278,6 +279,17 @@ class EvaluationState {
 
     isBuiltIn(key:Object):boolean {
         return EvaluationState.rootState.objectToReferenceMap.has(key);
+    }
+
+    makeDirtyAll(value:Value) {
+        if (!(value instanceof IterableValue)) {
+            return;
+        }
+        value.each((singleValue) => {
+            if (singleValue instanceof ReferenceValue) {
+                this.saveObject(this.dereference(singleValue).dirty(), singleValue);
+            }
+        });
     }
 
     private getObjectReference(object:Object):ReferenceValue {

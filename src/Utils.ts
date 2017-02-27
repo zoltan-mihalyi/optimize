@@ -3,6 +3,7 @@ import recast = require("recast");
 const builders = recast.types.builders;
 import {PrimitiveValue, Value, PropDescriptor, unknown, ReferenceValue, SingleValue} from "./Value";
 import {SemanticNode} from "./node/SemanticNode";
+import {CallNode, NewNode} from "./node/CallNodes";
 import Cache = require("./Cache");
 import Scope = require("./Scope");
 import EvaluationState = require("./EvaluationState");
@@ -87,4 +88,40 @@ export function isInnerScoped(node:SemanticNode):node is InnerScoped {
 const hasOwnProp = Object.prototype.hasOwnProperty;
 export function hasOwnProperty(object:Object, property:string):boolean {
     return hasOwnProp.call(object, property);
+}
+
+const MUTATING_METHODS:Function[] = [
+    Array.prototype.pop,
+    Array.prototype.push,
+    Array.prototype.reverse,
+    Array.prototype.sort,
+    Array.prototype.shift,
+    Array.prototype.unshift,
+    Array.prototype.splice
+];
+
+export function getRealFunctionAndContext(fn:Function, context:any, parameters:any[]):[Function, any] {
+    if (fn === Function.prototype.apply || fn === Function.prototype.call) {
+        return [context, parameters[0]];
+    }
+    return [fn, context];
+}
+
+export function canMutate(state:EvaluationState, fn:Function, context:any, parameters:any[]) {
+    [fn, context] = getRealFunctionAndContext(fn, context, parameters);
+    return MUTATING_METHODS.indexOf(fn) !== -1 && state.isBuiltIn(context);
+}
+
+export function getParameters(state:EvaluationState, node:CallNode|NewNode):any[] {
+    const parameters = [];
+    for (let i = 0; i < node.arguments.length; i++) {
+        const argument = node.arguments[i];
+        let parameter = argument.getValue();
+        if (hasTrueValue(parameter, state)) {
+            parameters.push(getTrueValue(parameter, state));
+        } else {
+            return null;
+        }
+    }
+    return parameters;
 }

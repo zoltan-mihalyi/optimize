@@ -1,7 +1,7 @@
 import EvaluationState = require("../EvaluationState");
 import {ExpressionNode} from "./ExpressionNode";
 import {SemanticNode} from "./SemanticNode";
-import {PrimitiveValue, Value, IterableValue, SingleValue, ReferenceValue} from "../Value";
+import {PrimitiveValue, Value, IterableValue, ReferenceValue} from "../Value";
 import {IdentifierNode} from "./IdentifierNode";
 import {TrackingVisitor} from "../NodeVisitor";
 import Later = require("./Later");
@@ -36,6 +36,28 @@ export class MemberNode extends ExpressionNode {
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.object.track(state, visitor);
         this.property.track(state, visitor);
+
+        let objectValue = this.object.getValue();
+        const propertyValue = this.getPropertyValue();
+        if (propertyValue instanceof IterableValue) {
+            if (objectValue instanceof IterableValue) {
+                objectValue.each((obj) => {
+                    let canMakeDirty = false;
+                    propertyValue.each(p => {
+                        const propName = p instanceof PrimitiveValue ? p.value + '' : state.dereference(p as ReferenceValue).trueValue + ''; //todo trueValue
+                        if (objectValue instanceof ReferenceValue && !state.dereference(objectValue).isCleanAccess(state, propName)) {
+                            canMakeDirty = true;
+                        }
+                    });
+                    if (canMakeDirty) {
+                        state.makeDirtyAll(obj);
+                    }
+                });
+            }
+        } else {
+            state.makeDirtyAll(objectValue);
+        }
+
     }
 
     isReadOnly():boolean {

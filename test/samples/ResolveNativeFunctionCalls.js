@@ -15,9 +15,6 @@ console.log(typeof Array);
 console.log(new Number("123").valueOf());
 console.log(new Array(10).length);
 
-console.log(Array.prototype.push(1));
-console.log(Array.prototype.push.apply(Object.prototype, [1]));
-
 console.log(new Date(100).getTime());
 console.log(new Date().getTime());
 
@@ -31,3 +28,6 @@ console.log(eval('1+1'));
 
 console.log(Function.prototype.apply.call(function(){}));
 console.log((function(){}).apply(Date));
+
+console.log(Array.prototype.push(1));
+console.log(Array.prototype.push.apply(Object.prototype, [1]));

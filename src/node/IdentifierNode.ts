@@ -1,8 +1,13 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {Variable} from "../Variable";
+import {MemberNode, ExpressionStatementNode} from "./Others";
+import {CallNode, NewNode} from "./CallNodes";
+import {AssignmentNode} from "./Assignments";
+import {VariableDeclaratorNode} from "./Variables";
 import EvaluationState = require("../EvaluationState");
 import Scope = require("../Scope");
 import Later = require("./Later");
+import {BinaryNode} from "./Operators";
 
 export class IdentifierNode extends ExpressionNode {
     readonly name:string;
@@ -16,10 +21,39 @@ export class IdentifierNode extends ExpressionNode {
     }
 
     onTrack(state:EvaluationState) {
-        if (this.isOnlyRead()) {
+        if (this.isRead()) {
             let variable = this.getVariable();
-            this.setValue(state.getValue(variable));
+            let value = state.getValue(variable);
+            if (this.isOnlyRead()) {
+                this.setValue(value);
+            }
+
+            if (this.canMakeDirty()) {
+                state.makeDirtyAll(value);
+            }
         }
+    }
+
+    canMakeDirty() {
+        const parent = this.parent;
+        if (parent instanceof Later.ForEachNode) {
+            return false;
+        }
+        if (parent instanceof MemberNode) {
+            return false; // member node handles this
+        }
+        if (parent instanceof CallNode || parent instanceof NewNode) {
+            if (parent.callee === this) {
+                return false;
+            }
+        }
+        if (parent instanceof AssignmentNode && parent.right === this && parent.parent instanceof ExpressionStatementNode) {
+            return false;
+        }
+        if (parent instanceof VariableDeclaratorNode) {
+            return false;
+        }
+        return true;
     }
 
     getVariable():Variable {

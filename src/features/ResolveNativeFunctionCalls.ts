@@ -1,6 +1,6 @@
 import NodeVisitor = require("../NodeVisitor");
 import {ReferenceValue, FUNCTION, Value} from "../Value";
-import {hasTrueValue, getTrueValue} from "../Utils";
+import {hasTrueValue, getTrueValue, canMutate, getRealFunctionAndContext, getParameters} from "../Utils";
 import {NewNode, CallNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
 import {TrackingVisitor} from "../NodeVisitor";
@@ -28,23 +28,6 @@ function isUnsafeNewCall(fn:Function, parameters:any[]) {
     return false;
 }
 
-function getRealFunctionAndContext(fn:Function, context:any, parameters:any[]):[Function, any] {
-    if (fn === Function.prototype.apply || fn === Function.prototype.call) {
-        return [context, parameters[0]];
-    }
-    return [fn, context];
-}
-
-const MUTATING_METHODS:Function[] = [
-    Array.prototype.pop,
-    Array.prototype.push,
-    Array.prototype.reverse,
-    Array.prototype.sort,
-    Array.prototype.shift,
-    Array.prototype.unshift,
-    Array.prototype.splice
-];
-
 export  = (visitor:TrackingVisitor) => {
     visitor.on(CallNode, resolveCall);
     visitor.on(NewNode, resolveCall);
@@ -60,15 +43,9 @@ export  = (visitor:TrackingVisitor) => {
             return;
         }
 
-        const parameters = [];
-        for (let i = 0; i < node.arguments.length; i++) {
-            const argument = node.arguments[i];
-            let parameter = argument.getValue();
-            if (hasTrueValue(parameter, state)) {
-                parameters.push(getTrueValue(parameter, state));
-            } else {
-                return;
-            }
+        const parameters = getParameters(state, node);
+        if (parameters === null) {
+            return;
         }
 
         let resultValue:Value;
@@ -86,7 +63,7 @@ export  = (visitor:TrackingVisitor) => {
             if (isUnsafeInFunctionCall(fn, context, parameters)) {
                 return;
             }
-            if (canMutate(fn, context, parameters)) {
+            if (canMutate(state, fn, context, parameters)) {
                 return;
             }
             resultValue = state.createValueFromCall(fn, context, parameters);
@@ -114,11 +91,6 @@ export  = (visitor:TrackingVisitor) => {
                 }
             }
             return false;
-        }
-
-        function canMutate(fn:Function, context:any, parameters:any[]) {
-            [fn, context] = getRealFunctionAndContext(fn, context, parameters);
-            return MUTATING_METHODS.indexOf(fn) !== -1 && state.isBuiltIn(context);
         }
     }
 };

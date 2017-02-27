@@ -163,6 +163,32 @@ export class ReferenceValue extends SingleValue {
 
 }
 
+function mergePropInfos(propInfo1:PropInfo, propInfo2:PropInfo):PropInfo {
+    if (propInfo1 === PropInfo.MAY_HAVE_NEW || propInfo2 === PropInfo.MAY_HAVE_NEW) {
+        return PropInfo.MAY_HAVE_NEW;
+    } else if (propInfo1 === PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE || propInfo2 == PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE) {
+        return PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE;
+    }
+    return PropInfo.KNOWS_ALL;
+}
+
+function mergeProps(prop1:PropDescriptor, prop2:PropDescriptor):PropDescriptor {
+    if (prop1.enumerable === prop2.enumerable) {
+        if (prop1.value && prop2.value) {
+            return {
+                value: prop1.value.or(prop2.value),
+                enumerable: prop1.enumerable
+            };
+        } else if (prop1.get && prop1.get === prop2.get) {
+            return {
+                enumerable: prop1.enumerable,
+                get: prop1.get
+            }
+        }
+    }
+    return null;
+}
+
 export class HeapObject {
     readonly trueValue:Object|null;
     private proto:ReferenceValue;
@@ -177,31 +203,14 @@ export class HeapObject {
     }
 
     resolveProperty(state:EvaluationState, name:string, context:Object):Value {
-        if (this.hasProperty(name)) {
-            let property = this.properties[name];
-            if (property.get) {
-                return state.createValueFromCall(state.dereference(property.get).trueValue as Function, context, []);
-            } else {
-                return property.value;
-            }
+        const property = this.resolvePropertyDescriptor(state, name);
+        if (property === null) {
+            return unknown;
         }
-
-        switch (this.propertyInfo) {
-            case PropInfo.MAY_HAVE_NEW:
-                return unknown;
-            case PropInfo.KNOWS_ALL:
-                if (this.proto) {
-                    return state.dereference(this.proto).resolveProperty(state, name, context);
-                }
-                return new PrimitiveValue(void 0);
-            case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
-                if (this.proto) {
-                    let protoObject = state.dereference(this.proto);
-                    if (protoObject.hasPropertyDeep(state, name)) {
-                        return protoObject.resolveProperty(state, name, context);
-                    }
-                }
-                return unknown;
+        if (property.get) {
+            return state.createValueFromCall(state.dereference(property.get).trueValue as Function, context, []);
+        } else {
+            return property.value;
         }
     }
 
@@ -263,24 +272,50 @@ export class HeapObject {
         });
     }
 
-    or(other:HeapObject):HeapObject { //todo use param...
+    or(other:HeapObject):HeapObject {
         const properties:PropDescriptorMap = {};
+        let mayHaveNew = false;
         for (const propName in this.properties) {
             if (hasOwnProperty(this.properties, propName)) {
-                properties[propName] = this.properties[propName];
+                const prop1 = this.properties[propName];
+                if (hasOwnProperty(other.properties, propName)) {
+                    const prop2 = other.properties[propName];
+                    const merged = mergeProps(prop1, prop2);
+                    if (merged) {
+                        properties[propName] = merged;
+                    } else {
+                        mayHaveNew = true;
+                    }
+                } else if (other.propertyInfo === PropInfo.KNOWS_ALL) {
+                    properties[propName] = prop1;
+                } else {
+                    mayHaveNew = true;
+                }
             }
         }
 
+        for (const propName in other.properties) {
+            if (hasOwnProperty(other.properties, propName)) {
+                const prop1 = other.properties[propName];
+                if (!hasOwnProperty(this.properties, propName)) {
+                    if (this.propertyInfo === PropInfo.KNOWS_ALL) {
+                        properties[propName] = prop1;
+                    } else {
+                        mayHaveNew = true;
+                    }
+                }
+            }
+        }
 
         return new HeapObject(this.objectClass, {
             proto: this.proto, //todo handle proto change
             properties: properties,
-            propertyInfo: PropInfo.MAY_HAVE_NEW,
+            propertyInfo: mayHaveNew ? PropInfo.MAY_HAVE_NEW : mergePropInfos(this.propertyInfo, other.propertyInfo),
             trueValue: null
         });
     }
 
-    private hasPropertyDeep(state:EvaluationState, name:string):boolean {
+    hasPropertyDeep(state:EvaluationState, name:string):boolean {
         if (this.hasProperty(name)) {
             return true;
         }
@@ -289,6 +324,35 @@ export class HeapObject {
         }
         return false;
     }
+
+    isCleanAccess(state:EvaluationState, name:string) {
+        return this.resolvePropertyDescriptor(state, name) !== null;
+    }
+
+    private resolvePropertyDescriptor(state:EvaluationState, name:string):PropDescriptor {
+        if (this.hasProperty(name)) {
+            return this.properties[name];
+        }
+
+        switch (this.propertyInfo) {
+            case PropInfo.MAY_HAVE_NEW:
+                return null;
+            case PropInfo.KNOWS_ALL:
+                if (this.proto) {
+                    return state.dereference(this.proto).resolvePropertyDescriptor(state, name);
+                }
+                return null;
+            case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
+                if (this.proto) {
+                    let protoObject = state.dereference(this.proto);
+                    if (protoObject.hasPropertyDeep(state, name)) {
+                        return protoObject.resolvePropertyDescriptor(state, name);
+                    }
+                }
+                return null;
+        }
+    }
+
 }
 
 export class FiniteSetOfValues extends IterableValue {

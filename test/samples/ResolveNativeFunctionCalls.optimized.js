@@ -15,9 +15,6 @@ console.log("function");
 console.log(123);
 console.log(10);
 
-console.log(Array.prototype.push(1));
-console.log(Array.prototype.push.apply(Object.prototype, [1]));
-
 console.log(100);
 console.log(new Date().getTime());
 
@@ -31,3 +28,6 @@ console.log(eval('1+1'));
 
 console.log(Function.prototype.apply.call(function(){}));
 console.log((function(){}).apply(Date));
+
+console.log(Array.prototype.push(1));
+console.log(Array.prototype.push.apply(Object.prototype, [1]));

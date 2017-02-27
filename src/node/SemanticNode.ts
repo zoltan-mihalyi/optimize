@@ -243,6 +243,7 @@ export abstract class SemanticNode {
     track(state:EvaluationState, visitor:TrackingVisitor) {
         this.onTrack(state, visitor);
         visitor.callAll(this, state);
+        this.afterTrack(state, visitor);
     }
 
     protected handleDeclarationsForNode() {
@@ -273,5 +274,9 @@ export abstract class SemanticNode {
         this.updated = true;
     }
 
+    protected afterTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    }
+
     protected abstract onTrack(state:EvaluationState, visitor:TrackingVisitor):void;
+
 }
