@@ -6,9 +6,29 @@ function track() {
         obj.x = 2;
         console.log(obj.x);
     }
-    console.log(obj.x); //{x:1} v {x:2}
+    console.log(obj.x);
     console.log(obj.x < 3);
     console.log(obj.x > 0);
+}
+
+function trackNewObject() {
+    var o = {x: 1};
+    if (u) {
+        o = {x: 2};
+    }
+    console.log(o.x);
+    console.log(o.x < 3);
+}
+
+function trackBranch() {
+    var o;
+    if (u) {
+        o = {x: 1};
+    } else {
+        o = {x: 2};
+    }
+    console.log(o.x);
+    console.log(o.x < 3);
 }
 
 function trackUpdate() {

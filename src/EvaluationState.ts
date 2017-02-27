@@ -98,8 +98,10 @@ class EvaluationState {
 
         const heap1 = state1.heap;
         state1.heap.each((ref, heapObject) => {
-            if (state2.hasReference(ref)) {
+            if (state2.heap.has(ref)) {
                 this.heap.setOrUpdate(ref, heapObject.or(state2.dereference(ref)));
+            } else {
+                this.heap.setOrUpdate(ref, heapObject);
             }
         });
         state2.heap.each((reference, heapObject) => {
@@ -127,9 +129,7 @@ class EvaluationState {
         });
 
         state.heap.each((reference, heapObject) => {
-            //TODO if (this.hasReference(reference)) {
             this.heap.setOrUpdate(reference, heapObject);
-            // }
         });
     }
 
@@ -307,9 +307,8 @@ class EvaluationState {
     }
 
     private orWithRef(reference:ReferenceValue, heapObject:HeapObject) {
-        if (this.hasReference(reference)) {
-            this.heap.setOrUpdate(reference, this.dereference(reference).or(heapObject));
-        }
+        let newObject = this.hasReference(reference) ? this.dereference(reference).or(heapObject) : heapObject;
+        this.heap.setOrUpdate(reference, newObject);
     }
 }
 

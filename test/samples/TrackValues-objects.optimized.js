@@ -6,8 +6,28 @@ function track() {
         obj.x = 2;
         console.log(2);
     }
-    console.log(obj.x); //{x:1} v {x:2}
+    console.log(obj.x);
     console.log(true);
+    console.log(true);
+}
+
+function trackNewObject() {
+    var o = {x: 1};
+    if (u) {
+        o = {x: 2};
+    }
+    console.log(o.x);
+    console.log(true);
+}
+
+function trackBranch() {
+    var o;
+    if (u) {
+        o = {x: 1};
+    } else {
+        o = {x: 2};
+    }
+    console.log(o.x);
     console.log(true);
 }
 
