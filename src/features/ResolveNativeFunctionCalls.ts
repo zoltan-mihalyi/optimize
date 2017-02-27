@@ -1,6 +1,6 @@
 import NodeVisitor = require("../NodeVisitor");
 import {ReferenceValue, FUNCTION, Value} from "../Value";
-import {hasTrueValue, getTrueValue, canMutate, getRealFunctionAndContext, getParameters} from "../Utils";
+import {hasTrueValue, getTrueValue, getRealFunctionAndContext, getParameters, getMutatingObject} from "../Utils";
 import {NewNode, CallNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
 import {TrackingVisitor} from "../NodeVisitor";
@@ -63,7 +63,7 @@ export  = (visitor:TrackingVisitor) => {
             if (isUnsafeInFunctionCall(fn, context, parameters)) {
                 return;
             }
-            if (canMutate(state, fn, context, parameters)) {
+            if (getMutatingObject(fn, context, parameters)) {
                 return;
             }
             resultValue = state.createValueFromCall(fn, context, parameters);

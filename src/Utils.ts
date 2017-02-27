@@ -107,9 +107,9 @@ export function getRealFunctionAndContext(fn:Function, context:any, parameters:a
     return [fn, context];
 }
 
-export function canMutate(state:EvaluationState, fn:Function, context:any, parameters:any[]) {
+export function getMutatingObject(fn:Function, context:any, parameters:any[]):any {
     [fn, context] = getRealFunctionAndContext(fn, context, parameters);
-    return MUTATING_METHODS.indexOf(fn) !== -1 && state.isBuiltIn(context);
+    return MUTATING_METHODS.indexOf(fn) !== -1 ? context : null;
 }
 
 export function getParameters(state:EvaluationState, node:CallNode|NewNode):any[] {
@@ -124,4 +124,9 @@ export function getParameters(state:EvaluationState, node:CallNode|NewNode):any[
         }
     }
     return parameters;
+}
+
+export function getClassName(value:Object) {
+    let str = Object.prototype.toString.call(value);
+    return str.substring(8, str.length - 1);
 }

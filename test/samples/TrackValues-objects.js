@@ -96,3 +96,12 @@ function trackBinaryOperator() {
     obj + '';
     console.log(obj.x);
 }
+
+function trackArray() {
+    var arr = [];
+    if (u) {
+        arr.push('a');
+    }
+    console.log(arr.length);
+    console.log(arr.length < 2);
+}

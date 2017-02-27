@@ -286,8 +286,6 @@ export class HeapObject {
                     } else {
                         mayHaveNew = true;
                     }
-                } else if (other.propertyInfo === PropInfo.KNOWS_ALL) {
-                    properties[propName] = prop1;
                 } else {
                     mayHaveNew = true;
                 }

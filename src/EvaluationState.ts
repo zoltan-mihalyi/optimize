@@ -19,7 +19,7 @@ import {
     IterableValue
 } from "./Value";
 import {Variable} from "./Variable";
-import {nonEnumerable, hasOwnProperty, isPrimitive, throwValue} from "./Utils";
+import {nonEnumerable, hasOwnProperty, isPrimitive, throwValue, getClassName} from "./Utils";
 import Map = require("./Map");
 import Scope = require("./Scope");
 import SafeProperties = require("./SafeProperties");
@@ -35,8 +35,7 @@ const newCallCache = new Cache<number,Function>(paramNum => {
 });
 
 function getObjectClass(value:Object):ObjectClass {
-    let str = Object.prototype.toString.call(value);
-    let className = str.substring(8, str.length - 1);
+    const className = getClassName(value);
 
     switch (className) {
         case 'Function':
