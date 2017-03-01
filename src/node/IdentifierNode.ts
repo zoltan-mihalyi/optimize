@@ -7,7 +7,6 @@ import {VariableDeclaratorNode} from "./Variables";
 import EvaluationState = require("../EvaluationState");
 import Scope = require("../Scope");
 import Later = require("./Later");
-import {BinaryNode} from "./Operators";
 
 export class IdentifierNode extends ExpressionNode {
     readonly name:string;
@@ -29,7 +28,7 @@ export class IdentifierNode extends ExpressionNode {
             }
 
             if (this.canMakeDirty()) {
-                state.makeDirtyAll(value);
+                state.makeDirtyAll(variable);
             }
         }
     }

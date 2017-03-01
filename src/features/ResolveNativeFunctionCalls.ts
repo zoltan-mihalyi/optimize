@@ -4,6 +4,8 @@ import {hasTrueValue, getTrueValue, getRealFunctionAndContext, getParameters, ge
 import {NewNode, CallNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
 import {TrackingVisitor} from "../NodeVisitor";
+import {ExpressionNode} from "../node/ExpressionNode";
+import {IdentifierNode} from "../node/IdentifierNode";
 import EvaluationState = require("../EvaluationState");
 
 const UNSAFE_FUNCTIONS:Function[] = [
@@ -63,8 +65,14 @@ export  = (visitor:TrackingVisitor) => {
             if (isUnsafeInFunctionCall(fn, context, parameters)) {
                 return;
             }
-            if (getMutatingObject(fn, context, parameters)) {
-                return;
+            let mutatingObject = getMutatingObject(fn, context, parameters);
+            if (mutatingObject) {
+                if (state.isBuiltIn(mutatingObject)) {
+                    return;
+                }
+                if (isMutatingVariable(mutatingObject, context, parameters)) {
+                    return;
+                }
             }
             resultValue = state.createValueFromCall(fn, context, parameters);
         } else {
@@ -91,6 +99,22 @@ export  = (visitor:TrackingVisitor) => {
                 }
             }
             return false;
+        }
+
+        function isMutatingVariable(mutatingObject:any, context:any, parameters:any[]) {
+            const mutatingNode = getMutatingNode(mutatingObject, context, parameters);
+            return mutatingNode instanceof IdentifierNode;
+        }
+
+        function getMutatingNode(mutatingObject:any, context:any, parameters:any[]):ExpressionNode {
+            if (mutatingObject === context) {
+                return (node.callee as MemberNode).object;
+            }
+            for (let i = 0; i < parameters.length; i++) {
+                if (parameters[i] === mutatingObject) {
+                    return node.arguments[i];
+                }
+            }
         }
     }
 };

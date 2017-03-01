@@ -2,6 +2,7 @@ import {ExpressionNode} from "./ExpressionNode";
 import {TrackingVisitor} from "../NodeVisitor";
 import {ReferenceValue, SingleValue, HeapObject} from "../Value";
 import {getMutatingObject, getParameters, canWrap, isPrimitive, getClassName} from "../Utils";
+import {IdentifierNode} from "./IdentifierNode";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
 import Map = require("../Map");
@@ -76,7 +77,8 @@ export class CallNode extends ExpressionNode {
         const callee = this.callee;
 
         if (callee instanceof Later.MemberNode) {
-            let objectValue = callee.object.getValue();
+            let object = callee.object;
+            let objectValue = object.getValue();
             let calleeValue = callee.getValue();
             if (calleeValue instanceof ReferenceValue && objectValue instanceof SingleValue && canWrap(objectValue)) {
                 const calleeObject = state.dereference(calleeValue);
@@ -91,12 +93,16 @@ export class CallNode extends ExpressionNode {
                 }
             }
 
-            state.makeDirtyAll(objectValue);
+            if (object instanceof IdentifierNode) {
+                state.makeDirtyAll(object.getVariable());
+            }
         }
 
         for (let i = 0; i < this.arguments.length; i++) {
             let obj = this.arguments[i];
-            state.makeDirtyAll(obj.getValue());
+            if (obj instanceof IdentifierNode) {
+                state.makeDirtyAll(obj.getVariable());
+            }
         }
     }
 

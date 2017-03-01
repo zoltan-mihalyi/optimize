@@ -7,7 +7,9 @@ function fn() {
     };
 
     x();
-    callback("x", obj2["x"]);
+    for (var i2 in obj2) {
+        callback(i2, obj2[i2]);
+    }
     log(g);
 
     for (var j = 0; j < 2; j++) {

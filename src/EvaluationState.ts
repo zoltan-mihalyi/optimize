@@ -55,10 +55,20 @@ function getObjectClass(value:Object):ObjectClass {
     }
 }
 
+function pushUnique<T>(target:T[], elements:T[]) {
+    for (let i = 0; i < elements.length; i++) {
+        const element = elements[i];
+        if (target.indexOf(element) === -1) {
+            target.push(element);
+        }
+    }
+}
+
 class EvaluationState {
     private variableValues:Map<Variable,Value> = new Map<Variable,Value>();
     private heap:Map<ReferenceValue,HeapObject> = new Map<ReferenceValue,HeapObject>();
     private objectToReferenceMap:Map<Object,ReferenceValue> = new Map<Object,ReferenceValue>();
+    private variableReferences:Map<Variable,ReferenceValue[]> = new Map<Variable,ReferenceValue[]>();
 
     static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false));
 
@@ -71,6 +81,10 @@ class EvaluationState {
                 this.setValue(variable, value);
             }
         });
+
+        if (parent) {
+            this.orWithVariableReferences(parent);
+        }
     }
 
     setValue(variable:Variable, value:Value) {
@@ -78,6 +92,20 @@ class EvaluationState {
         for (let i = 0; i < variable.writes.length; i++) {
             if (variable.writes[i].scope.findFunctionScope() !== variableFunctionScope) {
                 return;
+            }
+        }
+
+        if (value instanceof IterableValue) {
+            const references:ReferenceValue[] = [];
+            value.each(val => {
+                if (val instanceof ReferenceValue) {
+                    references.push(val);
+                }
+            });
+            if (this.variableReferences.has(variable)) {
+                pushUnique(this.variableReferences.get(variable), references);
+            } else {
+                this.variableReferences.set(variable, references);
             }
         }
 
@@ -108,6 +136,9 @@ class EvaluationState {
                 this.orWithRef(reference, heapObject);
             }
         });
+
+        state1.orWithVariableReferences(state2);
+        this.replaceWithVariableReferences(state1);
     }
 
     mergeMaybe(state:EvaluationState) {
@@ -118,6 +149,8 @@ class EvaluationState {
         state.heap.each((reference, heapObject) => {
             this.orWithRef(reference, heapObject);
         });
+
+        this.orWithVariableReferences(state);
     }
 
     mergeBack(state:EvaluationState) {
@@ -130,15 +163,14 @@ class EvaluationState {
         state.heap.each((reference, heapObject) => {
             this.heap.setOrUpdate(reference, heapObject);
         });
+
+        this.replaceWithVariableReferences(state);
     }
 
     trackAsUnsure(tracker:(state:EvaluationState) => void) {
         const unsureState = new UnsureEvaluationState(this, this.scope);
         tracker(unsureState);
-
-        unsureState.variableValues.each((variable) => {
-            this.variableValues.setOrUpdate(variable, unknown);
-        });
+        this.mergeMaybe(unsureState);
     }
 
     getValue(variable:Variable):Value {
@@ -280,15 +312,26 @@ class EvaluationState {
         return EvaluationState.rootState.objectToReferenceMap.has(key);
     }
 
-    makeDirtyAll(value:Value) {
-        if (!(value instanceof IterableValue)) {
-            return;
+    makeDirty(reference:ReferenceValue) {
+        this.saveObject(this.dereference(reference).dirty(), reference);
+    }
+
+    makeDirtyAll(variable:Variable) {
+        const references = this.getVariableReference(variable);
+
+        for (let i = 0; i < references.length; i++) {
+            this.makeDirty(references[i]);
         }
-        value.each((singleValue) => {
-            if (singleValue instanceof ReferenceValue) {
-                this.saveObject(this.dereference(singleValue).dirty(), singleValue);
-            }
-        });
+    }
+
+    private getVariableReference(variable:Variable):ReferenceValue[] {
+        if (this.variableReferences.has(variable)) {
+            return this.variableReferences.get(variable);
+        }
+        if (this.parent) {
+            return this.parent.getVariableReference(variable);
+        }
+        return [];
     }
 
     private getObjectReference(object:Object):ReferenceValue {
@@ -308,6 +351,25 @@ class EvaluationState {
     private orWithRef(reference:ReferenceValue, heapObject:HeapObject) {
         let newObject = this.hasReference(reference) ? this.dereference(reference).or(heapObject) : heapObject;
         this.heap.setOrUpdate(reference, newObject);
+    }
+
+    private orWithVariableReferences(other:EvaluationState) {
+        const target = this.variableReferences;
+        other.variableReferences.each((variable, references) => {
+            if (target.has(variable)) {
+                const ownReferences = target.get(variable);
+                pushUnique(ownReferences, references);
+            } else {
+                target.set(variable, references);
+            }
+        });
+    }
+
+    private replaceWithVariableReferences(other:EvaluationState) {
+        const target = this.variableReferences;
+        other.variableReferences.each((variable, references) => {
+            target.setOrUpdate(variable, references);
+        });
     }
 }
 

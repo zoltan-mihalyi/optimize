@@ -105,3 +105,37 @@ function trackArray() {
     console.log(arr.length);
     console.log(arr.length < 2);
 }
+
+function known() {
+    var obj = {x: 1};
+    var obj2 = obj;
+    console.log(obj2.x);
+}
+
+function unknown() {
+    var orig = {};
+    var other = orig;
+    if (u) {
+        other = u;
+    }
+    other.x = 1;
+    console.log(orig.x);
+}
+
+function unknown2() {
+    var orig = {};
+    var other = u;
+    if (u) {
+        other = orig;
+    }
+    other.x = 1;
+    console.log(orig.x);
+}
+
+function trackUnsure() {
+    var arr = [];
+    while (u) {
+        arr.push(1);
+    }
+    console.log(arr.length);
+}

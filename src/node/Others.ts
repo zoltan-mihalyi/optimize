@@ -34,30 +34,37 @@ export class MemberNode extends ExpressionNode {
     }
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        this.object.track(state, visitor);
+        const object = this.object;
+        object.track(state, visitor);
         this.property.track(state, visitor);
 
-        let objectValue = this.object.getValue();
+        if (!(object instanceof IdentifierNode)) {
+            return;
+        }
+
+        let objectValue = object.getValue();
         const propertyValue = this.getPropertyValue();
         if (propertyValue instanceof IterableValue) {
             if (objectValue instanceof IterableValue) {
                 objectValue.each((obj) => {
+                    if (!(obj instanceof ReferenceValue)) {
+                        return;
+                    }
                     let canMakeDirty = false;
                     propertyValue.each(p => {
                         const propName = p instanceof PrimitiveValue ? p.value + '' : state.dereference(p as ReferenceValue).trueValue + ''; //todo trueValue
-                        if (objectValue instanceof ReferenceValue && !state.dereference(objectValue).isCleanAccess(state, propName)) {
+                        if (!state.dereference(obj).isCleanAccess(state, propName)) {
                             canMakeDirty = true;
                         }
                     });
                     if (canMakeDirty) {
-                        state.makeDirtyAll(obj);
+                        state.makeDirty(obj);
                     }
                 });
             }
         } else {
-            state.makeDirtyAll(objectValue);
+            state.makeDirtyAll(object.getVariable());
         }
-
     }
 
     isReadOnly():boolean {
