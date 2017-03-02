@@ -139,3 +139,14 @@ function trackUnsure() {
     }
     console.log(arr.length);
 }
+
+function trackAnotherScope() {
+    var a = {x: 1};
+    var b = a;
+
+    call(() => {
+        b.x = 2;
+    });
+
+    console.log(a.x);
+}

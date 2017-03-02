@@ -94,11 +94,20 @@ class EvaluationState {
                 return;
             }
         }
+        let hasReadInAnotherScope = false;
+        for (let i = 0; i < variable.reads.length; i++) {
+            if (variable.reads[i].scope.findFunctionScope() !== variableFunctionScope) {
+                hasReadInAnotherScope = true;
+            }
+        }
 
         if (value instanceof IterableValue) {
             const references:ReferenceValue[] = [];
             value.each(val => {
                 if (val instanceof ReferenceValue) {
+                    if (hasReadInAnotherScope) {
+                        this.makeDirty(val);
+                    }
                     references.push(val);
                 }
             });
