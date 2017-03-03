@@ -134,8 +134,10 @@ function unknown2() {
 
 function trackUnsure() {
     var arr = [];
+    var arr2 = [];
     while (u) {
         arr.push(1);
+        arr = arr2;
     }
     console.log(arr.length);
 }

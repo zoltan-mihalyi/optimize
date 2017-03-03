@@ -3,6 +3,7 @@ import {binaryCache, hasTrueValue, getTrueValue} from "../Utils";
 import {SingleValue, unknown, PrimitiveValue, IterableValue, Value, ReferenceValue, HeapObject} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
 import {MemberNode} from "./Others";
+import {IdentifierNode} from "./IdentifierNode";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
 
@@ -15,8 +16,9 @@ function trackAssignment(state:EvaluationState, node:ExpressionNode, getNewValue
         return;
     }
 
-    const leftValue = state.getValue(node.getVariable());
-    state.setValue(node.getVariable(), getNewValue(leftValue));
+    const variable = node.getVariable();
+    const leftValue = state.getValue(variable);
+    state.setValue(variable, getNewValue(leftValue));
 }
 
 function handleMemberAssignment(state:EvaluationState, node:MemberNode, getNewValue:GetNewValue) {
@@ -74,6 +76,9 @@ export class AssignmentNode extends ExpressionNode {
 
         trackAssignment(state, this.left, (leftValue:Value) => {
             if (this.operator === '=') {
+                if (this.left instanceof IdentifierNode && this.right instanceof IdentifierNode) {
+                    state.assign(this.left.getVariable(), this.right.getVariable());
+                }
                 return rightValue;
             }
             const evaluator = binaryCache.get(this.operator.substring(0, this.operator.length - 1));

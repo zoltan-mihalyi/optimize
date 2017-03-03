@@ -111,14 +111,25 @@ class EvaluationState {
                     references.push(val);
                 }
             });
-            if (this.variableReferences.has(variable)) {
-                pushUnique(this.variableReferences.get(variable), references);
-            } else {
-                this.variableReferences.set(variable, references);
-            }
+            this.updateReferences(variable, references);
         }
 
         this.variableValues.setOrUpdate(variable, value);
+    }
+
+    assign(variable:Variable, variable2:Variable) {
+        if (!this.variableReferences.has(variable2)) {
+            return;
+        }
+        this.updateReferences(variable, this.variableReferences.get(variable2));
+    }
+
+    private updateReferences(variable:Variable, references:ReferenceValue[]) {
+        if (this.variableReferences.has(variable)) {
+            pushUnique(this.variableReferences.get(variable), references);
+        } else {
+            this.variableReferences.set(variable, references);
+        }
     }
 
     mergeOr(state1:EvaluationState, state2:EvaluationState) {
