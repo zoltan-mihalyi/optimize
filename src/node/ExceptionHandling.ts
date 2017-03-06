@@ -38,7 +38,7 @@ export class TryNode extends SemanticNode {
             if (this.handler) {
                 this.handler.track(state, visitor);
             }
-        });
+        }, false);
         if (this.finalizer) {
             this.finalizer.track(state, visitor);
         }

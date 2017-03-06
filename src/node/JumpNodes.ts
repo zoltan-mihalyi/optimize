@@ -23,7 +23,7 @@ export class LabeledNode extends SemanticNode {
     body:SemanticNode;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        state.trackAsUnsure(state => this.body.track(state, visitor));
+        state.trackAsUnsure(state => this.body.track(state, visitor), true);
     }
 }
 Later.LabeledNode = LabeledNode;

@@ -55,20 +55,12 @@ function getObjectClass(value:Object):ObjectClass {
     }
 }
 
-function pushUnique<T>(target:T[], elements:T[]) {
-    for (let i = 0; i < elements.length; i++) {
-        const element = elements[i];
-        if (target.indexOf(element) === -1) {
-            target.push(element);
-        }
-    }
-}
-
 class EvaluationState {
     private variableValues:Map<Variable,Value> = new Map<Variable,Value>();
     private heap:Map<ReferenceValue,HeapObject> = new Map<ReferenceValue,HeapObject>();
     private objectToReferenceMap:Map<Object,ReferenceValue> = new Map<Object,ReferenceValue>();
     private variableReferences:Map<Variable,ReferenceValue[]> = new Map<Variable,ReferenceValue[]>();
+    private updated:boolean = false;
 
     static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false));
 
@@ -122,14 +114,6 @@ class EvaluationState {
             return;
         }
         this.updateReferences(variable, this.variableReferences.get(variable2));
-    }
-
-    private updateReferences(variable:Variable, references:ReferenceValue[]) {
-        if (this.variableReferences.has(variable)) {
-            pushUnique(this.variableReferences.get(variable), references);
-        } else {
-            this.variableReferences.set(variable, references);
-        }
     }
 
     mergeOr(state1:EvaluationState, state2:EvaluationState) {
@@ -187,9 +171,12 @@ class EvaluationState {
         this.replaceWithVariableReferences(state);
     }
 
-    trackAsUnsure(tracker:(state:EvaluationState) => void) {
+    trackAsUnsure(tracker:(state:EvaluationState) => void, loop:boolean) {
         const unsureState = new UnsureEvaluationState(this, this.scope);
-        tracker(unsureState);
+        do {
+            unsureState.updated = false;
+            tracker(unsureState);
+        } while (loop && unsureState.updated);
         this.mergeMaybe(unsureState);
     }
 
@@ -344,6 +331,36 @@ class EvaluationState {
         }
     }
 
+    private updateReferences(variable:Variable, references:ReferenceValue[]) {
+        if (this.variableReferences.has(variable)) {
+            const target = this.variableReferences.get(variable);
+            const originalLength = target.length;
+
+            //remove old references after multiple tracks
+            for (let i = 0; i < target.length; i++) {
+                const reference = target[i];
+                if (!this.heap.has(reference)) {
+                    target.splice(i, 1);
+                    i--;
+                }
+            }
+
+            //add new references
+            for (let i = 0; i < references.length; i++) {
+                const reference = references[i];
+                if (target.indexOf(reference) === -1) {
+                    target.push(reference);
+                }
+            }
+
+            if (target.length !== originalLength) {
+                this.updated = true;
+            }
+        } else {
+            this.variableReferences.set(variable, references.slice());
+        }
+    }
+
     private getVariableReference(variable:Variable):ReferenceValue[] {
         if (this.variableReferences.has(variable)) {
             return this.variableReferences.get(variable);
@@ -374,20 +391,17 @@ class EvaluationState {
     }
 
     private orWithVariableReferences(other:EvaluationState) {
-        const target = this.variableReferences;
         other.variableReferences.each((variable, references) => {
-            if (target.has(variable)) {
-                const ownReferences = target.get(variable);
-                pushUnique(ownReferences, references);
-            } else {
-                target.set(variable, references);
-            }
+            this.updateReferences(variable, references);
         });
     }
 
     private replaceWithVariableReferences(other:EvaluationState) {
         const target = this.variableReferences;
         other.variableReferences.each((variable, references) => {
+            if (!target.has(variable) || target.get(variable).length !== references.length) {
+                this.updated = true;
+            }
             target.setOrUpdate(variable, references);
         });
     }

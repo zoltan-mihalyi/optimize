@@ -134,10 +134,22 @@ function unknown2() {
 
 function trackUnsure() {
     var arr = [];
+    var arr2;
+    try {
+        err();
+        arr2 = arr;
+        arr2.push(1);
+    } catch (e) {
+    }
+    console.log(arr.length);
+}
+
+function trackLoop() {
+    var arr = [];
     var arr2 = [];
     while (u) {
-        arr.push(1);
-        arr = arr2;
+        arr2.push(1);
+        arr2 = arr;
     }
     console.log(arr.length);
 }

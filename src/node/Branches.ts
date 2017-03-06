@@ -47,6 +47,6 @@ export class SwitchStatementNode extends SemanticNode {
             for (let i = 0; i < this.cases.length; i++) {
                 this.cases[i].track(state, visitor);
             }
-        });
+        }, false);
     }
 }

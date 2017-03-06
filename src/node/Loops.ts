@@ -20,7 +20,7 @@ export class DoWhileNode extends LoopNode {
         state.trackAsUnsure(state => {
             this.body.track(state, visitor);
             this.test.track(state, visitor);
-        });
+        }, true);
     }
 }
 export abstract class ForEachNode extends LoopNode implements InnerScoped {
@@ -45,7 +45,7 @@ export abstract class ForEachNode extends LoopNode implements InnerScoped {
             const identifier = this.left instanceof IdentifierNode ? this.left : this.left.declarations[0].id;
             state.setValue(identifier.getVariable(), unknown);
             this.body.track(state, visitor);
-        });
+        }, true);
     }
 }
 Later.ForEachNode = ForEachNode;
@@ -73,7 +73,7 @@ export class ForNode extends LoopNode {
             if (this.update) {
                 this.update.track(state, visitor);
             }
-        });
+        }, true);
     }
 }
 
@@ -85,6 +85,6 @@ export class WhileNode extends LoopNode {
         state.trackAsUnsure(state => {
             this.test.track(state, visitor);
             this.body.track(state, visitor);
-        });
+        }, true);
     }
 }
