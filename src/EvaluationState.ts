@@ -24,6 +24,7 @@ import Map = require("./Map");
 import Scope = require("./Scope");
 import SafeProperties = require("./SafeProperties");
 import Cache = require("./Cache");
+import Context from "./Context";
 
 const newCallCache = new Cache<number,Function>(paramNum => {
     let params:string[] = [];
@@ -62,9 +63,9 @@ class EvaluationState {
     private variableReferences:Map<Variable,ReferenceValue[]> = new Map<Variable,ReferenceValue[]>();
     private updated:boolean = false;
 
-    static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false));
+    static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false), null);
 
-    constructor(private parent:EvaluationState, private scope:Scope) {
+    constructor(private parent:EvaluationState, private scope:Scope, readonly context:Context) {
         scope.each((name:string, variable:Variable) => {
             let value:Value;
             if (parent && parent.variableValues.has(variable)) {
@@ -172,7 +173,7 @@ class EvaluationState {
     }
 
     trackAsUnsure(tracker:(state:EvaluationState) => void, loop:boolean) {
-        const unsureState = new UnsureEvaluationState(this, this.scope);
+        const unsureState = new UnsureEvaluationState(this, this.scope, this.context);
         do {
             unsureState.updated = false;
             tracker(unsureState);

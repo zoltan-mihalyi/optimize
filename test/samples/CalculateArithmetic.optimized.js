@@ -33,8 +33,8 @@ console.log(typeof arguments);
 console.log(1 + a);
 console.log(2);
 
-console.log(3);
-console.log(2);
+console.log(1 + ({}).constructor(2));
+console.log(2 - []);
 console.log(-u);
 
 console.log(false);
@@ -57,4 +57,4 @@ console.log("object");
 console.log("object");
 
 console.log(-0);
-console.log(-0);
+console.log(-[]);

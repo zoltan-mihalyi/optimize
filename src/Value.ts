@@ -328,6 +328,11 @@ export class HeapObject {
     }
 
     private resolvePropertyDescriptor(state:EvaluationState, name:string):PropDescriptor {
+        let noNativeOverwrites = state.context.options.assumptions.noNativeOverwrites;
+        if (!noNativeOverwrites && this.trueValue && state.isBuiltIn(this.trueValue)) {
+            return null;
+        }
+
         if (this.hasProperty(name)) {
             return this.properties[name];
         }

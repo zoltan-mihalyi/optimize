@@ -79,11 +79,11 @@ export function toSemanticNode(expression:Expression, parent:SemanticNode, paren
     }
 }
 
-export function semantic(expression:Expression):SemanticNode {
+export function semantic(expression:Expression, options:OptimizeOptions):SemanticNode {
     if ((expression as any).errors && (expression as any).errors.length) {
         throw (expression as any).errors[0];
     }
-    const node = toSemanticNode(expression, null, null, null, null, new Context());
+    const node = toSemanticNode(expression, null, null, null, null, new Context(options));
     node.initialize();
     return node;
 }

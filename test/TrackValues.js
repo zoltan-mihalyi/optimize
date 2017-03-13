@@ -5,6 +5,6 @@ describe('Track values', function() {
         Helper.assertMatch('TrackValues-variables');
     });
     it('should track objects', function() {
-        Helper.assertMatch('TrackValues-objects');
+        Helper.assertMatch('TrackValues-objects', {assumptions: {noNativeOverwrites: true}});
     });
 });

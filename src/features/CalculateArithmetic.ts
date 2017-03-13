@@ -30,6 +30,11 @@ export = (trackingVisitor:TrackingVisitor) => {
             }
 
             if (hasTrueValue(leftValue, state) && hasTrueValue(rightValue, state)) {
+                if ((leftValue instanceof ReferenceValue || rightValue instanceof ReferenceValue)) {
+                    if (!node.context.options.assumptions.noNativeOverwrites) {
+                        return unknown;
+                    }
+                }
                 return state.createValue(evaluator(getTrueValue(leftValue, state), getTrueValue(rightValue, state)));
             }
             return unknown;
@@ -54,15 +59,16 @@ export = (trackingVisitor:TrackingVisitor) => {
         const mapper = unaryCache.get(node.operator);
         node.setValue(valueInformation.map(value => {
             if (hasTrueValue(value, state)) {
-                return state.createValue(mapper(getTrueValue(value, state)));
-            } else {
-                if (node.operator === '!') {
-                    return new PrimitiveValue(false);
-                } else if (node.operator === 'void') {
-                    return new PrimitiveValue(void 0);
-                } else if (node.operator === 'typeof') {
-                    return new PrimitiveValue(state.dereference(value as ReferenceValue).objectClass.getTypeof());
+                if (value instanceof PrimitiveValue || node.context.options.assumptions.noNativeOverwrites) {
+                    return state.createValue(mapper(getTrueValue(value, state)));
                 }
+            }
+            if (node.operator === '!') {
+                return new PrimitiveValue(false);
+            } else if (node.operator === 'void') {
+                return new PrimitiveValue(void 0);
+            } else if (node.operator === 'typeof') {
+                return new PrimitiveValue(state.dereference(value as ReferenceValue).objectClass.getTypeof());
             }
             return unknown;
         }));

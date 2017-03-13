@@ -25,9 +25,9 @@ export class ConditionalNode extends ExpressionNode {
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.test.track(state, visitor);
-        const consequentCtx = new EvaluationState(state, this.scope);
+        const consequentCtx = new EvaluationState(state, this.scope, this.context);
         this.consequent.track(consequentCtx, visitor);
-        const alternateCtx = new EvaluationState(state, this.scope);
+        const alternateCtx = new EvaluationState(state, this.scope, this.context);
         this.alternate.track(alternateCtx, visitor);
         state.mergeOr(consequentCtx, alternateCtx);
     }

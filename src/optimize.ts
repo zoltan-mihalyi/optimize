@@ -36,17 +36,30 @@ ResolvePropertyAccess(trackingVisitor);
 ResolvePropertyName(trackingVisitor);
 UnrollForIn(trackingVisitor);
 
-export = function (code:string):string {
-    let ast:Expression = recast.parse(code).program;
+function createOptions(opts: OptionalOptimizeOptions): OptimizeOptions {
+    return {
+        assumptions: createAssumptionOptions(opts && opts.assumptions)
+    };
+}
+
+function createAssumptionOptions(assumptions: OptionalAssumptionOptions): AssumptionOptions {
+    return {
+        noNativeOverwrites: !!(assumptions && assumptions.noNativeOverwrites)
+    };
+}
+
+export = function (code: string, opts?: OptionalOptimizeOptions): string {
+    const options: OptimizeOptions = createOptions(opts);
+    let ast: Expression = recast.parse(code).program;
 
     let changed = false;
     let updated = true;
 
-    let semanticNode = semantic(ast);
+    let semanticNode = semantic(ast, options);
     while (updated) {
         if (changed) {
             ast = semanticNode.toAst();
-            semanticNode = semantic(ast);
+            semanticNode = semantic(ast, options);
         } else {
             semanticNode.clearUpdated();
         }

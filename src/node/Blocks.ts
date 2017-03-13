@@ -10,7 +10,7 @@ export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        const blockState = new EvaluationState(state, this.scope);
+        const blockState = new EvaluationState(state, this.scope, this.context);
         if (this.parent instanceof Later.FunctionDeclarationNode || this.parent instanceof Later.AbstractFunctionExpressionNode) {
             this.parent.addArgumentsIfNeeded(state);
         }
