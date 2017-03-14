@@ -44,7 +44,8 @@ function createOptions(opts: OptionalOptimizeOptions): OptimizeOptions {
 
 function createAssumptionOptions(assumptions: OptionalAssumptionOptions): AssumptionOptions {
     return {
-        noNativeOverwrites: !!(assumptions && assumptions.noNativeOverwrites)
+        noNativeOverwrites: !!(assumptions && assumptions.noNativeOverwrites),
+        noGlobalPropertyOverwrites: !!(assumptions && assumptions.noGlobalPropertyOverwrites)
     };
 }
 

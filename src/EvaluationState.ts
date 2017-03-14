@@ -183,6 +183,9 @@ class EvaluationState {
 
     getValue(variable:Variable):Value {
         if (this.variableValues.has(variable)) {
+            if(variable.global && !this.context.options.assumptions.noGlobalPropertyOverwrites){
+                return unknown;
+            }
             return this.variableValues.get(variable);
         }
         if (this.parent) {

@@ -1,15 +1,17 @@
 interface OptionalAssumptionOptions {
-    noNativeOverwrites?: boolean;
+    noNativeOverwrites?:boolean;
+    noGlobalPropertyOverwrites?:boolean
 }
 
 interface OptionalOptimizeOptions {
-    assumptions?: OptionalAssumptionOptions;
+    assumptions?:OptionalAssumptionOptions;
 }
 
-interface AssumptionOptions {
-    noNativeOverwrites: boolean;
+interface AssumptionOptions extends OptionalAssumptionOptions {
+    noNativeOverwrites:boolean;
+    noGlobalPropertyOverwrites:boolean;
 }
 
 interface OptimizeOptions extends OptionalOptimizeOptions {
-    assumptions: AssumptionOptions;
+    assumptions:AssumptionOptions;
 }
