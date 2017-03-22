@@ -17,4 +17,12 @@ describe('Assumption optimizations', function() {
             }
         });
     });
+
+    it('no global property reads', function() {
+        Helper.assertMatch('assumptions/noGlobalPropertyReads', {
+            assumptions: {
+                noGlobalPropertyReads: true
+            }
+        });
+    });
 });

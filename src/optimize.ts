@@ -36,22 +36,26 @@ ResolvePropertyAccess(trackingVisitor);
 ResolvePropertyName(trackingVisitor);
 UnrollForIn(trackingVisitor);
 
-function createOptions(opts: OptionalOptimizeOptions): OptimizeOptions {
+function createOptions(opts:OptionalOptimizeOptions):OptimizeOptions {
     return {
         assumptions: createAssumptionOptions(opts && opts.assumptions)
     };
 }
 
-function createAssumptionOptions(assumptions: OptionalAssumptionOptions): AssumptionOptions {
+function createAssumptionOptions(assumptions:OptionalAssumptionOptions):AssumptionOptions {
+    if (!assumptions) {
+        assumptions = {};
+    }
     return {
-        noNativeOverwrites: !!(assumptions && assumptions.noNativeOverwrites),
-        noGlobalPropertyOverwrites: !!(assumptions && assumptions.noGlobalPropertyOverwrites)
+        noNativeOverwrites: !!(assumptions.noNativeOverwrites),
+        noGlobalPropertyOverwrites: !!(assumptions.noGlobalPropertyOverwrites),
+        noGlobalPropertyReads: !!(assumptions.noGlobalPropertyReads)
     };
 }
 
-export = function (code: string, opts?: OptionalOptimizeOptions): string {
-    const options: OptimizeOptions = createOptions(opts);
-    let ast: Expression = recast.parse(code).program;
+export = function (code:string, opts?:OptionalOptimizeOptions):string {
+    const options:OptimizeOptions = createOptions(opts);
+    let ast:Expression = recast.parse(code).program;
 
     let changed = false;
     let updated = true;

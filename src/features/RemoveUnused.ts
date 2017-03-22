@@ -17,11 +17,11 @@ export  = (nodeVisitor:NodeVisitor) => {
         const result:Expression[] = [];
         let currentDeclarations:Expression[] = null;
         let keepUnchanged = true;
-        for (var i = 0; i < declarationNode.declarations.length; i++) {
+        for (let i = 0; i < declarationNode.declarations.length; i++) {
             const node = declarationNode.declarations[i];
 
             let variable = node.scope.get(node.id.name);
-            if (canBeUsed(variable) || hasWriteWithoutDeclaration(variable)) {
+            if (canBeUsed(variable) || canBeUsedThroughGlobalScope(variable, node) || hasWriteWithoutDeclaration(variable)) {
                 if (currentDeclarations) {
                     currentDeclarations.push(node.toAst());
                 } else {
@@ -53,11 +53,11 @@ export  = (nodeVisitor:NodeVisitor) => {
 
     nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
         let variable = node.scope.get(node.id.name);
-        if (!canBeUsed(variable)) {
-            node.remove();
+        if (canBeUsedThroughGlobalScope(variable, node)) {
             return;
         }
-        if (variable.global) {
+        if (!canBeUsed(variable)) {
+            node.remove();
             return;
         }
         if (!canBeCalled(node, [])) {
@@ -77,7 +77,11 @@ export  = (nodeVisitor:NodeVisitor) => {
     }
 
     function canBeUsed(variable:Variable):boolean {
-        return variable.global || variable.reads.length > 0;
+        return variable.reads.length > 0;
+    }
+
+    function canBeUsedThroughGlobalScope(variable:Variable, node:SemanticNode):boolean {
+        return variable.global && !node.context.options.assumptions.noGlobalPropertyReads;
     }
 
     function canBeCalled(node:FunctionDeclarationNode, visited:FunctionDeclarationNode[]):boolean {
