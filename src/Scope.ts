@@ -1,6 +1,7 @@
 import {createUnusedName, hasOwnProperty} from "./Utils";
 import {Variable} from "./Variable";
-import {Value} from "./Value";
+import {Value, ReferenceValue, HeapObject} from "./Value";
+import Map = require("./Map");
 
 interface Variables {
     [name:string]:Variable;
@@ -55,6 +56,7 @@ class Scope {
             writes: [],
             reads: [],
             initialValue: initialValue,
+            initialHeap: new Map<ReferenceValue,HeapObject>(),
             scope: this
         };
     }

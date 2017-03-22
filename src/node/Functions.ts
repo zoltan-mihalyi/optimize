@@ -24,7 +24,8 @@ function addArgumentsValue(node:FunctionDeclarationNode|AbstractFunctionExpressi
         proto: state.getReferenceValue(Object.prototype),
         properties: {},
         propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
-        trueValue: null
+        trueValue: null,
+        fn: null
     }));
     state.setValue(node.innerScope.get('arguments'), argumentsRef);
 }
@@ -32,6 +33,12 @@ function addArgumentsValue(node:FunctionDeclarationNode|AbstractFunctionExpressi
 function createInnerScope(node:InnerScoped, scope:Scope) {
     node.innerScope = new Scope(scope, false);
     return scope;
+}
+
+export interface FunctionNode extends InnerScoped {
+    id:IdentifierNode;
+    params:IdentifierNode[];
+    body:ExpressionNode|BlockNode;
 }
 
 export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements InnerScoped {
@@ -42,7 +49,7 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
     expression:boolean;
 
     onTrack(state:EvaluationState) {
-        this.setValue(state.createCustomFunctionReference(this.params.length));
+        this.setValue(state.createCustomFunctionReference(this));
     }
 
     addArgumentsIfNeeded(state:EvaluationState) {
@@ -86,14 +93,14 @@ export class ArrowFunctionExpressionNode extends AbstractFunctionExpressionNode 
     }
 }
 
-export class FunctionDeclarationNode extends SemanticNode implements InnerScoped {
+export class FunctionDeclarationNode extends SemanticNode implements FunctionNode {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:BlockNode;
     innerScope:Scope;
 
     onTrack(state:EvaluationState) {
-        state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this.params.length));
+        state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this));
     }
 
     addArgumentsIfNeeded(state:EvaluationState){

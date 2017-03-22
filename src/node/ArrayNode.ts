@@ -41,7 +41,8 @@ export class ArrayNode extends ExpressionNode {
             proto: state.getReferenceValue(Array.prototype),
             properties: properties,
             propertyInfo: PropInfo.KNOWS_ALL,
-            trueValue: trueValue
+            trueValue: trueValue,
+            fn: null
         })));
     }
 

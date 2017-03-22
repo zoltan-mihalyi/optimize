@@ -53,7 +53,8 @@ export class ObjectNode extends ExpressionNode {
             proto: state.getReferenceValue(Object.prototype),
             properties: properties,
             propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
-            trueValue: trueValue
+            trueValue: trueValue,
+            fn: null
         })));
     }
 

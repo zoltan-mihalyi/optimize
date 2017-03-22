@@ -267,7 +267,7 @@ export abstract class SemanticNode {
         this.updated = true;
     }
 
-    protected markUpdated() {
+    markUpdated() {
         if (this.parent) {
             this.parent.markUpdated();
         }

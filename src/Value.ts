@@ -1,4 +1,5 @@
 import {equals, hasOwnProperty} from "./Utils";
+import {FunctionNode} from "./node/Functions";
 import Map = require("./Map");
 import EvaluationState = require("./EvaluationState");
 
@@ -127,6 +128,7 @@ interface ObjectParameters {
     properties:PropDescriptorMap;
     propertyInfo:PropInfo;
     trueValue:Object|null;
+    fn:FunctionNode;
 }
 
 export class ReferenceValue extends SingleValue {
@@ -164,6 +166,7 @@ function mergeProps(prop1:PropDescriptor, prop2:PropDescriptor):PropDescriptor {
 
 export class HeapObject {
     readonly trueValue:Object|null;
+    readonly fn:FunctionNode;
     private proto:ReferenceValue;
     private properties:PropDescriptorMap;
     private propertyInfo:PropInfo;
@@ -173,6 +176,7 @@ export class HeapObject {
         this.properties = parameters.properties;
         this.propertyInfo = parameters.propertyInfo;
         this.trueValue = parameters.trueValue;
+        this.fn = parameters.fn;
     }
 
     resolveProperty(state:EvaluationState, name:string, context:Object):Value {
@@ -203,7 +207,8 @@ export class HeapObject {
             proto: this.proto,
             properties: properties,
             propertyInfo: this.propertyInfo,
-            trueValue: null //todo
+            trueValue: null, //todo,
+            fn: this.fn
         });
     }
 
@@ -241,7 +246,8 @@ export class HeapObject {
             proto: null,
             properties: {},
             propertyInfo: PropInfo.MAY_HAVE_NEW,
-            trueValue: null
+            trueValue: null,
+            fn: this.fn
         });
     }
 
@@ -282,7 +288,8 @@ export class HeapObject {
             proto: this.proto, //todo handle proto change
             properties: properties,
             propertyInfo: mayHaveNew ? PropInfo.MAY_HAVE_NEW : mergePropInfos(this.propertyInfo, other.propertyInfo),
-            trueValue: null
+            trueValue: null,
+            fn: this.fn === other.fn ? this.fn : null
         });
     }
 
@@ -298,6 +305,24 @@ export class HeapObject {
 
     isCleanAccess(state:EvaluationState, name:string) {
         return this.resolvePropertyDescriptor(state, name) !== null;
+    }
+
+    eachReference(callback:(reference:ReferenceValue) => void) {
+        if (this.proto) {
+            callback(this.proto);
+        }
+        for (const i in this.properties) {
+            /* istanbul ignore else */
+            if (hasOwnProperty(this.properties, i)) {
+                const property = this.properties[i];
+                if (property.get) {
+                    callback(property.get);
+                }
+                if (property.value instanceof ReferenceValue) {
+                    callback(property.value);
+                }
+            }
+        }
     }
 
     private resolvePropertyDescriptor(state:EvaluationState, name:string):PropDescriptor {
@@ -379,6 +404,10 @@ export class FiniteSetOfValues extends IterableValue {
         } else {
             return other.product(this, mapper);
         }
+    }
+
+    size():number {
+        return this.values.length;
     }
 
     protected equalsInner(other:FiniteSetOfValues):boolean {

@@ -16,6 +16,7 @@ import ReduceSequenceExpression = require("./features/ReduceSequenceExpression")
 import UnrollForIn = require("./features/UnrollForIn");
 import InlineFunctionCall = require("./features/InlineFunctionCall");
 import RemoveUnused = require("./features/RemoveUnused");
+import SetParameterValues = require("./features/SetParameterValues");
 import TrackValues = require("./features/TrackValues");
 
 const nodeVisitor = new NodeVisitor();
@@ -29,12 +30,13 @@ InlineFunctionCall(nodeVisitor);
 RemoveUnused(nodeVisitor);
 
 const trackingVisitor = new TrackingVisitor();
-TrackValues(nodeVisitor, trackingVisitor);
+TrackValues(nodeVisitor, trackingVisitor); //todo nodevisitor constructor param?
 CalculateArithmetic(trackingVisitor);
 ResolveNativeFunctionCalls(trackingVisitor);
 ResolvePropertyAccess(trackingVisitor);
 ResolvePropertyName(trackingVisitor);
 UnrollForIn(trackingVisitor);
+SetParameterValues(trackingVisitor);
 
 function createOptions(opts:OptionalOptimizeOptions):OptimizeOptions {
     return {
@@ -69,7 +71,9 @@ export = function (code:string, opts?:OptionalOptimizeOptions):string {
             semanticNode.clearUpdated();
         }
 
+        nodeVisitor.callStart(semanticNode);
         semanticNode.walk(node => nodeVisitor.callAll(node));
+        nodeVisitor.callEnd(semanticNode);
         changed = semanticNode.isChanged();
         updated = semanticNode.isUpdated();
     }

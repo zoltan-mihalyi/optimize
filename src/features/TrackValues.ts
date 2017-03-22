@@ -5,6 +5,9 @@ import {ProgramNode} from "../node/Blocks";
 import {TrackingVisitor, NodeVisitor} from "../NodeVisitor";
 
 export = (nodeVisitor:NodeVisitor, trackingVisitor:TrackingVisitor) => {
+    nodeVisitor.onStart(node => trackingVisitor.callStart(node));
+    nodeVisitor.onEnd(node => trackingVisitor.callEnd(node));
+
     nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
         track(node.body);
     });

@@ -1,7 +1,10 @@
 import recast = require("recast");
 
 const builders = recast.types.builders;
-import {PrimitiveValue, Value, PropDescriptor, unknown, ReferenceValue, SingleValue} from "./Value";
+import {
+    PrimitiveValue, Value, PropDescriptor, unknown, ReferenceValue, SingleValue, UnknownValue,
+    FiniteSetOfValues
+} from "./Value";
 import {SemanticNode} from "./node/SemanticNode";
 import {CallNode, NewNode} from "./node/CallNodes";
 import Cache = require("./Cache");
@@ -129,4 +132,20 @@ export function getParameters(state:EvaluationState, node:CallNode|NewNode):any[
 export function getClassName(value:Object) {
     let str = Object.prototype.toString.call(value);
     return str.substring(8, str.length - 1);
+}
+
+export function isValueUpdate(oldValue:Value, newValue:Value) { //todo
+    if (newValue instanceof UnknownValue) {
+        return false;
+    }
+    if (oldValue.equals(newValue)) {
+        return false;
+    }
+    if (oldValue instanceof ReferenceValue && newValue instanceof ReferenceValue) {
+        return false;
+    }
+    if (oldValue instanceof FiniteSetOfValues && newValue instanceof FiniteSetOfValues && oldValue.size() === newValue.size()) {
+        return false;
+    }
+    return true;
 }

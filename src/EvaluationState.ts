@@ -20,11 +20,12 @@ import {
 } from "./Value";
 import {Heap, Variable} from "./Variable";
 import {nonEnumerable, hasOwnProperty, isPrimitive, throwValue, getClassName} from "./Utils";
+import Context from "./Context";
+import {FunctionNode} from "./node/Functions";
 import Map = require("./Map");
 import Scope = require("./Scope");
 import SafeProperties = require("./SafeProperties");
 import Cache = require("./Cache");
-import Context from "./Context";
 
 const newCallCache = new Cache<number, Function>(paramNum => {
     let params:string[] = [];
@@ -72,6 +73,11 @@ class EvaluationState {
             if (parent && parent.variableValues.has(variable)) {
             } else {
                 value = variable.initialValue ? variable.initialValue : unknown;
+                variable.initialHeap.each((ref, obj) => {
+                    if (!this.heap.has(ref)) {
+                        this.heap.set(ref, obj)
+                    }
+                });
                 this.setValue(variable, value);
             }
         });
@@ -206,32 +212,34 @@ class EvaluationState {
         return false;
     }
 
-    createCustomFunctionReference(length:number):ReferenceValue {
+    createCustomFunctionReference(functionNode:FunctionNode):ReferenceValue {
         let properties:any = {};
 
-        const fn = this.createFunctionValue(properties, length);
+        const fn = this.createFunctionValue(properties, functionNode);
         properties.prototype = nonEnumerable(this.saveObject(new HeapObject(OBJECT, {
             proto: this.getReferenceValue(Object.prototype),
             properties: {
                 constructor: nonEnumerable(fn)
             },
             propertyInfo: PropInfo.KNOWS_ALL,
-            trueValue: null //todo
+            trueValue: null, //todo
+            fn: null
         })));
 
         return fn;
     }
 
-    createFunctionValue(properties:PropDescriptorMap, length:number):ReferenceValue {
+    createFunctionValue(properties:PropDescriptorMap, functionNode:FunctionNode):ReferenceValue {
         (properties as any).arguments = nonEnumerable(unknown);
         (properties as any).caller = nonEnumerable(unknown);
-        (properties as any).length = nonEnumerable(new PrimitiveValue(length));
+        (properties as any).length = nonEnumerable(new PrimitiveValue(functionNode.params.length));
 
         return this.saveObject(new HeapObject(FUNCTION, {
             proto: this.getReferenceValue(Function.prototype),
             properties: properties,
             propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
-            trueValue: null
+            trueValue: null,
+            fn: functionNode
         }));
     }
 
@@ -282,7 +290,8 @@ class EvaluationState {
             proto: proto ? this.getReferenceValue(proto) : null,
             properties: properties,
             propertyInfo: SafeProperties.has(object) ? PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : PropInfo.KNOWS_ALL,
-            trueValue: object
+            trueValue: object,
+            fn: null
         }));
         this.objectToReferenceMap.set(object, result);
 
@@ -338,6 +347,14 @@ class EvaluationState {
 
         for (let i = 0; i < references.length; i++) {
             this.makeDirty(references[i]);
+        }
+    }
+
+    eachVariableReference(variable:Variable, callback:(ref:ReferenceValue) => void) {
+        const references = this.getVariableReference(variable);
+
+        for (let i = 0; i < references.length; i++) {
+            callback(references[i]);
         }
     }
 

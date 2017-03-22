@@ -1,6 +1,6 @@
 import recast = require("recast");
 import {Value, unknown, UnknownValue, PrimitiveValue, FiniteSetOfValues} from "../Value";
-import {equals} from "../Utils";
+import {equals, isValueUpdate} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
 import {LiteralNode, UnaryNode, AbstractFunctionExpressionNode} from "./Later";
 import Scope = require("../Scope");
@@ -66,14 +66,10 @@ export abstract class ExpressionNode extends SemanticNode {
             }
         }
 
-        if (this.calculatedValue.equals(value) || !(this.calculatedValue instanceof FiniteSetOfValues)) { //is
-            this.calculatedValue = value; //for reference update. todo rearrange
-            return;
+        if(isValueUpdate(this.calculatedValue, value)){
+            this.markUpdated();
         }
-
         this.calculatedValue = value;
-
-        this.markUpdated();
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {

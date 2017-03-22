@@ -14,5 +14,6 @@ export interface Variable {
     reads:IdentifierNode[];
     name:string;
     initialValue:Value;
+    initialHeap:Heap;
     scope:Scope;
 }
