@@ -152,6 +152,15 @@ function trackLoop() {
     console.log(arr.length);
 }
 
+function trackLoopWithNewRef() {
+    var arr = [];
+    while (u) {
+        arr.push(1);
+        arr = [];
+    }
+    console.log(arr.length);
+}
+
 function trackAnotherScope() {
     var a = {x: 1};
     var b = a;

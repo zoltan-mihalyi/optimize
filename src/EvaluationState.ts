@@ -26,7 +26,7 @@ import SafeProperties = require("./SafeProperties");
 import Cache = require("./Cache");
 import Context from "./Context";
 
-const newCallCache = new Cache<number,Function>(paramNum => {
+const newCallCache = new Cache<number, Function>(paramNum => {
     let params:string[] = [];
     for (let i = 0; i < paramNum; i++) {
         params.push('p' + i);
@@ -57,10 +57,11 @@ function getObjectClass(value:Object):ObjectClass {
 }
 
 class EvaluationState {
-    private variableValues:Map<Variable,Value> = new Map<Variable,Value>();
-    private heap:Map<ReferenceValue,HeapObject> = new Map<ReferenceValue,HeapObject>();
-    private objectToReferenceMap:Map<Object,ReferenceValue> = new Map<Object,ReferenceValue>();
-    private variableReferences:Map<Variable,ReferenceValue[]> = new Map<Variable,ReferenceValue[]>();
+    private variableValues:Map<Variable, Value> = new Map<Variable, Value>();
+    private heap:Map<ReferenceValue, HeapObject> = new Map<ReferenceValue, HeapObject>();
+    private objectToReferenceMap:Map<Object, ReferenceValue> = new Map<Object, ReferenceValue>();
+    private variableReferences:Map<Variable, ReferenceValue[]> = new Map<Variable, ReferenceValue[]>();
+    private ownReferences:ReferenceValue[] = [];
     private updated:boolean = false;
 
     static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false), null);
@@ -176,6 +177,7 @@ class EvaluationState {
         const unsureState = new UnsureEvaluationState(this, this.scope, this.context);
         do {
             unsureState.updated = false;
+            unsureState.ownReferences = [];
             tracker(unsureState);
         } while (loop && unsureState.updated);
         this.mergeMaybe(unsureState);
@@ -183,7 +185,7 @@ class EvaluationState {
 
     getValue(variable:Variable):Value {
         if (this.variableValues.has(variable)) {
-            if(variable.global && !this.context.options.assumptions.noGlobalPropertyOverwrites){
+            if (variable.global && !this.context.options.assumptions.noGlobalPropertyOverwrites) {
                 return unknown;
             }
             return this.variableValues.get(variable);
@@ -233,7 +235,11 @@ class EvaluationState {
         }));
     }
 
-    saveObject(heapObject:HeapObject, reference:ReferenceValue = new ReferenceValue()):ReferenceValue {
+    saveObject(heapObject:HeapObject, reference?:ReferenceValue):ReferenceValue {
+        if (!reference) {
+            reference = new ReferenceValue();
+            this.ownReferences.push(reference);
+        }
         this.heap.setOrUpdate(reference, heapObject);
         return reference;
     }
@@ -335,6 +341,16 @@ class EvaluationState {
         }
     }
 
+    private isOwn(reference:ReferenceValue):boolean {
+        if (this.ownReferences.indexOf(reference) !== -1) {
+            return true;
+        }
+        if (this.parent) {
+            return this.parent.isOwn(reference);
+        }
+        return false;
+    }
+
     private updateReferences(variable:Variable, references:ReferenceValue[]) {
         if (this.variableReferences.has(variable)) {
             const target = this.variableReferences.get(variable);
@@ -343,7 +359,7 @@ class EvaluationState {
             //remove old references after multiple tracks
             for (let i = 0; i < target.length; i++) {
                 const reference = target[i];
-                if (!this.heap.has(reference)) {
+                if (!this.isOwn(reference)) {
                     target.splice(i, 1);
                     i--;
                 }
