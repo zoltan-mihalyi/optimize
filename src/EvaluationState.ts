@@ -18,7 +18,7 @@ import {
     PropDescriptor,
     IterableValue
 } from "./Value";
-import {Variable} from "./Variable";
+import {Heap, Variable} from "./Variable";
 import {nonEnumerable, hasOwnProperty, isPrimitive, throwValue, getClassName} from "./Utils";
 import Map = require("./Map");
 import Scope = require("./Scope");
@@ -58,7 +58,7 @@ function getObjectClass(value:Object):ObjectClass {
 
 class EvaluationState {
     private variableValues:Map<Variable, Value> = new Map<Variable, Value>();
-    private heap:Map<ReferenceValue, HeapObject> = new Map<ReferenceValue, HeapObject>();
+    private heap:Heap = new Map<ReferenceValue, HeapObject>();
     private objectToReferenceMap:Map<Object, ReferenceValue> = new Map<Object, ReferenceValue>();
     private variableReferences:Map<Variable, ReferenceValue[]> = new Map<Variable, ReferenceValue[]>();
     private ownReferences:ReferenceValue[] = [];

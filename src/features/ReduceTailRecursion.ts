@@ -26,7 +26,7 @@ export  = (nodeVisitor:NodeVisitor) => {
             if (!callee.refersToSame(enclosingFunction.id)) {
                 return;
             }
-            if (enclosingFunction.body.scope.get('arguments').reads.length > 0) {
+            if (enclosingFunction.body.scope.hasArgumentsRead()) {
                 return;
             }
             replaceRecursionWithGoto(node, enclosingFunction);

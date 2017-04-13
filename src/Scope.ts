@@ -95,6 +95,10 @@ class Scope {
         return this.parent.findFunctionScope();
     }
 
+    hasArgumentsRead():boolean {
+        return this.get('arguments').reads.length > 0;
+    }
+
     private setUnknownGlobal(name:string):Variable {
         if (this.parent) {
             return this.parent.setUnknownGlobal(name);

@@ -55,23 +55,11 @@ export abstract class SingleValue extends IterableValue {
     product(other:Value, mapper:(left:SingleValue, right:SingleValue) => Value):Value {
         return other.map(rval => mapper(this, rval));
     }
-
-    abstract compareTo(state:EvaluationState, other:SingleValue, strict:boolean):ComparisonResult;
 }
 
 export class PrimitiveValue extends SingleValue {
     constructor(public value:string|boolean|number) {
         super();
-    }
-
-    compareTo(state:EvaluationState, other:SingleValue, strict:boolean):ComparisonResult {
-        if (other instanceof PrimitiveValue) {
-            // tslint:disable-next-line:triple-equals
-            let equals = strict ? (this.value === other.value) : (this.value == other.value);
-            return fromBoolean(equals);
-        } else {
-            return (other as ReferenceValue).compareTo(state, this, strict);
-        }
     }
 
     protected equalsInner(other:PrimitiveValue):boolean {
@@ -142,21 +130,6 @@ interface ObjectParameters {
 }
 
 export class ReferenceValue extends SingleValue {
-    compareTo(state:EvaluationState, other:SingleValue, strict:boolean):ComparisonResult {
-        if (other instanceof ReferenceValue) {
-            return fromBoolean(this === other);
-        }
-        if (strict) {
-            return ComparisonResult.FALSE;
-        }
-        let heapObject = state.dereference(this);
-        if (heapObject.trueValue) {
-            // tslint:disable-next-line:triple-equals
-            return fromBoolean(heapObject.trueValue == (other as PrimitiveValue).value);
-        }
-        return ComparisonResult.UNKNOWN;
-    }
-
     protected equalsInner(other:ReferenceValue):boolean {
         return this === other;
     }

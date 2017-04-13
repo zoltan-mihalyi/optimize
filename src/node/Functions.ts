@@ -29,6 +29,11 @@ function addArgumentsValue(node:FunctionDeclarationNode|AbstractFunctionExpressi
     state.setValue(node.innerScope.get('arguments'), argumentsRef);
 }
 
+function createInnerScope(node:InnerScoped, scope:Scope) {
+    node.innerScope = new Scope(scope, false);
+    return scope;
+}
+
 export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements InnerScoped {
     id:IdentifierNode;
     params:IdentifierNode[];
@@ -67,9 +72,8 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
         addParametersToScope(this, !this.isLambda());
     }
 
-    protected createSubScopeIfNeeded(scope:Scope):Scope { //todo duplicate
-        this.innerScope = new Scope(scope, false);
-        return scope;
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        return createInnerScope(this, scope);
     }
 
     abstract isLambda():boolean;
@@ -103,8 +107,7 @@ export class FunctionDeclarationNode extends SemanticNode implements InnerScoped
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
-        this.innerScope = new Scope(scope, false);
-        return scope;
+        return createInnerScope(this, scope);
     }
 }
 Later.FunctionDeclarationNode = FunctionDeclarationNode;
