@@ -2,7 +2,7 @@ import Scope = require("../Scope");
 import Context from "../Context";
 import {toSemanticNode} from "../Nodes";
 import {map, hasOwnProperty} from "../Utils";
-import {FunctionDeclarationNode, AbstractFunctionExpressionNode} from "./Functions";
+import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
 import {TrackingVisitor} from "../NodeVisitor";
 import Later = require("./Later");
@@ -52,7 +52,7 @@ export abstract class SemanticNode {
         }
     }
 
-    getEnclosingFunction():FunctionDeclarationNode|AbstractFunctionExpressionNode {
+    getEnclosingFunction():FunctionNode {
         let parent = this.parent;
         while (parent) {
             if (parent instanceof Later.FunctionDeclarationNode || parent instanceof Later.AbstractFunctionExpressionNode) {

@@ -8,7 +8,7 @@ import Scope = require("../Scope");
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
 
-function addParametersToScope(node:FunctionDeclarationNode|AbstractFunctionExpressionNode, addArguments:boolean) {
+function addParametersToScope(node:FunctionNode, addArguments:boolean) {
     const params = node.params;
     const scope = node.innerScope;
     for (let i = 0; i < params.length; i++) {
@@ -19,7 +19,7 @@ function addParametersToScope(node:FunctionDeclarationNode|AbstractFunctionExpre
     }
 }
 
-function addArgumentsValue(node:FunctionDeclarationNode|AbstractFunctionExpressionNode, state:EvaluationState) {
+function addArgumentsValue(node:FunctionNode, state:EvaluationState) {
     const argumentsRef = state.saveObject(new HeapObject(ARGUMENTS, {
         proto: state.getReferenceValue(Object.prototype),
         properties: {},
@@ -41,7 +41,7 @@ export interface FunctionNode extends InnerScoped {
     body:ExpressionNode|BlockNode;
 }
 
-export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements InnerScoped {
+export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements FunctionNode {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:ExpressionNode|BlockNode;
