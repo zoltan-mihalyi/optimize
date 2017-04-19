@@ -7,6 +7,37 @@ import Later = require("./Later");
 import {PrimitiveValue} from "../Value";
 const global = new Function('return this')();
 
+const GLOBAL_APIS = [
+    'undefined',
+    'Infinity',
+    'NaN',
+    'eval',
+    'isNaN',
+    'parseFloat',
+    'parseInt',
+    'decodeURI',
+    'decodeURIComponent',
+    'encodeURI',
+    'encodeURIComponent',
+    'Object',
+    'Function',
+    'Array',
+    'Boolean',
+    'Error',
+    'EvalError',
+    'RangeError',
+    'ReferenceError',
+    'SyntaxError',
+    'TypeError',
+    'URIError',
+    'Number',
+    'String',
+    'Boolean',
+    'RegExp',
+    'Math',
+    'Date'
+];
+
 export class BlockNode extends SemanticNode {
     body:SemanticNode[];
 
@@ -52,42 +83,12 @@ export class ProgramNode extends BlockNode {
     sourceType:string;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        this.saveApi('undefined', state);
-        this.saveApi('Infinity', state);
-        this.saveApi('NaN', state);
-        this.saveApi('eval', state);
-        this.saveApi('isNaN', state);
-        this.saveApi('parseFloat', state);
-        this.saveApi('parseInt', state);
-        this.saveApi('decodeURI', state);
-        this.saveApi('decodeURIComponent', state);
-        this.saveApi('encodeURI', state);
-        this.saveApi('encodeURIComponent', state);
-        this.saveApi('Object', state);
-        this.saveApi('Function', state);
-        this.saveApi('Array', state);
-        this.saveApi('Boolean', state);
-        this.saveApi('Error', state);
-        this.saveApi('EvalError', state);
-        this.saveApi('RangeError', state);
-        this.saveApi('ReferenceError', state);
-        this.saveApi('SyntaxError', state);
-        this.saveApi('TypeError', state);
-        this.saveApi('URIError', state);
-        this.saveApi('Number', state);
-        this.saveApi('String', state);
-        this.saveApi('Boolean', state);
-        this.saveApi('RegExp', state);
-        this.saveApi('Math', state);
-        this.saveApi('Date', state);
+        GLOBAL_APIS.forEach(name => state.setValue(this.scope.getOrCreate(name), state.createValue(global[name])));
 
         super.onTrack(state, visitor);
     }
 
     protected handleDeclarationsForNode() {
-    }
-
-    private saveApi(name:string, state:EvaluationState) {
-        this.scope.set(name, true, state.createValue(global[name]));
+        GLOBAL_APIS.forEach(name => this.scope.set(name, true, null));
     }
 }

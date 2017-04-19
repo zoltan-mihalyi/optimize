@@ -56,7 +56,7 @@ class Scope {
             writes: [],
             reads: [],
             initialValue: initialValue,
-            initialHeap: new Map<ReferenceValue,HeapObject>(),
+            initialHeap: new Map<ReferenceValue, HeapObject>(),
             scope: this
         };
     }
