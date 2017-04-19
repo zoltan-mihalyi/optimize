@@ -3,7 +3,7 @@ console.log(1);
 console.log(1);
 console.log(1);
 console.log(1);
-var x;
+var x = u;
 console.log(({
     [{x:x}]: 1
 })["x"]);

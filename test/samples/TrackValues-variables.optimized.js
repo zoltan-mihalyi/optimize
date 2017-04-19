@@ -213,3 +213,7 @@ function trackSwithc() {
     }
     console.log(i, j, k);
 }
+
+function trackUninitialized() {
+    console.log(void 0, void 0);
+}

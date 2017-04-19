@@ -9,7 +9,7 @@ console.log(({
 console.log(({
     [["x"]]: 1
 })["x"]);
-var x;
+var x = u;
 console.log(({
     [{x:x}]: 1
 })["x"]);

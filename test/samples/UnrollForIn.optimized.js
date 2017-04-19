@@ -1,6 +1,6 @@
 var a;
 var b;
-console.log(a, b);
+console.log(void 0, void 0);
 
 var i = "x";
 console.log("x");
@@ -22,7 +22,6 @@ function x() {
     function y() {
     }
 
-    var z;
-    return y + z;
+    return y + void 0;
 }
 x();

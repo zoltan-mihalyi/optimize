@@ -220,3 +220,9 @@ function trackSwithc() {
     }
     console.log(i, j, k);
 }
+
+function trackUninitialized() {
+    var a;
+    console.log(a, b);
+    var b = 1;
+}

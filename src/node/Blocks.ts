@@ -4,6 +4,7 @@ import {isInnerScoped} from "../Utils";
 import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
+import {PrimitiveValue} from "../Value";
 const global = new Function('return this')();
 
 export class BlockNode extends SemanticNode {
@@ -18,6 +19,12 @@ export class BlockNode extends SemanticNode {
             const node = this.body[i];
             if (node instanceof Later.FunctionDeclarationNode) {
                 node.track(blockState, visitor);
+            } else if (node instanceof Later.VariableDeclarationNode) {
+                if (!node.isBlockScoped()) {
+                    node.declarations.forEach(declaration => {
+                        state.setValue(declaration.id.getVariable(), new PrimitiveValue(void 0));
+                    });
+                }
             }
         }
         for (let i = 0; i < this.body.length; i++) {
