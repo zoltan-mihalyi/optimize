@@ -14,7 +14,7 @@ function trackUpdate() {
     console.log(2);
     x--;
     console.log(1);
-    x=function() {
+    x = function() {
     };
     x++;
     console.log(x);
@@ -22,9 +22,9 @@ function trackUpdate() {
 
 function trackUpdate2() {
     var x = 1;
-    x+=1;
+    x += 1;
     console.log(2);
-    x+=function() {
+    x += function() {
     };
     console.log(x);
 }
@@ -216,4 +216,13 @@ function trackSwithc() {
 
 function trackUninitialized() {
     console.log(void 0, void 0);
+}
+
+function trackUninitializedLet() {
+    console.log(void 0, b);
+    let b = 1;
+}
+
+function trackDoubleInitialization() {
+    console.log(1);
 }

@@ -1,7 +1,7 @@
 import EvaluationState = require("../EvaluationState");
 import {SemanticNode} from "./SemanticNode";
 import Scope = require("../Scope");
-import {unknown} from "../Value";
+import {PrimitiveValue, unknown} from "../Value";
 import Later = require("./Later");
 import {IdentifierNode} from "./IdentifierNode";
 import {ExpressionNode} from "./ExpressionNode";
@@ -9,7 +9,7 @@ import {TrackingVisitor} from "../NodeVisitor";
 
 export class VariableDeclarationNode extends SemanticNode {
     declarations:VariableDeclaratorNode[];
-    kind:'var'|'const'|'let';
+    kind:'var' | 'const' | 'let';
 
     isBlockScoped() {
         return this.kind !== 'var';
@@ -39,6 +39,8 @@ export class VariableDeclaratorNode extends SemanticNode {
         if (this.init) {
             this.init.track(state, visitor);
             state.setValue(this.id.getVariable(), this.init.getValue());
+        } else if (this.parent.isBlockScoped()) {
+            state.setValue(this.id.getVariable(), new PrimitiveValue(void 0));
         }
     }
 
