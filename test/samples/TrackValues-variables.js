@@ -223,8 +223,11 @@ function trackSwithc() {
 
 function trackUninitialized() {
     var a;
-    console.log(a, b);
+    console.log(a, b, c);
     var b = 1;
+    if (u) {
+        var c = 2;
+    }
 }
 
 function trackUninitializedLet() {

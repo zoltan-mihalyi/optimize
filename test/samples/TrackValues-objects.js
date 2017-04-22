@@ -163,6 +163,14 @@ function trackLoopWithNewRef() {
     console.log(arr.length);
 }
 
+function trackLoopWithNewRefNewVar() {
+    var arr = [];
+    while (1) {
+        var arr = [];
+    }
+    return arr;
+}
+
 function trackAnotherScope() {
     var a = {x: 1};
     var b = a;

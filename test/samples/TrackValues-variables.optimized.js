@@ -215,7 +215,8 @@ function trackSwithc() {
 }
 
 function trackUninitialized() {
-    console.log(void 0, void 0);
+    console.log(void 0, void 0, void 0);
+    if (u) {}
 }
 
 function trackUninitializedLet() {

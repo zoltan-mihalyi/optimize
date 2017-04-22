@@ -70,7 +70,7 @@ class EvaluationState {
     constructor(private parent:EvaluationState, private scope:Scope, readonly context:Context) {
         scope.each((name:string, variable:Variable) => {
             let value:Value;
-            if (!(parent && parent.variableValues.has(variable))) {
+            if (!(parent && parent.hasValue(variable))) {
                 value = variable.initialValue ? variable.initialValue : unknown;
                 variable.initialHeap.each((ref, obj) => {
                     if (!this.heap.has(ref)) {

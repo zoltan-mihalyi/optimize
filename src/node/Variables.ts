@@ -53,7 +53,7 @@ export class VariableDeclaratorNode extends SemanticNode {
             variable = parent.parent.body.scope.set(this.id.name, blockScoped, unknown);
             isWrite = true;
         } else {
-            variable = this.scope.set(this.id.name, blockScoped, blockScoped ? null : unknown);
+            variable = this.scope.set(this.id.name, blockScoped, blockScoped ? null : new PrimitiveValue(void 0));
             isWrite = !!this.init;
         }
         if (isWrite) {
