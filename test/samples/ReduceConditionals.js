@@ -3,7 +3,7 @@ if (12) {
     console.log(i);
 }
 
-if(0){
+if (0) {
     console.log(0);
 }
 
@@ -56,3 +56,9 @@ if (null) {
     var aaa = 1;
 }
 console.log(aaa);
+
+if (false) {
+    var declaredInBlock = u;
+    function fnInBlock(){}
+}
+console.log(declaredInBlock, fnInBlock);

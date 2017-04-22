@@ -10,6 +10,9 @@ import Later = require("./Later");
 import recast = require("recast");
 import Map = require("../Map");
 import EvaluationState = require("../EvaluationState");
+import {VariableDeclaratorNode} from "./Variables";
+
+const builders = recast.types.builders;
 
 export abstract class SemanticNode {
     readonly type:string;
@@ -22,7 +25,7 @@ export abstract class SemanticNode {
 
     constructor(source:Expression,
                 public readonly parent:SemanticNode,
-                private readonly parentObject:{[idx:string]:any},
+                private readonly parentObject:{ [idx:string]:any },
                 protected readonly parentProperty:string,
                 scope:Scope,
                 readonly context:Context) {
@@ -100,7 +103,7 @@ export abstract class SemanticNode {
             return toSemanticNode(e, this.parent, this.parentObject, this.parentProperty, this.scope, this.context);
         });
 
-        const removedCommentsByOriginal:Map<Expression,Comment> = new Map<Expression,Comment>();
+        const removedCommentsByOriginal:Map<Expression, Comment> = new Map<Expression, Comment>();
         this.walk((node:SemanticNode) => {
             if (node instanceof Later.Comment) {
                 removedCommentsByOriginal.set(node.original, node);
@@ -221,23 +224,24 @@ export abstract class SemanticNode {
             return [];
         }
         const enclosingFunction = this.getEnclosingFunction();
-        const result:Expression[] = [];
+        const names:string[] = [];
         this.walk((node:SemanticNode) => {
             if (node instanceof Later.FunctionDeclarationNode) {
                 if (node.getEnclosingFunction() === enclosingFunction) {
-                    result.push(node.toAst());
+                    names.push(node.id.name);
                 }
             } else if (node instanceof Later.VariableDeclarationNode && !node.isBlockScoped()) {
                 if (node.getEnclosingFunction() === enclosingFunction) {
-                    let declaration = node.toAst() as any;
-                    for (let i = 0; i < declaration.declarations.length; i++) {
-                        declaration.declarations[i].init = null;
+                    const declarations:VariableDeclaratorNode[] = node.declarations;
+                    for (let i = 0; i < declarations.length; i++) {
+                        names.push(declarations[i].id.name);
                     }
-                    result.push(declaration);
                 }
             }
         });
-        return result;
+        return names.map(name => {
+            return builders.variableDeclaration('var', [builders.variableDeclarator(builders.identifier(name), null)])
+        });
     }
 
     track(state:EvaluationState, visitor:TrackingVisitor) {

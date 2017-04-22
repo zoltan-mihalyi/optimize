@@ -1,6 +1,7 @@
 var a;
 var b;
-console.log(void 0, void 0);
+var c;
+console.log(void 0, void 0, void 0);
 
 var i = "x";
 console.log("x");
@@ -18,10 +19,5 @@ console.log("0");
 i = "1";
 console.log("1");
 
-function x() {
-    function y() {
-    }
-
-    return y + void 0;
-}
-x();
+var x;
+console.log(void 0);

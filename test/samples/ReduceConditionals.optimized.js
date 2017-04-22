@@ -37,3 +37,7 @@ console.log("true");
 
 var aaa;
 console.log(aaa);
+
+var declaredInBlock;
+var fnInBlock;
+console.log(declaredInBlock, fnInBlock);
