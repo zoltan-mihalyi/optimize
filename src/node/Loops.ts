@@ -43,7 +43,7 @@ export abstract class ForEachNode extends LoopNode implements InnerScoped {
         this.right.track(state, visitor);
         state.trackAsUnsure(state => {
             const identifier = this.left instanceof IdentifierNode ? this.left : this.left.declarations[0].id;
-            state.setValue(identifier.getVariable(), unknown);
+            state.setValue(identifier.getVariable(), unknown, true);
             this.body.track(state, visitor);
         }, true);
     }

@@ -76,7 +76,7 @@ export class ProgramNode extends BlockNode {
     sourceType:string;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        GLOBAL_APIS.forEach(name => state.setValue(this.scope.getOrCreate(name), state.createValue(global[name])));
+        GLOBAL_APIS.forEach(name => state.setValue(this.scope.getOrCreate(name), state.createValue(global[name]), true));
 
         super.onTrack(state, visitor);
     }

@@ -1,6 +1,6 @@
 import {createUnusedName, hasOwnProperty} from "./Utils";
-import {Variable} from "./Variable";
-import {Value, ReferenceValue, HeapObject} from "./Value";
+import {Heap, Variable} from "./Variable";
+import {Value, ReferenceValue, HeapObject, unknown} from "./Value";
 import Map = require("./Map");
 
 interface Variables {
@@ -8,9 +8,10 @@ interface Variables {
 }
 
 class Scope {
+    possibleHeap:Heap;
     private readonly variables:Variables = {};
 
-    constructor(private parent:Scope, readonly blockScope:boolean) {
+    constructor(readonly parent:Scope, readonly blockScope:boolean) {
     }
 
     has(name:string):boolean {
@@ -57,6 +58,7 @@ class Scope {
             reads: [],
             initialValue: initialValue,
             initialHeap: new Map<ReferenceValue, HeapObject>(),
+            possibleValue: null,
             scope: this
         };
     }
@@ -95,6 +97,26 @@ class Scope {
             return this;
         }
         return this.parent.findFunctionScope();
+    }
+
+    getOuterValue(variable:Variable):Value {
+        const name = variable.name;
+        const parent = this.parent;
+
+        if (!parent) {
+            return unknown;
+        }
+        if (hasOwnProperty(parent.variables, name)) {
+            return parent.variables[name].possibleValue || unknown;
+        }
+        return parent.getOuterValue(variable);
+    }
+
+    dereference(reference:ReferenceValue):HeapObject {
+        if (this.possibleHeap && this.possibleHeap.has(reference)) {
+            return this.possibleHeap.get(reference);
+        }
+        return this.parent.dereference(reference);
     }
 
     hasArgumentsRead():boolean {

@@ -7,4 +7,7 @@ describe('Track values', function() {
     it('should track objects', function() {
         Helper.assertMatch('TrackValues-objects', {assumptions: {noNativeOverwrites: true}});
     });
+    it('should inside functions with the values in outer functions', function() {
+        Helper.assertMatch('TrackValues-inside');
+    });
 });

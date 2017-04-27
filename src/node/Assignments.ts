@@ -27,7 +27,7 @@ function trackAssignment(state:EvaluationState, node:ExpressionNode, getNewValue
 
     const variable = node.getVariable();
     const leftValue = state.getValue(variable);
-    state.setValue(variable, getNewValue(leftValue));
+    state.setValue(variable, getNewValue(leftValue), false);
 }
 
 function handleMemberAssignment(state:EvaluationState, node:MemberNode, getNewValue:GetNewValue) {

@@ -1,4 +1,4 @@
-class Map<K,V> {
+class Map<K, V> {
     private keys:K[] = [];
     private values:V[] = [];
 
@@ -11,7 +11,7 @@ class Map<K,V> {
         this.values.push(value);
     }
 
-    get(key:K) {
+    get(key:K):V {
         const idx = this.keys.indexOf(key);
         if (idx === -1) {
             throw new Error('Does not contain!');
@@ -19,7 +19,7 @@ class Map<K,V> {
         return this.values[idx];
     }
 
-    has(key:K) {
+    has(key:K):boolean {
         return this.keys.indexOf(key) !== -1;
     }
 

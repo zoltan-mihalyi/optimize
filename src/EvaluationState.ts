@@ -5,7 +5,8 @@ import {
     FunctionObjectClass,
     HeapObject,
     IterableValue,
-    KNOWS_ALL, NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
+    KNOWS_ALL,
+    NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
     NUMBER,
     OBJECT,
     ObjectClass,
@@ -67,20 +68,26 @@ class EvaluationState {
     private variableReferences:Map<Variable, ReferenceValue[]> = new Map<Variable, ReferenceValue[]>();
     private ownReferences:ReferenceValue[] = [];
     private updated:boolean = false;
+    private possibleValues:Map<Variable, Value> = new Map<Variable, Value>();
+    private possibleHeap:Heap = new Map<ReferenceValue, HeapObject>();
 
 
     constructor(private parent:EvaluationState, private scope:Scope, readonly context:Context) {
         scope.each((name:string, variable:Variable) => {
             let value:Value;
-            if (!(parent && parent.hasValue(variable))) {
-                value = variable.initialValue ? variable.initialValue : unknown;
-                variable.initialHeap.each((ref, obj) => {
-                    if (!this.heap.has(ref)) {
-                        this.heap.set(ref, obj);
-                    }
-                });
-                this.setValue(variable, value);
+            if (parent && parent.hasValue(variable)) {
+                return;
             }
+            value = variable.initialValue;
+            if (!value) {
+                return;
+            }
+            variable.initialHeap.each((ref, obj) => {
+                if (!this.heap.has(ref)) {
+                    this.setOrUpdateHeap(ref, obj);
+                }
+            });
+            this.setValue(variable, value, true);
         });
 
         if (parent) {
@@ -88,7 +95,7 @@ class EvaluationState {
         }
     }
 
-    setValue(variable:Variable, value:Value) {
+    setValue(variable:Variable, value:Value, initialize:boolean) {
         let variableFunctionScope = variable.scope.findFunctionScope();
         for (let i = 0; i < variable.writes.length; i++) {
             if (variable.writes[i].scope.findFunctionScope() !== variableFunctionScope) {
@@ -115,7 +122,7 @@ class EvaluationState {
             this.updateReferences(variable, references);
         }
 
-        this.variableValues.setOrUpdate(variable, value);
+        this.setOrUpdateVariable(variable, value, initialize);
     }
 
     assign(variable:Variable, variable2:Variable) {
@@ -128,7 +135,7 @@ class EvaluationState {
     mergeOr(state1:EvaluationState, state2:EvaluationState) {
         const map1 = state1.variableValues;
         state1.variableValues.each((variable, value) => {
-            this.variableValues.setOrUpdate(variable, value.or(state2.getValue(variable)));
+            this.setOrUpdateVariable(variable, value.or(state2.getValue(variable)), false);
         });
         state2.variableValues.each((variable, value) => {
             if (!map1.has(variable)) {
@@ -139,9 +146,9 @@ class EvaluationState {
         const heap1 = state1.heap;
         state1.heap.each((ref, heapObject) => {
             if (state2.heap.has(ref)) {
-                this.heap.setOrUpdate(ref, heapObject.or(state2.dereference(ref)));
+                this.setOrUpdateHeap(ref, heapObject.or(state2.dereference(ref)));
             } else {
-                this.heap.setOrUpdate(ref, heapObject);
+                this.setOrUpdateHeap(ref, heapObject);
             }
         });
         state2.heap.each((reference, heapObject) => {
@@ -152,6 +159,9 @@ class EvaluationState {
 
         state1.orWithVariableReferences(state2);
         this.replaceWithVariableReferences(state1);
+
+        this.mergePossibleValues(state1);
+        this.mergePossibleValues(state2);
     }
 
     mergeMaybe(state:EvaluationState) {
@@ -164,12 +174,13 @@ class EvaluationState {
         });
 
         this.orWithVariableReferences(state);
+        this.mergePossibleValues(state);
     }
 
     mergeBack(state:EvaluationState) {
         state.variableValues.each((variable:Variable, value:Value) => {
             if (this.hasValue(variable)) {
-                this.variableValues.setOrUpdate(variable, value);
+                this.setOrUpdateVariable(variable, value, false);
             }
         });
 
@@ -178,6 +189,7 @@ class EvaluationState {
         });
 
         this.replaceWithVariableReferences(state);
+        this.mergePossibleValues(state);
     }
 
     trackAsUnsure(tracker:(state:EvaluationState) => void, loop:boolean) {
@@ -191,16 +203,21 @@ class EvaluationState {
     }
 
     getValue(variable:Variable):Value {
+        if (variable.global && !this.context.options.assumptions.noGlobalPropertyOverwrites) {
+            return unknown;
+        }
+        return this.getValueInner(variable);
+    }
+
+    protected getValueInner(variable:Variable):Value {
+
         if (this.variableValues.has(variable)) {
-            if (variable.global && !this.context.options.assumptions.noGlobalPropertyOverwrites) {
-                return unknown;
-            }
             return this.variableValues.get(variable);
         }
         if (this.parent) {
-            return this.parent.getValue(variable);
+            return this.parent.getValueInner(variable);
         }
-        return unknown;
+        return this.scope.getOuterValue(variable);
     }
 
     hasValue(variable:Variable):boolean {
@@ -243,13 +260,13 @@ class EvaluationState {
     }
 
     updateObject(reference:ReferenceValue, heapObject:HeapObject) {
-        this.heap.setOrUpdate(reference, heapObject);
+        this.setOrUpdateHeap(reference, heapObject);
     }
 
     createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue {
         const reference = new ReferenceValue(objectClass);
         this.ownReferences.push(reference);
-        this.heap.set(reference, heapObject);
+        this.setOrUpdateHeap(reference, heapObject);
         return reference;
     }
 
@@ -267,7 +284,10 @@ class EvaluationState {
         if (this.heap.has(reference)) {
             return this.heap.get(reference);
         }
-        return this.parent.dereference(reference);
+        if (this.parent) {
+            return this.parent.dereference(reference);
+        }
+        return this.scope.parent.dereference(reference);
     }
 
     createValue(value:any):SingleValue {
@@ -358,6 +378,31 @@ class EvaluationState {
         }
     }
 
+    addPossibleValuesToScope() {
+        this.possibleValues.each((variable, value) => {
+            variable.possibleValue = value;
+        });
+        this.scope.possibleHeap = this.possibleHeap;
+    }
+
+    private setOrUpdateVariable(variable:Variable, value:Value, initialize:boolean) {
+        if (!initialize && this.possibleValues.has(variable)) {
+            this.possibleValues.setOrUpdate(variable, this.possibleValues.get(variable).or(value));
+        } else {
+            this.possibleValues.setOrUpdate(variable, value);
+        }
+        this.variableValues.setOrUpdate(variable, value);
+    }
+
+    private setOrUpdateHeap(reference:ReferenceValue, heapObject:HeapObject) {
+        if (this.possibleHeap.has(reference)) {
+            this.possibleHeap.setOrUpdate(reference, this.possibleHeap.get(reference).or(heapObject));
+        } else {
+            this.possibleHeap.set(reference, heapObject);
+        }
+        this.heap.setOrUpdate(reference, heapObject);
+    }
+
     private isOwn(reference:ReferenceValue):boolean {
         if (this.ownReferences.indexOf(reference) !== -1) {
             return true;
@@ -419,12 +464,12 @@ class EvaluationState {
     }
 
     private orWith(variable:Variable, value:Value) {
-        this.variableValues.setOrUpdate(variable, this.getValue(variable).or(value));
+        this.setOrUpdateVariable(variable, this.getValue(variable).or(value), false);
     }
 
     private orWithRef(reference:ReferenceValue, heapObject:HeapObject) {
         let newObject = this.hasReference(reference) ? this.dereference(reference).or(heapObject) : heapObject;
-        this.heap.setOrUpdate(reference, newObject);
+        this.setOrUpdateHeap(reference, newObject);
     }
 
     private orWithVariableReferences(other:EvaluationState) {
@@ -442,10 +487,24 @@ class EvaluationState {
             target.setOrUpdate(variable, references);
         });
     }
+
+    private mergePossibleValues(other:EvaluationState) {
+        other.possibleHeap.each((reference, heapObject) => {
+            this.possibleHeap.setOrUpdate(reference, heapObject);
+        });
+
+        other.possibleValues.each((variable, value) => {
+            if (this.possibleValues.has(variable)) {
+                this.possibleValues.setOrUpdate(variable, value.or(this.possibleValues.get(variable)));
+            } else {
+                this.possibleValues.set(variable, value);
+            }
+        });
+    }
 }
 
 class UnsureEvaluationState extends EvaluationState {
-    getValue() {
+    getValueInner() {
         return unknown;
     }
 }

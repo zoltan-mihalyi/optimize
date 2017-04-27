@@ -38,9 +38,9 @@ export class VariableDeclaratorNode extends SemanticNode {
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         if (this.init) {
             this.init.track(state, visitor);
-            state.setValue(this.id.getVariable(), this.init.getValue());
+            state.setValue(this.id.getVariable(), this.init.getValue(), false);
         } else if (this.parent.isBlockScoped()) {
-            state.setValue(this.id.getVariable(), new PrimitiveValue(void 0));
+            state.setValue(this.id.getVariable(), new PrimitiveValue(void 0), false);
         }
     }
 

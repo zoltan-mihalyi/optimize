@@ -44,7 +44,6 @@ export function isPrimitive(value:any):value is number|string|boolean|null {
 }
 
 export function throwValue(msg:string):Value {
-    console.log('WARNING: ' + msg);
     return unknown;
 }
 

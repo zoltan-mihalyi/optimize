@@ -13,6 +13,7 @@ export interface Variable {
     writes:IdentifierNode[];
     reads:IdentifierNode[];
     name:string;
+    possibleValue:Value;
     initialValue:Value;
     initialHeap:Heap;
     scope:Scope;

@@ -26,7 +26,7 @@ function addArgumentsValue(node:FunctionNode, state:EvaluationState) {
         propertyInfo: NO_UNKNOWN_OVERRIDE,
         trueValue: null
     }));
-    state.setValue(node.innerScope.get('arguments'), argumentsRef);
+    state.setValue(node.innerScope.get('arguments'), argumentsRef, true);
 }
 
 function createInnerScope(node:InnerScoped, scope:Scope) {
@@ -99,7 +99,7 @@ export class FunctionDeclarationNode extends SemanticNode implements FunctionNod
     innerScope:Scope;
 
     onTrack(state:EvaluationState) {
-        state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this));
+        state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this), true);
     }
 
     addArgumentsIfNeeded(state:EvaluationState) {
@@ -108,7 +108,7 @@ export class FunctionDeclarationNode extends SemanticNode implements FunctionNod
 
     protected handleDeclarationsForNode() {
         addParametersToScope(this, true);
-        let variable = this.scope.set(this.id.name, false, unknown);
+        let variable = this.scope.set(this.id.name, false, null);
         variable.writes.push(this.id);
     }
 
