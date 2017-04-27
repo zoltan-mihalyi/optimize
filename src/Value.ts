@@ -112,9 +112,16 @@ export interface PropDescriptorMap {
     [idx:string]:PropDescriptor;
 }
 
-export const enum PropInfo {
-    MAY_HAVE_NEW, NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE, KNOWS_ALL
+interface PropInfo {
+    readonly knowsAllEnumerable:boolean;
+    readonly knowsAllOverride:boolean;
+    readonly knowsAll:boolean;
 }
+
+export const MAY_HAVE_NEW:PropInfo = {knowsAll: false, knowsAllEnumerable: false, knowsAllOverride: false};
+export const NO_UNKNOWN_OVERRIDE:PropInfo = {knowsAll: false, knowsAllEnumerable: false, knowsAllOverride: true};
+export const NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:PropInfo = {knowsAll: false, knowsAllEnumerable: true, knowsAllOverride: true};
+export const KNOWS_ALL:PropInfo = {knowsAll: true, knowsAllEnumerable: true, knowsAllOverride: true};
 
 interface ObjectParameters {
     proto:ReferenceValue;
@@ -134,14 +141,11 @@ export class ReferenceValue extends SingleValue {
 }
 
 function mergePropInfos(propInfo1:PropInfo, propInfo2:PropInfo):PropInfo {
-    if (propInfo1 === PropInfo.MAY_HAVE_NEW || propInfo2 === PropInfo.MAY_HAVE_NEW) {
-        return PropInfo.MAY_HAVE_NEW;
-    } else if (propInfo1 === PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE
-        || propInfo2 === PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE) {
-
-        return PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE;
-    }
-    return PropInfo.KNOWS_ALL;
+    return {
+        knowsAll: propInfo1.knowsAll && propInfo2.knowsAll,
+        knowsAllOverride: propInfo1.knowsAllOverride && propInfo2.knowsAllOverride,
+        knowsAllEnumerable: propInfo1.knowsAllEnumerable && propInfo2.knowsAllEnumerable
+    };
 }
 
 function mergeProps(prop1:PropDescriptor, prop2:PropDescriptor):PropDescriptor {
@@ -209,7 +213,7 @@ export class HeapObject {
     }
 
     canIterate(state:EvaluationState):boolean {
-        if (this.propertyInfo === PropInfo.MAY_HAVE_NEW) {
+        if (!this.propertyInfo.knowsAllEnumerable) {
             return false;
         }
         if (this.proto) {
@@ -261,7 +265,7 @@ export class HeapObject {
             if (hasOwnProperty(other.properties, propName)) {
                 const prop1 = other.properties[propName];
                 if (!hasOwnProperty(this.properties, propName)) {
-                    if (this.propertyInfo === PropInfo.KNOWS_ALL) {
+                    if (this.propertyInfo.knowsAll) {
                         properties[propName] = prop1;
                     } else {
                         mayHaveNew = true;
@@ -273,7 +277,7 @@ export class HeapObject {
         return new HeapObject({
             proto: this.proto, //todo handle proto change
             properties: properties,
-            propertyInfo: mayHaveNew ? PropInfo.MAY_HAVE_NEW : mergePropInfos(this.propertyInfo, other.propertyInfo),
+            propertyInfo: mayHaveNew ? MAY_HAVE_NEW : mergePropInfos(this.propertyInfo, other.propertyInfo),
             trueValue: null
         });
     }
@@ -320,30 +324,24 @@ export class HeapObject {
             return this.properties[name];
         }
 
-        switch (this.propertyInfo) {
-            case PropInfo.MAY_HAVE_NEW:
-                return null;
-            case PropInfo.KNOWS_ALL:
-                if (this.proto) {
-                    return state.dereference(this.proto).resolvePropertyDescriptor(state, name);
+        if (this.proto) {
+            if (this.propertyInfo.knowsAll) {
+                return state.dereference(this.proto).resolvePropertyDescriptor(state, name);
+            } else if (this.propertyInfo.knowsAllOverride) {
+                let protoObject = state.dereference(this.proto);
+                if (protoObject.hasPropertyDeep(state, name)) {
+                    return protoObject.resolvePropertyDescriptor(state, name);
                 }
-                return null;
-            case PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:
-                if (this.proto) {
-                    let protoObject = state.dereference(this.proto);
-                    if (protoObject.hasPropertyDeep(state, name)) {
-                        return protoObject.resolvePropertyDescriptor(state, name);
-                    }
-                }
-                return null;
+            }
         }
+        return null;
     }
 }
 
 export const DIRTY_OBJECT = new HeapObject({
     proto: null,
     properties: {},
-    propertyInfo: PropInfo.MAY_HAVE_NEW,
+    propertyInfo: MAY_HAVE_NEW,
     trueValue: null
 });
 

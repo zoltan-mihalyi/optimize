@@ -1,6 +1,6 @@
 import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {unknown, ARGUMENTS, PropInfo, HeapObject} from "../Value";
+import {unknown, ARGUMENTS, HeapObject, NO_UNKNOWN_OVERRIDE} from "../Value";
 import {InnerScoped} from "../Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import {BlockNode} from "./Blocks";
@@ -23,7 +23,7 @@ function addArgumentsValue(node:FunctionNode, state:EvaluationState) {
     const argumentsRef = state.createObject(ARGUMENTS, new HeapObject({
         proto: state.getReferenceValue(Object.prototype),
         properties: {},
-        propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
+        propertyInfo: NO_UNKNOWN_OVERRIDE,
         trueValue: null
     }));
     state.setValue(node.innerScope.get('arguments'), argumentsRef);

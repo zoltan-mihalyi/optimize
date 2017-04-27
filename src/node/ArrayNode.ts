@@ -1,5 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {ARRAY, HeapObject, PrimitiveValue, PropDescriptorMap, PropInfo} from "../Value";
+import {ARRAY, HeapObject, KNOWS_ALL, PrimitiveValue, PropDescriptorMap} from "../Value";
 import {getTrueValue, hasTrueValue} from "../Utils";
 import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
@@ -40,7 +40,7 @@ export class ArrayNode extends ExpressionNode {
         this.setValue(state.createObject(ARRAY, new HeapObject({
             proto: state.getReferenceValue(Array.prototype),
             properties: properties,
-            propertyInfo: PropInfo.KNOWS_ALL,
+            propertyInfo: KNOWS_ALL,
             trueValue: trueValue
         })));
     }

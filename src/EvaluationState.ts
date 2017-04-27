@@ -1,16 +1,17 @@
 import {
     ARRAY,
     BOOLEAN,
-    DIRTY_OBJECT, FunctionObjectClass,
+    DIRTY_OBJECT,
+    FunctionObjectClass,
     HeapObject,
     IterableValue,
+    KNOWS_ALL, NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
     NUMBER,
     OBJECT,
     ObjectClass,
     PrimitiveValue,
     PropDescriptor,
     PropDescriptorMap,
-    PropInfo,
     ReferenceValue,
     REG_EXP,
     SingleValue,
@@ -221,7 +222,7 @@ class EvaluationState {
             properties: {
                 constructor: nonEnumerable(fn)
             },
-            propertyInfo: PropInfo.KNOWS_ALL,
+            propertyInfo: KNOWS_ALL,
             trueValue: null //todo
         })));
 
@@ -236,7 +237,7 @@ class EvaluationState {
         return this.createObject(new FunctionObjectClass(functionNode), new HeapObject({
             proto: this.getReferenceValue(Function.prototype),
             properties: properties,
-            propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
+            propertyInfo: NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
             trueValue: null
         }));
     }
@@ -289,7 +290,7 @@ class EvaluationState {
         const result = this.createObject(getObjectClass(object), new HeapObject({
             proto: proto ? this.getReferenceValue(proto) : null,
             properties: properties,
-            propertyInfo: SafeProperties.has(object) ? PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : PropInfo.KNOWS_ALL,
+            propertyInfo: SafeProperties.has(object) ? NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : KNOWS_ALL,
             trueValue: object
         }));
         this.objectToReferenceMap.set(object, result);

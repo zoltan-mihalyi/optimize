@@ -1,5 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PropDescriptorMap, OBJECT, PropInfo, PrimitiveValue, HeapObject} from "../Value";
+import {Value, PropDescriptorMap, OBJECT, PrimitiveValue, HeapObject, KNOWS_ALL, MAY_HAVE_NEW} from "../Value";
 import {hasTrueValue, getTrueValue, throwValue} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
 import {TrackingVisitor} from "../NodeVisitor";
@@ -52,7 +52,7 @@ export class ObjectNode extends ExpressionNode {
         this.setValue(state.createObject(OBJECT, new HeapObject({
             proto: state.getReferenceValue(Object.prototype),
             properties: properties,
-            propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
+            propertyInfo: knowsAll ? KNOWS_ALL : MAY_HAVE_NEW,
             trueValue: trueValue
         })));
     }

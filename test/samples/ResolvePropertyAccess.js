@@ -47,3 +47,7 @@ console.log({}[function() {}]);
 Math.PI = 3;
 Math.PI -= 3;
 Math.PI++;
+
+function resolveNonEnumerable() {
+    return arguments.toString === {}.toString;
+}
