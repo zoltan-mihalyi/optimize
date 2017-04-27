@@ -1,6 +1,5 @@
 import {equals, hasOwnProperty} from "./Utils";
 import {FunctionNode} from "./node/Functions";
-import Map = require("./Map");
 import EvaluationState = require("./EvaluationState");
 
 export let unknown:UnknownValue;
@@ -26,16 +25,6 @@ export abstract class IterableValue extends Value {
     abstract each(callback:(value:SingleValue) => void):void;
 }
 
-export const enum ComparisonResult {
-    TRUE,
-    FALSE,
-    UNKNOWN
-}
-
-function fromBoolean(bool:boolean):ComparisonResult {
-    return bool ? ComparisonResult.TRUE : ComparisonResult.FALSE;
-}
-
 export abstract class SingleValue extends IterableValue {
     or(value:Value):Value {
         if (value instanceof SingleValue) {
@@ -59,7 +48,7 @@ export abstract class SingleValue extends IterableValue {
 }
 
 export class PrimitiveValue extends SingleValue {
-    constructor(public value:string|boolean|number) {
+    constructor(public value:string | boolean | number) {
         super();
     }
 
@@ -127,7 +116,7 @@ interface ObjectParameters {
     proto:ReferenceValue;
     properties:PropDescriptorMap;
     propertyInfo:PropInfo;
-    trueValue:Object|null;
+    trueValue:Object | null;
     fn:FunctionNode;
 }
 
@@ -141,7 +130,9 @@ export class ReferenceValue extends SingleValue {
 function mergePropInfos(propInfo1:PropInfo, propInfo2:PropInfo):PropInfo {
     if (propInfo1 === PropInfo.MAY_HAVE_NEW || propInfo2 === PropInfo.MAY_HAVE_NEW) {
         return PropInfo.MAY_HAVE_NEW;
-    } else if (propInfo1 === PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE || propInfo2 == PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE) {
+    } else if (propInfo1 === PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE
+        || propInfo2 === PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE) {
+
         return PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE;
     }
     return PropInfo.KNOWS_ALL;
@@ -158,14 +149,14 @@ function mergeProps(prop1:PropDescriptor, prop2:PropDescriptor):PropDescriptor {
             return {
                 enumerable: prop1.enumerable,
                 get: prop1.get
-            }
+            };
         }
     }
     return null;
 }
 
 export class HeapObject {
-    readonly trueValue:Object|null;
+    readonly trueValue:Object | null;
     readonly fn:FunctionNode;
     private proto:ReferenceValue;
     private properties:PropDescriptorMap;
@@ -196,7 +187,9 @@ export class HeapObject {
         const properties:PropDescriptorMap = {};
 
         for (const i in this.properties) {
-            properties[i] = this.properties[i];
+            if (hasOwnProperty(this.properties, i)) {
+                properties[i] = this.properties[i];
+            }
         }
         properties[name] = {
             enumerable: true,

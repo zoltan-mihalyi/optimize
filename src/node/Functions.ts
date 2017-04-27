@@ -38,13 +38,13 @@ function createInnerScope(node:InnerScoped, scope:Scope) {
 export interface FunctionNode extends InnerScoped {
     id:IdentifierNode;
     params:IdentifierNode[];
-    body:ExpressionNode|BlockNode;
+    body:ExpressionNode | BlockNode;
 }
 
 export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements FunctionNode {
     id:IdentifierNode;
     params:IdentifierNode[];
-    body:ExpressionNode|BlockNode;
+    body:ExpressionNode | BlockNode;
     innerScope:Scope;
     expression:boolean;
 
@@ -103,7 +103,7 @@ export class FunctionDeclarationNode extends SemanticNode implements FunctionNod
         state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this));
     }
 
-    addArgumentsIfNeeded(state:EvaluationState){
+    addArgumentsIfNeeded(state:EvaluationState) {
         addArgumentsValue(this, state);
     }
 

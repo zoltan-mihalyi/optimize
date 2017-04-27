@@ -4,7 +4,6 @@ import {isInnerScoped} from "../Utils";
 import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
-import {PrimitiveValue} from "../Value";
 const global = new Function('return this')();
 
 const GLOBAL_APIS = [

@@ -37,7 +37,9 @@ function clone(object:any, cloned:Map<Object,Object>) {//todo proto...
     return result;
 }
 
-function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, calleeObject:HeapObject, objectObject:HeapObject, parameters:any[]):boolean {
+function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, calleeObject:HeapObject,
+                           objectObject:HeapObject, parameters:any[]):boolean {
+
     try {
         if (objectValue instanceof ReferenceValue) {
             const mutatingObject = getMutatingObject(calleeObject.trueValue as Function, objectObject.trueValue, parameters);

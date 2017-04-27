@@ -1,5 +1,4 @@
-import NodeVisitor = require("../NodeVisitor");
-import {PrimitiveValue, unknown, ReferenceValue, ComparisonResult, SingleValue} from "../Value";
+import {PrimitiveValue, unknown, ReferenceValue, SingleValue} from "../Value";
 import {hasTrueValue, getTrueValue, binaryCache} from "../Utils";
 import {BinaryNode, UnaryNode} from "../node/Operators";
 import {TrackingVisitor} from "../NodeVisitor";
@@ -8,6 +7,12 @@ import EvaluationState = require("../EvaluationState");
 
 
 type UnaryFunction = (x:any) => any;
+
+const enum ComparisonResult {
+    TRUE,
+    FALSE,
+    UNKNOWN
+}
 
 const unaryCache = new Cache<string, UnaryFunction>(operator => {
     return new Function('arg', `return ${operator} arg;`) as UnaryFunction;
@@ -20,27 +25,27 @@ function compareTo(state:EvaluationState, value1:SingleValue, value2:SingleValue
             let equals = strict ? (value1.value === value2.value) : (value1.value == value2.value);
             return fromBoolean(equals);
         } else {
-            return compareReferenceToPrimitive(state, value2 as ReferenceValue, value1, strict);
+            return compareReferenceToPrimitive(value2 as ReferenceValue, value1);
         }
     } else {
         if (value2 instanceof ReferenceValue) {
             return fromBoolean(value1 === value2);
         } else {
-            return compareReferenceToPrimitive(state, value1 as ReferenceValue, value2 as PrimitiveValue, strict);
+            return compareReferenceToPrimitive(value1 as ReferenceValue, value2 as PrimitiveValue);
         }
     }
-}
 
-function compareReferenceToPrimitive(state:EvaluationState, reference:ReferenceValue, primitive:PrimitiveValue, strict:boolean):ComparisonResult {
-    if (strict) {
-        return ComparisonResult.FALSE;
+    function compareReferenceToPrimitive(reference:ReferenceValue, primitive:PrimitiveValue):ComparisonResult {
+        if (strict) {
+            return ComparisonResult.FALSE;
+        }
+        let heapObject = state.dereference(reference);
+        if (heapObject.trueValue) {
+            // tslint:disable-next-line:triple-equals
+            return fromBoolean(heapObject.trueValue == primitive.value);
+        }
+        return ComparisonResult.UNKNOWN;
     }
-    let heapObject = state.dereference(reference);
-    if (heapObject.trueValue) {
-        // tslint:disable-next-line:triple-equals
-        return fromBoolean(heapObject.trueValue == primitive.value);
-    }
-    return ComparisonResult.UNKNOWN;
 }
 
 function fromBoolean(bool:boolean):ComparisonResult {

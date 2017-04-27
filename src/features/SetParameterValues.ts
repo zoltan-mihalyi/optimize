@@ -1,4 +1,3 @@
-import NodeVisitor = require("../NodeVisitor");
 import {HeapObject, IterableValue, PrimitiveValue, ReferenceValue, Value} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
 import {CallNode, NewNode} from "../node/CallNodes";
@@ -9,10 +8,8 @@ import {AssignmentNode} from "../node/Assignments";
 import {VariableDeclaratorNode} from "../node/Variables";
 import {Heap, Variable} from "../Variable";
 import {isValueUpdate} from "../Utils";
-import Cache = require("../Cache");
 import EvaluationState = require("../EvaluationState");
 import Map = require("../Map");
-import references = require("../node/Later");
 
 interface Parameter {
     value:Value;
@@ -103,7 +100,7 @@ export = (trackingVisitor:TrackingVisitor) => {
 
     trackingVisitor.on(IdentifierNode, (node:IdentifierNode, state:EvaluationState) => {
         if (!node.isRead()) {
-            return
+            return;
         }
 
         const parent = node.parent;

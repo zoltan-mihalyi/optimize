@@ -20,7 +20,7 @@
     "typescript": "^2.1.5"
   },
   "scripts": {
-    "test": "node node_modules/.bin/gulp test:cover"
+    "test": "node_modules/.bin/gulp tslint test:cover"
   },
   "author": "",
   "license": "ISC"

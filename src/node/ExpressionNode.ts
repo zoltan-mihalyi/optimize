@@ -1,10 +1,9 @@
 import recast = require("recast");
-import {Value, unknown, UnknownValue, PrimitiveValue, FiniteSetOfValues} from "../Value";
+import {PrimitiveValue, unknown, UnknownValue, Value} from "../Value";
 import {equals, isValueUpdate} from "../Utils";
 import {SemanticNode} from "./SemanticNode";
-import {LiteralNode, UnaryNode, AbstractFunctionExpressionNode} from "./Later";
+import {AbstractFunctionExpressionNode, LiteralNode, UnaryNode} from "./Later";
 import Scope = require("../Scope");
-import EvaluationState = require("../EvaluationState");
 
 const builders = recast.types.builders;
 
@@ -66,7 +65,7 @@ export abstract class ExpressionNode extends SemanticNode {
             }
         }
 
-        if(isValueUpdate(this.calculatedValue, value)){
+        if (isValueUpdate(this.calculatedValue, value)) {
             this.markUpdated();
         }
         this.calculatedValue = value;

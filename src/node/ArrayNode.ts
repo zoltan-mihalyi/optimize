@@ -1,6 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PropDescriptorMap, PrimitiveValue, ReferenceValue, ARRAY, PropInfo, HeapObject} from "../Value";
-import {hasTrueValue, getTrueValue} from "../Utils";
+import {ARRAY, HeapObject, PrimitiveValue, PropDescriptorMap, PropInfo} from "../Value";
+import {getTrueValue, hasTrueValue} from "../Utils";
 import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 
@@ -13,7 +13,7 @@ export class ArrayNode extends ExpressionNode {
             element.track(state, trackingVisitor);
         }
 
-        if(!this.isClean()){
+        if (!this.isClean()) {
             return;
         }
         const properties:PropDescriptorMap = {

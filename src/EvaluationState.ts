@@ -58,6 +58,8 @@ function getObjectClass(value:Object):ObjectClass {
 }
 
 class EvaluationState {
+    static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false), null);
+
     private variableValues:Map<Variable, Value> = new Map<Variable, Value>();
     private heap:Heap = new Map<ReferenceValue, HeapObject>();
     private objectToReferenceMap:Map<Object, ReferenceValue> = new Map<Object, ReferenceValue>();
@@ -65,7 +67,6 @@ class EvaluationState {
     private ownReferences:ReferenceValue[] = [];
     private updated:boolean = false;
 
-    static rootState:EvaluationState = new EvaluationState(null, new Scope(null, false), null);
 
     constructor(private parent:EvaluationState, private scope:Scope, readonly context:Context) {
         scope.each((name:string, variable:Variable) => {
@@ -74,7 +75,7 @@ class EvaluationState {
                 value = variable.initialValue ? variable.initialValue : unknown;
                 variable.initialHeap.each((ref, obj) => {
                     if (!this.heap.has(ref)) {
-                        this.heap.set(ref, obj)
+                        this.heap.set(ref, obj);
                     }
                 });
                 this.setValue(variable, value);

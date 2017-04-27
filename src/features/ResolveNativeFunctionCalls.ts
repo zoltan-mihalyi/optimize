@@ -1,7 +1,6 @@
-import NodeVisitor = require("../NodeVisitor");
-import {ReferenceValue, FUNCTION, Value} from "../Value";
-import {hasTrueValue, getTrueValue, getRealFunctionAndContext, getParameters, getMutatingObject} from "../Utils";
-import {NewNode, CallNode} from "../node/CallNodes";
+import {FUNCTION, ReferenceValue, Value} from "../Value";
+import {getMutatingObject, getParameters, getRealFunctionAndContext, getTrueValue, hasTrueValue} from "../Utils";
+import {CallNode, NewNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
 import {TrackingVisitor} from "../NodeVisitor";
 import {ExpressionNode} from "../node/ExpressionNode";

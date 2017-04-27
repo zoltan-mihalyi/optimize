@@ -240,7 +240,7 @@ export abstract class SemanticNode {
             }
         });
         return names.map(name => {
-            return builders.variableDeclaration('var', [builders.variableDeclarator(builders.identifier(name), null)])
+            return builders.variableDeclaration('var', [builders.variableDeclarator(builders.identifier(name), null)]);
         });
     }
 

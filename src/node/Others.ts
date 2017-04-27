@@ -52,7 +52,10 @@ export class MemberNode extends ExpressionNode {
                     }
                     let canMakeDirty = false;
                     propertyValue.each(p => {
-                        const propName = p instanceof PrimitiveValue ? p.value + '' : state.dereference(p as ReferenceValue).trueValue + ''; //todo trueValue
+                        const propName = p instanceof PrimitiveValue ?
+                            p.value + ''
+                            : state.dereference(p as ReferenceValue).trueValue + ''; //todo trueValue
+
                         if (!state.dereference(obj).isCleanAccess(state, propName)) {
                             canMakeDirty = true;
                         }
