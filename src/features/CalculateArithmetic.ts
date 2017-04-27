@@ -107,7 +107,7 @@ export = (trackingVisitor:TrackingVisitor) => {
             } else if (node.operator === 'void') {
                 return new PrimitiveValue(void 0);
             } else if (node.operator === 'typeof') {
-                return new PrimitiveValue(state.dereference(value as ReferenceValue).objectClass.getTypeof());
+                return new PrimitiveValue((value as ReferenceValue).objectClass.getTypeof());
             }
             return unknown;
         }));

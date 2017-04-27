@@ -1,6 +1,15 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {binaryCache, hasTrueValue, getTrueValue} from "../Utils";
-import {SingleValue, unknown, PrimitiveValue, IterableValue, Value, ReferenceValue, HeapObject} from "../Value";
+import {binaryCache, getTrueValue, hasTrueValue} from "../Utils";
+import {
+    DIRTY_OBJECT,
+    HeapObject,
+    IterableValue,
+    PrimitiveValue,
+    ReferenceValue,
+    SingleValue,
+    unknown,
+    Value
+} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
 import {MemberNode} from "./Others";
 import {IdentifierNode} from "./IdentifierNode";
@@ -29,7 +38,7 @@ function handleMemberAssignment(state:EvaluationState, node:MemberNode, getNewVa
             if (singleValue instanceof ReferenceValue) {
                 const heapObject = state.dereference(singleValue);
                 const newHeapObject = createModifiedObject(state, node, heapObject, getNewValue);
-                state.saveObject(isSingle ? newHeapObject : heapObject.or(newHeapObject), singleValue);
+                state.updateObject(singleValue, isSingle ? newHeapObject : heapObject.or(newHeapObject));
             }
         });
     }
@@ -59,7 +68,7 @@ function createModifiedObject(state:EvaluationState, left:MemberNode, heapObject
         hasUnknownProperty = true;
     }
     if (hasUnknownProperty) {
-        newHeapObject = heapObject.dirty();
+        newHeapObject = DIRTY_OBJECT;
     }
     return newHeapObject;
 }

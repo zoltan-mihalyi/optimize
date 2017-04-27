@@ -1,25 +1,25 @@
 import {
-    Value,
-    unknown,
-    SingleValue,
-    ReferenceValue,
-    HeapObject,
-    PropDescriptorMap,
-    PrimitiveValue,
-    FUNCTION,
-    OBJECT,
-    PropInfo,
-    ObjectClass,
     ARRAY,
-    REG_EXP,
-    STRING,
     BOOLEAN,
+    DIRTY_OBJECT, FunctionObjectClass,
+    HeapObject,
+    IterableValue,
     NUMBER,
+    OBJECT,
+    ObjectClass,
+    PrimitiveValue,
     PropDescriptor,
-    IterableValue
+    PropDescriptorMap,
+    PropInfo,
+    ReferenceValue,
+    REG_EXP,
+    SingleValue,
+    STRING,
+    unknown,
+    Value
 } from "./Value";
 import {Heap, Variable} from "./Variable";
-import {nonEnumerable, hasOwnProperty, isPrimitive, throwValue, getClassName} from "./Utils";
+import {getClassName, hasOwnProperty, isPrimitive, nonEnumerable, throwValue} from "./Utils";
 import Context from "./Context";
 import {FunctionNode} from "./node/Functions";
 import Map = require("./Map");
@@ -41,7 +41,7 @@ function getObjectClass(value:Object):ObjectClass {
 
     switch (className) {
         case 'Function':
-            return FUNCTION;
+            return new FunctionObjectClass(null);
         case 'Array':
             return ARRAY;
         case 'RegExp':
@@ -216,14 +216,13 @@ class EvaluationState {
         let properties:any = {};
 
         const fn = this.createFunctionValue(properties, functionNode);
-        properties.prototype = nonEnumerable(this.saveObject(new HeapObject(OBJECT, {
+        properties.prototype = nonEnumerable(this.createObject(OBJECT, new HeapObject({
             proto: this.getReferenceValue(Object.prototype),
             properties: {
                 constructor: nonEnumerable(fn)
             },
             propertyInfo: PropInfo.KNOWS_ALL,
-            trueValue: null, //todo
-            fn: null
+            trueValue: null //todo
         })));
 
         return fn;
@@ -234,21 +233,22 @@ class EvaluationState {
         (properties as any).caller = nonEnumerable(unknown);
         (properties as any).length = nonEnumerable(new PrimitiveValue(functionNode.params.length));
 
-        return this.saveObject(new HeapObject(FUNCTION, {
+        return this.createObject(new FunctionObjectClass(functionNode), new HeapObject({
             proto: this.getReferenceValue(Function.prototype),
             properties: properties,
             propertyInfo: PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
-            trueValue: null,
-            fn: functionNode
+            trueValue: null
         }));
     }
 
-    saveObject(heapObject:HeapObject, reference?:ReferenceValue):ReferenceValue {
-        if (!reference) {
-            reference = new ReferenceValue();
-            this.ownReferences.push(reference);
-        }
+    updateObject(reference:ReferenceValue, heapObject:HeapObject) {
         this.heap.setOrUpdate(reference, heapObject);
+    }
+
+    createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue {
+        const reference = new ReferenceValue(objectClass);
+        this.ownReferences.push(reference);
+        this.heap.set(reference, heapObject);
         return reference;
     }
 
@@ -286,12 +286,11 @@ class EvaluationState {
         let properties:PropDescriptorMap = {};
         let proto = Object.getPrototypeOf(object);
 
-        const result = this.saveObject(new HeapObject(getObjectClass(object), {
+        const result = this.createObject(getObjectClass(object), new HeapObject({
             proto: proto ? this.getReferenceValue(proto) : null,
             properties: properties,
             propertyInfo: SafeProperties.has(object) ? PropInfo.NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : PropInfo.KNOWS_ALL,
-            trueValue: object,
-            fn: null
+            trueValue: object
         }));
         this.objectToReferenceMap.set(object, result);
 
@@ -339,7 +338,7 @@ class EvaluationState {
     }
 
     makeDirty(reference:ReferenceValue) {
-        this.saveObject(this.dereference(reference).dirty(), reference);
+        this.updateObject(reference, DIRTY_OBJECT);
     }
 
     makeDirtyAll(variable:Variable) {

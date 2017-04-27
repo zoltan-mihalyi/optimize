@@ -54,7 +54,7 @@ function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, calle
 
                 state.createValueFromCall(calleeObject.trueValue as Function, context, parameters);
 
-                state.saveObject(state.dereference(state.getReferenceValue(clonedObject)), objectValue);
+                state.updateObject(objectValue, state.dereference(state.getReferenceValue(clonedObject)));
             }
         }
         return true;

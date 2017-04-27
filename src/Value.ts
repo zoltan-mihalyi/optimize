@@ -60,12 +60,16 @@ export class PrimitiveValue extends SingleValue {
 export abstract class ObjectClass {
     abstract getTypeof():string;
 }
-class FunctionObjectClass extends ObjectClass {
+
+export class FunctionObjectClass extends ObjectClass {
+    constructor(readonly fn:FunctionNode) {
+        super();
+    }
+
     getTypeof():string {
         return 'function';
     }
 }
-export const FUNCTION = new FunctionObjectClass();
 
 class ObjectObjectClass extends ObjectClass {
     getTypeof():string {
@@ -117,14 +121,16 @@ interface ObjectParameters {
     properties:PropDescriptorMap;
     propertyInfo:PropInfo;
     trueValue:Object | null;
-    fn:FunctionNode;
 }
 
 export class ReferenceValue extends SingleValue {
+    constructor(readonly objectClass:ObjectClass) {
+        super();
+    }
+
     protected equalsInner(other:ReferenceValue):boolean {
         return this === other;
     }
-
 }
 
 function mergePropInfos(propInfo1:PropInfo, propInfo2:PropInfo):PropInfo {
@@ -157,17 +163,15 @@ function mergeProps(prop1:PropDescriptor, prop2:PropDescriptor):PropDescriptor {
 
 export class HeapObject {
     readonly trueValue:Object | null;
-    readonly fn:FunctionNode;
     private proto:ReferenceValue;
     private properties:PropDescriptorMap;
     private propertyInfo:PropInfo;
 
-    constructor(readonly objectClass:ObjectClass, parameters:ObjectParameters) {
+    constructor(parameters:ObjectParameters) {
         this.proto = parameters.proto;
         this.properties = parameters.properties;
         this.propertyInfo = parameters.propertyInfo;
         this.trueValue = parameters.trueValue;
-        this.fn = parameters.fn;
     }
 
     resolveProperty(state:EvaluationState, name:string, context:Object):Value {
@@ -196,12 +200,11 @@ export class HeapObject {
             value: newValue
         };
 
-        return new HeapObject(this.objectClass, {
+        return new HeapObject({
             proto: this.proto,
             properties: properties,
             propertyInfo: this.propertyInfo,
-            trueValue: null, //todo,
-            fn: this.fn
+            trueValue: null //todo
         });
     }
 
@@ -232,16 +235,6 @@ export class HeapObject {
 
     hasProperty(name:string):boolean {
         return hasOwnProperty(this.properties, name);
-    }
-
-    dirty() { //todo used?
-        return new HeapObject(this.objectClass, {
-            proto: null,
-            properties: {},
-            propertyInfo: PropInfo.MAY_HAVE_NEW,
-            trueValue: null,
-            fn: this.fn
-        });
     }
 
     or(other:HeapObject):HeapObject {
@@ -277,12 +270,11 @@ export class HeapObject {
             }
         }
 
-        return new HeapObject(this.objectClass, {
+        return new HeapObject({
             proto: this.proto, //todo handle proto change
             properties: properties,
             propertyInfo: mayHaveNew ? PropInfo.MAY_HAVE_NEW : mergePropInfos(this.propertyInfo, other.propertyInfo),
-            trueValue: null,
-            fn: this.fn === other.fn ? this.fn : null
+            trueValue: null
         });
     }
 
@@ -346,8 +338,14 @@ export class HeapObject {
                 return null;
         }
     }
-
 }
+
+export const DIRTY_OBJECT = new HeapObject({
+    proto: null,
+    properties: {},
+    propertyInfo: PropInfo.MAY_HAVE_NEW,
+    trueValue: null
+});
 
 export class FiniteSetOfValues extends IterableValue {
     static create(values:SingleValue[]):Value {

@@ -21,7 +21,7 @@ export class ObjectNode extends ExpressionNode {
         }
         let properties:PropDescriptorMap = {};
         let knowsAll = true;
-        let trueValue:{[idx:string]:any} = {};
+        let trueValue:{ [idx:string]:any } = {};
         for (let i = 0; i < this.properties.length; i++) {
             const property = this.properties[i];
             let value = property.getKeyValue();
@@ -49,12 +49,11 @@ export class ObjectNode extends ExpressionNode {
                 break;
             }
         }
-        this.setValue(state.saveObject(new HeapObject(OBJECT, {
+        this.setValue(state.createObject(OBJECT, new HeapObject({
             proto: state.getReferenceValue(Object.prototype),
             properties: properties,
             propertyInfo: knowsAll ? PropInfo.KNOWS_ALL : PropInfo.MAY_HAVE_NEW,
-            trueValue: trueValue,
-            fn: null
+            trueValue: trueValue
         })));
     }
 

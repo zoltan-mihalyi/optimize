@@ -37,12 +37,11 @@ export class ArrayNode extends ExpressionNode {
             }
         }
 
-        this.setValue(state.saveObject(new HeapObject(ARRAY, {
+        this.setValue(state.createObject(ARRAY, new HeapObject({
             proto: state.getReferenceValue(Array.prototype),
             properties: properties,
             propertyInfo: PropInfo.KNOWS_ALL,
-            trueValue: trueValue,
-            fn: null
+            trueValue: trueValue
         })));
     }
 

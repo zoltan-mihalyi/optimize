@@ -1,4 +1,4 @@
-import {FUNCTION, ReferenceValue, Value} from "../Value";
+import {FunctionObjectClass, ReferenceValue, Value} from "../Value";
 import {getMutatingObject, getParameters, getRealFunctionAndContext, getTrueValue, hasTrueValue} from "../Utils";
 import {CallNode, NewNode} from "../node/CallNodes";
 import {MemberNode} from "../node/Others";
@@ -36,7 +36,7 @@ export  = (visitor:TrackingVisitor) => {
     function resolveCall(node:CallNode|NewNode, state:EvaluationState) {
         let callee = node.callee;
         let value = callee.getValue();
-        if (!(value instanceof ReferenceValue) || state.dereference(value).objectClass !== FUNCTION) {
+        if (!(value instanceof ReferenceValue) || !(value.objectClass instanceof FunctionObjectClass)) {
             return;
         }
         const fn = state.dereference(value).trueValue as Function;

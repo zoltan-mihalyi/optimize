@@ -20,12 +20,11 @@ function addParametersToScope(node:FunctionNode, addArguments:boolean) {
 }
 
 function addArgumentsValue(node:FunctionNode, state:EvaluationState) {
-    const argumentsRef = state.saveObject(new HeapObject(ARGUMENTS, {
+    const argumentsRef = state.createObject(ARGUMENTS, new HeapObject({
         proto: state.getReferenceValue(Object.prototype),
         properties: {},
         propertyInfo: PropInfo.MAY_HAVE_NEW, //todo no override, but enumerable. separate!!!
-        trueValue: null,
-        fn: null
+        trueValue: null
     }));
     state.setValue(node.innerScope.get('arguments'), argumentsRef);
 }

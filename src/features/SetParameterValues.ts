@@ -1,4 +1,4 @@
-import {HeapObject, IterableValue, PrimitiveValue, ReferenceValue, Value} from "../Value";
+import {FunctionObjectClass, HeapObject, IterableValue, PrimitiveValue, ReferenceValue, Value} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
 import {CallNode, NewNode} from "../node/CallNodes";
 import {AbstractFunctionExpressionNode, FunctionDeclarationNode, FunctionNode} from "../node/Functions";
@@ -185,9 +185,11 @@ export = (trackingVisitor:TrackingVisitor) => {
         }
 
         state.eachVariableReference(variable, reference => {
-            const fn = state.dereference(reference).fn;
-            if (fn) {
-                functionCalls.pushOrReset(fn, parameters);
+            const objectClass = reference.objectClass;
+            if (objectClass instanceof FunctionObjectClass) {
+                if (objectClass.fn) {
+                    functionCalls.pushOrReset(objectClass.fn, parameters);
+                }
             }
         });
     }
