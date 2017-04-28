@@ -1,7 +1,7 @@
 var a;
 var b;
 var c;
-console.log(void 0, void 0, void 0);
+console.log(a, b, c);
 
 var i = "x";
 console.log("x");
@@ -20,4 +20,4 @@ i = "1";
 console.log("1");
 
 var x;
-console.log(void 0);
+console.log(x);
