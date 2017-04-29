@@ -12,6 +12,10 @@ function fn() {
     }
 
     used();
+
+    var reassignedLater;
+
+    reassignedLater = {};
 }
 
 function removeMoreUnused() {

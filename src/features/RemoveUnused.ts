@@ -1,10 +1,10 @@
 import {Variable} from "../Variable";
-import recast = require("recast");
 import {SemanticNode} from "../node/SemanticNode";
 import {FunctionDeclarationNode} from "../node/Functions";
 import {VariableDeclarationNode, VariableDeclaratorNode} from "../node/Variables";
 import {ForEachNode} from "../node/Loops";
 import {NodeVisitor} from "../NodeVisitor";
+import recast = require("recast");
 
 const builders = recast.types.builders;
 
@@ -57,11 +57,17 @@ export  = (nodeVisitor:NodeVisitor) => {
             return;
         }
         if (!canBeUsed(variable)) {
-            node.remove();
+            remove();
             return;
         }
         if (!canBeCalled(node, [])) {
-            node.remove();
+            remove();
+        }
+
+        function remove() {
+            node.replaceWith([builders.variableDeclaration('var', [
+                builders.variableDeclarator(node.id.toAst(), null)
+            ])]);
         }
     });
 

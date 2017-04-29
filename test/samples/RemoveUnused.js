@@ -37,6 +37,11 @@ function fn() {
     }
 
     used();
+
+    function reassignedLater() {
+    }
+
+    reassignedLater = {};
 }
 
 function removeMoreUnused() {
