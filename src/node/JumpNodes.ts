@@ -1,9 +1,9 @@
 import {SemanticNode} from "./SemanticNode";
 import {IdentifierNode} from "./IdentifierNode";
 import {ExpressionNode} from "./ExpressionNode";
+import {TrackingVisitor} from "../NodeVisitor";
 import EvaluationState = require("../EvaluationState");
 import Later = require("./Later");
-import {TrackingVisitor} from "../NodeVisitor";
 
 export class BreakNode extends SemanticNode {
     onTrack() {
@@ -23,7 +23,7 @@ export class LabeledNode extends SemanticNode {
     body:SemanticNode;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        state.trackAsUnsure(state => this.body.track(state, visitor), true);
+        state.trackAsUnsure(visitor, [this.body], true);
     }
 }
 Later.LabeledNode = LabeledNode;

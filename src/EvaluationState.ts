@@ -24,6 +24,8 @@ import {Heap, Variable} from "./Variable";
 import {getClassName, hasOwnProperty, isPrimitive, nonEnumerable, throwValue} from "./Utils";
 import Context from "./Context";
 import {FunctionNode} from "./node/Functions";
+import {TrackingVisitor} from "./NodeVisitor";
+import {SemanticNode} from "./node/SemanticNode";
 import Map = require("./Map");
 import Scope = require("./Scope");
 import SafeProperties = require("./SafeProperties");
@@ -192,12 +194,12 @@ class EvaluationState {
         this.mergePossibleValues(state);
     }
 
-    trackAsUnsure(tracker:(state:EvaluationState) => void, loop:boolean) {
-        const unsureState = new UnsureEvaluationState(this, this.scope, this.context);
+    trackAsUnsure(visitor:TrackingVisitor, nodes:SemanticNode[], loop:boolean) {
+        const unsureState = new UnsureEvaluationState(this, this.scope, this.context, nodes);
         do {
             unsureState.updated = false;
             unsureState.ownReferences = [];
-            tracker(unsureState);
+            nodes.forEach(node => node.track(unsureState, visitor));
         } while (loop && unsureState.updated);
         this.mergeMaybe(unsureState);
     }
@@ -504,8 +506,26 @@ class EvaluationState {
 }
 
 class UnsureEvaluationState extends EvaluationState {
-    getValueInner() {
-        return unknown;
+    constructor(parent:EvaluationState, scope:Scope, context:Context, private nodes:SemanticNode[]) {
+        super(parent, scope, context);
+    }
+
+    getValueInner(variable:Variable):Value {
+        for (let i = 0; i < variable.writes.length; i++) {
+            const write = variable.writes[i];
+            for (let j = 0; j < this.nodes.length; j++) {
+                const unsureNode = this.nodes[j];
+                if (unsureNode.contains(node => node === write)) {
+                    return unknown;
+                }
+            }
+        }
+
+        return super.getValueInner(variable);
+    }
+
+    dereference(reference:ReferenceValue):HeapObject {
+        return DIRTY_OBJECT;
     }
 }
 

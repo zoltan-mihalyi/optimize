@@ -43,10 +43,6 @@ export class SwitchStatementNode extends SemanticNode {
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.discriminant.track(state, visitor);
-        state.trackAsUnsure(state => {
-            for (let i = 0; i < this.cases.length; i++) {
-                this.cases[i].track(state, visitor);
-            }
-        }, false);
+        state.trackAsUnsure(visitor, this.cases, false);
     }
 }

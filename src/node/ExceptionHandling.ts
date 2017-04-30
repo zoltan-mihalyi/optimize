@@ -2,9 +2,9 @@ import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
 import {IdentifierNode} from "./IdentifierNode";
 import {BlockNode} from "./Blocks";
-import EvaluationState = require("../EvaluationState");
 import {unknown} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
+import EvaluationState = require("../EvaluationState");
 
 export class CatchNode extends SemanticNode {
     param:IdentifierNode;
@@ -33,12 +33,11 @@ export class TryNode extends SemanticNode {
     finalizer:BlockNode;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        state.trackAsUnsure(state => {
-            this.block.track(state, visitor);
-            if (this.handler) {
-                this.handler.track(state, visitor);
-            }
-        }, false);
+        const nodes:SemanticNode[] = [this.block];
+        if (this.handler) {
+            nodes.push(this.handler);
+        }
+        state.trackAsUnsure(visitor, nodes, false);
         if (this.finalizer) {
             this.finalizer.track(state, visitor);
         }

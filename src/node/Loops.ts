@@ -1,10 +1,10 @@
 import {SemanticNode} from "./SemanticNode";
-import {unknown} from "../Value";
 import {ExpressionNode} from "./ExpressionNode";
 import {InnerScoped} from "../Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import {VariableDeclarationNode} from "./Variables";
 import {TrackingVisitor} from "../NodeVisitor";
+import {unknown} from "../Value";
 import EvaluationState = require("../EvaluationState");
 import Scope = require("../Scope");
 import Later = require("./Later");
@@ -17,10 +17,7 @@ export class DoWhileNode extends LoopNode {
     test:ExpressionNode;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        state.trackAsUnsure(state => {
-            this.body.track(state, visitor);
-            this.test.track(state, visitor);
-        }, true);
+        state.trackAsUnsure(visitor, [this.body, this.test], true);
     }
 }
 export abstract class ForEachNode extends LoopNode implements InnerScoped {
@@ -41,11 +38,10 @@ export abstract class ForEachNode extends LoopNode implements InnerScoped {
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.right.track(state, visitor);
-        state.trackAsUnsure(state => {
-            const identifier = this.left instanceof IdentifierNode ? this.left : this.left.declarations[0].id;
-            state.setValue(identifier.getVariable(), unknown, true);
-            this.body.track(state, visitor);
-        }, true);
+        const identifier = this.left instanceof IdentifierNode ? this.left : this.left.declarations[0].id;
+        state.setValue(identifier.getVariable(), unknown, true);
+
+        state.trackAsUnsure(visitor, [this.body], true);
     }
 }
 Later.ForEachNode = ForEachNode;
@@ -65,15 +61,15 @@ export class ForNode extends LoopNode {
         if (this.init) {
             this.init.track(state, visitor);
         }
-        state.trackAsUnsure(state => {
-            if (this.test) {
-                this.test.track(state, visitor);
-            }
-            this.body.track(state, visitor);
-            if (this.update) {
-                this.update.track(state, visitor);
-            }
-        }, true);
+        const nodes = [];
+        if (this.test) {
+            nodes.push(this.test);
+        }
+        nodes.push(this.body);
+        if (this.update) {
+            nodes.push(this.update);
+        }
+        state.trackAsUnsure(visitor, nodes, true);
     }
 }
 
@@ -82,9 +78,6 @@ export class WhileNode extends LoopNode {
     test:ExpressionNode;
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        state.trackAsUnsure(state => {
-            this.test.track(state, visitor);
-            this.body.track(state, visitor);
-        }, true);
+        state.trackAsUnsure(visitor, [this.test, this.body], true);
     }
 }
