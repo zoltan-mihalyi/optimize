@@ -22,7 +22,6 @@ import TrackValues = require("./features/TrackValues");
 const nodeVisitor = new NodeVisitor();
 ReduceConditionals(nodeVisitor);
 ReduceLogical(nodeVisitor);
-ReduceTailRecursion(nodeVisitor);
 RemoveBlock(nodeVisitor);
 RemoveExpressionStatements(nodeVisitor);
 ReduceSequenceExpression(nodeVisitor);
@@ -37,6 +36,7 @@ ResolvePropertyAccess(trackingVisitor);
 ResolvePropertyName(trackingVisitor);
 UnrollForIn(trackingVisitor);
 SetParameterValues(trackingVisitor);
+ReduceTailRecursion(trackingVisitor);
 
 function createOptions(opts:OptionalOptimizeOptions):OptimizeOptions {
     return {

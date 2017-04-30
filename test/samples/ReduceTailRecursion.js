@@ -75,3 +75,8 @@ function noLoop() {
         return noLoop();
     }
 }
+
+function overwritten() {
+    return overwritten();
+}
+overwritten = null;

@@ -1,5 +1,5 @@
 import {createUnusedName, void0} from "../Utils";
-import {unknown} from "../Value";
+import {unknown, ReferenceValue} from "../Value";
 import {SemanticNode} from "../node/SemanticNode";
 import {FunctionDeclarationNode} from "../node/Functions";
 import {CallNode} from "../node/CallNodes";
@@ -9,21 +9,24 @@ import {LiteralNode} from "../node/Literal";
 import {WhileNode} from "../node/Loops";
 import {BlockNode} from "../node/Blocks";
 import {VariableDeclarationNode} from "../node/Variables";
+import {TrackingVisitor} from "../NodeVisitor";
 import Scope = require("../Scope");
 import recast = require("recast");
-import {NodeVisitor} from "../NodeVisitor";
+import EvaluationState = require("../EvaluationState");
 
 const builders = recast.types.builders;
 
-export  = (nodeVisitor:NodeVisitor) => {
-    nodeVisitor.on(CallNode, (node:CallNode) => {
+export  = (visitor:TrackingVisitor) => {
+    visitor.on(CallNode, (node:CallNode, state:EvaluationState) => {
         const callee = node.callee;
         if (node.parent instanceof ReturnNode && callee instanceof IdentifierNode) {
             const enclosingFunction = node.getEnclosingFunction();
             if (!(enclosingFunction instanceof FunctionDeclarationNode)) {
                 return;
             }
-            if (!callee.refersToSame(enclosingFunction.id)) {
+            const value = callee.getValue();
+
+            if (!(value instanceof ReferenceValue) || value !== state.getValue(enclosingFunction.id.getVariable())) {
                 return;
             }
             if (enclosingFunction.body.scope.hasArgumentsRead()) {

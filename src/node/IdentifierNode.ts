@@ -113,13 +113,6 @@ export class IdentifierNode extends ExpressionNode {
         return this.isRead();
     }
 
-    refersToSame(identifier:IdentifierNode):boolean {
-        if (!identifier.isReal()) {
-            return false;
-        }
-        return this.scope.getOrCreate(this.name) === identifier.scope.getOrCreate(identifier.name);
-    }
-
     protected createSubScopeIfNeeded(scope:Scope):Scope {
         if (this.parent instanceof Later.FunctionDeclarationNode || this.parent instanceof Later.AbstractFunctionExpressionNode) {
             if (this.parentProperty !== "id") {

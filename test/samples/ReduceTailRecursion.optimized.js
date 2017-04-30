@@ -116,3 +116,8 @@ function noLoop() {
         return;
     }
 }
+
+function overwritten() {
+    return overwritten();
+}
+overwritten = null;
