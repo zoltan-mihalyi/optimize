@@ -21,7 +21,7 @@ import {
     Value
 } from "./Value";
 import {Heap, Variable} from "./Variable";
-import {getClassName, hasOwnProperty, isPrimitive, nonEnumerable, throwValue} from "./Utils";
+import {getClassName, hasOwnProperty, isPrimitive, nonEnumerable, throwValue, updateHeap} from "./Utils";
 import Context from "./Context";
 import {FunctionNode} from "./node/Functions";
 import {TrackingVisitor} from "./NodeVisitor";
@@ -74,21 +74,17 @@ class EvaluationState {
     private possibleHeap:Heap = new Map<ReferenceValue, HeapObject>();
 
 
-    constructor(private parent:EvaluationState, private scope:Scope, readonly context:Context) {
-        scope.each((name:string, variable:Variable) => {
-            let value:Value;
+    constructor(private parent:EvaluationState, readonly scope:Scope, readonly context:Context) {
+        scope.initialHeap.each((ref, obj) => {
+            if (!this.heap.has(ref)) {
+                this.setOrUpdateHeap(ref, obj);
+            }
+        });
+
+        scope.initialValues.each((variable:Variable, value:Value) => {
             if (parent && parent.hasValue(variable)) {
                 return;
             }
-            value = variable.initialValue;
-            if (!value) {
-                return;
-            }
-            variable.initialHeap.each((ref, obj) => {
-                if (!this.heap.has(ref)) {
-                    this.setOrUpdateHeap(ref, obj);
-                }
-            });
             this.setValue(variable, value, true);
         });
 
@@ -387,6 +383,10 @@ class EvaluationState {
         this.scope.possibleHeap = this.possibleHeap;
     }
 
+    getHeap():Heap {
+        return this.heap.clone();
+    }
+
     private setOrUpdateVariable(variable:Variable, value:Value, initialize:boolean) {
         if (!initialize && this.possibleValues.has(variable)) {
             this.possibleValues.setOrUpdate(variable, this.possibleValues.get(variable).or(value));
@@ -397,11 +397,7 @@ class EvaluationState {
     }
 
     private setOrUpdateHeap(reference:ReferenceValue, heapObject:HeapObject) {
-        if (this.possibleHeap.has(reference)) {
-            this.possibleHeap.setOrUpdate(reference, this.possibleHeap.get(reference).or(heapObject));
-        } else {
-            this.possibleHeap.set(reference, heapObject);
-        }
+        updateHeap(this.possibleHeap, reference, heapObject);
         this.heap.setOrUpdate(reference, heapObject);
     }
 

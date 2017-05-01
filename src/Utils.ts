@@ -2,11 +2,19 @@ import recast = require("recast");
 
 const builders = recast.types.builders;
 import {
-    PrimitiveValue, Value, PropDescriptor, unknown, ReferenceValue, SingleValue, UnknownValue,
-    FiniteSetOfValues
+    PrimitiveValue,
+    Value,
+    PropDescriptor,
+    unknown,
+    ReferenceValue,
+    SingleValue,
+    UnknownValue,
+    FiniteSetOfValues,
+    HeapObject
 } from "./Value";
 import {SemanticNode} from "./node/SemanticNode";
 import {CallNode, NewNode} from "./node/CallNodes";
+import {Heap} from "./Variable";
 import Cache = require("./Cache");
 import Scope = require("./Scope");
 import EvaluationState = require("./EvaluationState");
@@ -147,4 +155,12 @@ export function isValueUpdate(oldValue:Value, newValue:Value) { //todo
         return false;
     }
     return true;
+}
+
+export function updateHeap(target:Heap, reference:ReferenceValue, heapObject:HeapObject) {
+    if (target.has(reference)) {
+        target.setOrUpdate(reference, target.get(reference).or(heapObject));
+    } else {
+        target.set(reference, heapObject);
+    }
 }

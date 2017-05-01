@@ -16,7 +16,7 @@ export class IdentifierNode extends ExpressionNode {
         if (!variable) {
             return false;
         }
-        return !!variable.initialValue;
+        return this.scope.hasInitialValue(variable);
     }
 
     onTrack(state:EvaluationState) {

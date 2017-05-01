@@ -47,6 +47,13 @@ class Map<K, V> {
             this.values[idx] = value;
         }
     }
+
+    clone():Map<K,V> {
+        const result = new Map<K,V>();
+        result.keys.push(...this.keys);
+        result.values.push(...this.values);
+        return result;
+    }
 }
 
 export = Map;

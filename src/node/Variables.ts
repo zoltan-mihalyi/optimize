@@ -1,11 +1,11 @@
 import EvaluationState = require("../EvaluationState");
 import {SemanticNode} from "./SemanticNode";
-import Scope = require("../Scope");
 import {PrimitiveValue, unknown} from "../Value";
-import Later = require("./Later");
 import {IdentifierNode} from "./IdentifierNode";
 import {ExpressionNode} from "./ExpressionNode";
 import {TrackingVisitor} from "../NodeVisitor";
+import Scope = require("../Scope");
+import Later = require("./Later");
 
 export class VariableDeclarationNode extends SemanticNode {
     declarations:VariableDeclaratorNode[];
@@ -55,7 +55,7 @@ export class VariableDeclaratorNode extends SemanticNode {
         } else {
             variable = this.scope.set(this.id.name, blockScoped, null);
             if (!blockScoped) { //assign initialValue later, because var scope can be different
-                variable.initialValue = variable.global ? unknown : new PrimitiveValue(void 0);
+                variable.scope.initialValues.set(variable, variable.global ? unknown : new PrimitiveValue(void 0));
             }
             isWrite = !!this.init;
         }

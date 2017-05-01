@@ -162,14 +162,18 @@ describe('Semantic node test', function() {
     it('function parameters are initialized', function() {
         var ast = recast.parse('function fn(a){} (function(a){})').program;
         var semanticNode = Nodes.semantic(ast);
-        assert(semanticNode.body[0].body.scope.get('a').initialValue);
-        assert(semanticNode.body[1].expression.body.scope.get('a').initialValue);
+        var param1 = semanticNode.body[0].body.scope.get('a');
+        assert(param1.scope.initialValues.has(param1));
+
+        var param2 = semanticNode.body[1].expression.body.scope.get('a');
+        assert(param2.scope.initialValues.has(param2));
     });
 
     it('catch parameter is a variable', function() {
         var ast = recast.parse('try{}catch(e){}').program;
         var semanticNode = Nodes.semantic(ast);
-        assert(semanticNode.body[0].handler.body.scope.get('e').initialValue);
+        var catchVar = semanticNode.body[0].handler.body.scope.get('e');
+        assert(catchVar.scope.initialValues.has(catchVar));
     });
 
     it('replace root', function() {

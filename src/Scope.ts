@@ -9,6 +9,9 @@ interface Variables {
 
 class Scope {
     possibleHeap:Heap;
+    readonly initialValues:Map<Variable, Value> = new Map<Variable, Value>();
+    readonly initialHeap:Heap = new Map<ReferenceValue, HeapObject>();
+
     private readonly variables:Variables = {};
 
     constructor(readonly parent:Scope, readonly blockScope:boolean) {
@@ -49,18 +52,20 @@ class Scope {
         if (!blockScope && this.blockScope) {
             return this.parent.set(name, false, initialValue);
         }
-        return this.variables[name] = {
+        const variable:Variable = this.variables[name] = {
             blockScoped: blockScope,
             global: !this.parent,
             name: name,
             usages: [], //todo remove
             writes: [],
             reads: [],
-            initialValue: initialValue,
-            initialHeap: new Map<ReferenceValue, HeapObject>(),
             possibleValue: null,
             scope: this
         };
+        if (initialValue) {
+            this.initialValues.set(variable, initialValue);
+        }
+        return variable;
     }
 
     createUnusedIdentifier(base:string):string {
@@ -121,6 +126,16 @@ class Scope {
 
     hasArgumentsRead():boolean {
         return this.get('arguments').reads.length > 0;
+    }
+
+    hasInitialValue(variable:Variable):boolean {
+        if (this.initialValues.has(variable)) {
+            return true;
+        }
+        if (this.parent) {
+            return this.parent.hasInitialValue(variable);
+        }
+        return false;
     }
 
     private setUnknownGlobal(name:string):Variable {

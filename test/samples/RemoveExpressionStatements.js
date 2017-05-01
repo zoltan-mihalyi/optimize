@@ -10,3 +10,11 @@ var xxx = u;
 xxx;
 void Date;
 void Datex;
+
+var a = u;
+a;
+{
+    let x = u;
+    a;
+    console.log(x);
+}

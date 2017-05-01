@@ -1,4 +1,4 @@
-import {FunctionObjectClass, HeapObject, IterableValue, PrimitiveValue, ReferenceValue, Value} from "../Value";
+import {FunctionObjectClass, PrimitiveValue, Value} from "../Value";
 import {TrackingVisitor} from "../NodeVisitor";
 import {CallNode, NewNode} from "../node/CallNodes";
 import {AbstractFunctionExpressionNode, FunctionDeclarationNode, FunctionNode} from "../node/Functions";
@@ -7,16 +7,14 @@ import {SemanticNode} from "../node/SemanticNode";
 import {AssignmentNode} from "../node/Assignments";
 import {VariableDeclaratorNode} from "../node/Variables";
 import {Heap, Variable} from "../Variable";
-import {isValueUpdate} from "../Utils";
+import {isValueUpdate, updateHeap} from "../Utils";
 import EvaluationState = require("../EvaluationState");
 import Map = require("../Map");
 
-interface Parameter {
-    value:Value;
+type Parameters = {
+    arguments:Value[];
     heap:Heap;
-}
-
-type Parameters = Parameter[];
+};
 
 class MultiMap<K, V> extends Map<K, V[]> {
     push(key:K, values:V[]) {
@@ -41,31 +39,6 @@ class MultiMap<K, V> extends Map<K, V[]> {
 
 function isOuterScoped(variable:Variable, node:IdentifierNode) {
     return variable.scope !== node.scope.findFunctionScope();
-}
-
-function getParameter(state:EvaluationState, value:Value):Parameter {
-    const heap:Heap = new Map<ReferenceValue, HeapObject>();
-
-    if (value instanceof IterableValue) {
-        value.each(singleValue => {
-            if (singleValue instanceof ReferenceValue) {
-                addReference(singleValue);
-            }
-        });
-    }
-
-    return {
-        value: value,
-        heap: heap
-    };
-
-    function addReference(reference:ReferenceValue) {
-        if (!heap.has(reference)) {
-            const heapObject = state.dereference(reference);
-            heap.set(reference, heapObject);
-            heapObject.eachReference(addReference);
-        }
-    }
 }
 
 function isCalling(node:IdentifierNode):boolean {
@@ -146,14 +119,16 @@ export = (trackingVisitor:TrackingVisitor) => {
             }
             for (let i = 0; i < node.params.length; i++) {
                 const param = node.params[i];
-                const parameter = getParameterAt(parametersList, i);
+                const value = getValueAt(parametersList, i);
                 const variable = param.getVariable();
-                if (isValueUpdate(variable.initialValue, parameter.value)) {
+
+                const initialValues = node.innerScope.initialValues;
+                if (!initialValues.has(variable) || isValueUpdate(initialValues.get(variable), value)) {
                     param.markUpdated();
                 }
-                variable.initialValue = parameter.value;
-                variable.initialHeap = parameter.heap;
+                initialValues.setOrUpdate(variable, value);
             }
+            mergeHeap(node.innerScope.initialHeap, parametersList);
         });
 
         functionCalls = null;
@@ -174,7 +149,10 @@ export = (trackingVisitor:TrackingVisitor) => {
             return;
         }
 
-        const parameters = node.arguments.map(arg => getParameter(state, arg.getValue()));
+        const parameters:Parameters = {
+            arguments: node.arguments.map(arg => arg.getValue()),
+            heap: state.getHeap()
+        };
         const variable = callee.getVariable();
         onPossibleCall(state, callee, variable, parameters);
     }
@@ -203,38 +181,26 @@ export = (trackingVisitor:TrackingVisitor) => {
     }
 };
 
-function getParameterAt(parametersList:Parameters[], index:number):Parameter {
+function mergeHeap(target:Heap, parameterList:Parameters[]) {
+    for (let i = 0; i < parameterList.length; i++) {
+        const parameters = parameterList[i];
+        parameters.heap.each((reference, heapObject) => {
+            updateHeap(target, reference, heapObject);
+        });
+    }
+}
+
+function getValueAt(parametersList:Parameters[], index:number):Value {
     let resultValue:Value = null;
-    let resultHeap:Heap = null;
     for (let i = 0; i < parametersList.length; i++) {
-        const parameters = parametersList[i];
-        let value:Value;
-        let heap:Heap;
-        if (parameters.length > index) {
-            const parameter = parameters[index];
-            value = parameter.value;
-            heap = parameter.heap;
-        } else {
-            value = new PrimitiveValue(void 0);
-            heap = new Map<ReferenceValue, HeapObject>();
-        }
+        const parameters = parametersList[i].arguments;
+        let value = parameters.length > index ? parameters[index] : new PrimitiveValue(void 0);
 
         if (resultValue === null) {
             resultValue = value;
-            resultHeap = heap;
         } else {
             resultValue = resultValue.or(value);
-            heap.each((ref, obj) => {
-                if (resultHeap.has(ref)) {
-                    resultHeap.setOrUpdate(ref, resultHeap.get(ref).or(obj));
-                } else {
-                    resultHeap.set(ref, obj);
-                }
-            });
         }
     }
-    return {
-        value: resultValue,
-        heap: resultHeap
-    };
+    return resultValue;
 }
