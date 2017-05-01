@@ -378,9 +378,15 @@ class EvaluationState {
 
     addPossibleValuesToScope() {
         this.possibleValues.each((variable, value) => {
-            variable.possibleValue = value;
+            if (variable.scope === this.scope) {
+                variable.possibleValue = value;
+            }
         });
         this.scope.possibleHeap = this.possibleHeap;
+    }
+
+    getVariableValues() {
+        return this.variableValues.clone();
     }
 
     getHeap():Heap {

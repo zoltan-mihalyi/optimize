@@ -136,6 +136,29 @@ function fn() {
     moreObjectInSingleCall({}, {});
 }
 
+function setScopeValues() {
+    var a = 1;
+    fn();
+    a = 2;
+    fn2();
+
+    function fn() {
+        return 1;
+    }
+
+    function fn2() {
+        return 2;
+    }
+
+    function fn3() {
+        return a;
+    }
+
+    return function() {
+        return fn3();
+    }
+}
+
 function global(p) {
     return p;
 }

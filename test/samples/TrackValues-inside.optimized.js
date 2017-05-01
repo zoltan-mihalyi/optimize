@@ -32,7 +32,7 @@ function trackInsideMaybe() {
 
     if (u) {
         a = null;
-        console.log(fn());
+        call(fn);
         a = function() {
         };
 

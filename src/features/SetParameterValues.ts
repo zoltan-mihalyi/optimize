@@ -10,9 +10,11 @@ import {Heap, Variable} from "../Variable";
 import {isValueUpdate, updateHeap} from "../Utils";
 import EvaluationState = require("../EvaluationState");
 import Map = require("../Map");
+import Scope = require("../Scope");
 
 type Parameters = {
     arguments:Value[];
+    variableValues:Map<Variable, Value>;
     heap:Heap;
 };
 
@@ -128,7 +130,7 @@ export = (trackingVisitor:TrackingVisitor) => {
                 }
                 initialValues.setOrUpdate(variable, value);
             }
-            mergeHeap(node.innerScope.initialHeap, parametersList);
+            mergeHeapAndInitialValues(node.innerScope, parametersList);
         });
 
         functionCalls = null;
@@ -151,6 +153,7 @@ export = (trackingVisitor:TrackingVisitor) => {
 
         const parameters:Parameters = {
             arguments: node.arguments.map(arg => arg.getValue()),
+            variableValues: state.getVariableValues(),
             heap: state.getHeap()
         };
         const variable = callee.getVariable();
@@ -181,11 +184,14 @@ export = (trackingVisitor:TrackingVisitor) => {
     }
 };
 
-function mergeHeap(target:Heap, parameterList:Parameters[]) {
+function mergeHeapAndInitialValues(scope:Scope, parameterList:Parameters[]) {
     for (let i = 0; i < parameterList.length; i++) {
         const parameters = parameterList[i];
         parameters.heap.each((reference, heapObject) => {
-            updateHeap(target, reference, heapObject);
+            updateHeap(scope.initialHeap, reference, heapObject);
+        });
+        parameters.variableValues.each((variable, value) => {
+            scope.initialValues.setOrUpdate(variable, value);
         });
     }
 }
