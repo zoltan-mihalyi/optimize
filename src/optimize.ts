@@ -18,6 +18,7 @@ import InlineFunctionCall = require("./features/InlineFunctionCall");
 import RemoveUnused = require("./features/RemoveUnused");
 import SetParameterValues = require("./features/SetParameterValues");
 import TrackValues = require("./features/TrackValues");
+import UseLiterals = require("./features/UseLiterals");
 
 const nodeVisitor = new NodeVisitor();
 ReduceConditionals(nodeVisitor);
@@ -37,6 +38,7 @@ ResolvePropertyName(trackingVisitor);
 UnrollForIn(trackingVisitor);
 SetParameterValues(trackingVisitor);
 ReduceTailRecursion(trackingVisitor);
+UseLiterals(trackingVisitor);
 
 function createOptions(opts:OptionalOptimizeOptions):OptimizeOptions {
     return {
