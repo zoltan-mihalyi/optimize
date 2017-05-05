@@ -220,7 +220,7 @@ function mergeElse() {
     console.log(x, y);
 }
 
-function trackSwithc() {
+function trackSwitch() {
     var i = 1, j = 2, k = 3;
     switch (u) {
         case 1:
@@ -246,4 +246,9 @@ function trackUninitializedLet() {
 
 function trackDoubleInitialization() {
     console.log(1);
+}
+
+function trackLogicalOperator(p) {
+    p || (p = 3);
+    return p;
 }

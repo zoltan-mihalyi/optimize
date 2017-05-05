@@ -41,6 +41,13 @@ export class LogicalNode extends BinaryNode {
     isClean():boolean {
         return this.left.isClean() && this.right.isClean();
     }
+
+    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+        this.left.track(state, visitor);
+        const rightState = new EvaluationState(state, this.scope, this.context);
+        this.right.track(rightState, visitor);
+        state.mergeMaybe(rightState);
+    }
 }
 
 export class UnaryNode extends ExpressionNode {
