@@ -31,3 +31,7 @@ console.log((function(){}).apply(Date));
 
 console.log(Array.prototype.push(1));
 console.log(Array.prototype.push.apply(Object.prototype, [1]));
+
+function resolveInside() {
+    return "1";
+}

@@ -45,7 +45,7 @@ function getObjectClass(value:Object):ObjectClass {
 
     switch (className) {
         case 'Function':
-            return new FunctionObjectClass(null);
+            return new FunctionObjectClass(null, value as Function);
         case 'Array':
             return ARRAY;
         case 'RegExp':
@@ -249,7 +249,7 @@ class EvaluationState {
         (properties as any).caller = nonEnumerable(unknown);
         (properties as any).length = nonEnumerable(new PrimitiveValue(functionNode.params.length));
 
-        return this.createObject(new FunctionObjectClass(functionNode), new HeapObject({
+        return this.createObject(new FunctionObjectClass(functionNode, null), new HeapObject({
             proto: this.getReferenceValue(Function.prototype),
             properties: properties,
             propertyInfo: NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,

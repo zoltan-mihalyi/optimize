@@ -39,8 +39,8 @@ export  = (visitor:TrackingVisitor) => {
         if (!(value instanceof ReferenceValue) || !(value.objectClass instanceof FunctionObjectClass)) {
             return;
         }
-        const fn = state.dereference(value).trueValue as Function;
-        if (!fn || UNSAFE_FUNCTIONS.indexOf(fn as any) !== -1) {
+        const fn = value.objectClass.native;
+        if (!fn || UNSAFE_FUNCTIONS.indexOf(fn) !== -1) {
             return;
         }
 

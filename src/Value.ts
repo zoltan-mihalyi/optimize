@@ -62,7 +62,7 @@ export abstract class ObjectClass {
 }
 
 export class FunctionObjectClass extends ObjectClass {
-    constructor(readonly fn:FunctionNode) {
+    constructor(readonly fn:FunctionNode, readonly native:Function) {
         super();
     }
 
@@ -184,7 +184,7 @@ export class HeapObject {
             return unknown;
         }
         if (property.get) {
-            return state.createValueFromCall(state.dereference(property.get).trueValue as Function, context, []);
+            return state.createValueFromCall((property.get.objectClass as FunctionObjectClass).native, context, []);
         } else {
             return property.value;
         }

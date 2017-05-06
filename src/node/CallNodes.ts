@@ -1,6 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {TrackingVisitor} from "../NodeVisitor";
-import {ReferenceValue, SingleValue, HeapObject} from "../Value";
+import {ReferenceValue, SingleValue, HeapObject, FunctionObjectClass} from "../Value";
 import {getMutatingObject, getParameters, canWrap, isPrimitive, getClassName} from "../Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import EvaluationState = require("../EvaluationState");
@@ -37,12 +37,12 @@ function clone(object:any, cloned:Map<Object,Object>) {//todo proto...
     return result;
 }
 
-function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, calleeObject:HeapObject,
+function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, fn:Function,
                            objectObject:HeapObject, parameters:any[]):boolean {
 
     try {
         if (objectValue instanceof ReferenceValue) {
-            const mutatingObject = getMutatingObject(calleeObject.trueValue as Function, objectObject.trueValue, parameters);
+            const mutatingObject = getMutatingObject(fn, objectObject.trueValue, parameters);
             if (mutatingObject) {
                 const clonedObject = clone(mutatingObject, new Map<Object, Object>());
                 let context = objectObject.trueValue;
@@ -52,7 +52,7 @@ function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, calle
                     parameters[0] = clonedObject;
                 }
 
-                state.createValueFromCall(calleeObject.trueValue as Function, context, parameters);
+                state.createValueFromCall(fn, context, parameters);
 
                 state.updateObject(objectValue, state.dereference(state.getReferenceValue(clonedObject)));
             }
@@ -83,12 +83,12 @@ export class CallNode extends ExpressionNode {
             let objectValue = object.getValue();
             let calleeValue = callee.getValue();
             if (calleeValue instanceof ReferenceValue && objectValue instanceof SingleValue && canWrap(objectValue)) {
-                const calleeObject = state.dereference(calleeValue);
+                const objectClass = calleeValue.objectClass;
                 const objectObject = state.dereference(state.wrapReferenceValue(objectValue));
-                if (calleeObject.trueValue) {
+                if (objectClass instanceof FunctionObjectClass && objectClass.native) {
                     const parameters = getParameters(state, this);
                     if (parameters !== null) {
-                        if (applyFunctionCall(state, objectValue, calleeObject, objectObject, parameters)) {
+                        if (applyFunctionCall(state, objectValue, objectClass.native, objectObject, parameters)) {
                             return;
                         }
                     }
