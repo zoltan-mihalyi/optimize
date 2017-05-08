@@ -12,3 +12,7 @@ console.log(new Object(null, console.log(1)));
 console.log(new Object([]));
 console.log(new Object([], console.log(1)));
 console.log(new Object(0));
+
+function useInside() {
+    console.log(new RegExp('abc', 'gi'));
+}

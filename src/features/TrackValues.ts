@@ -14,7 +14,7 @@ export = (nodeVisitor:NodeVisitor, trackingVisitor:TrackingVisitor) => {
     nodeVisitor.on(AbstractFunctionExpressionNode as any, (node:AbstractFunctionExpressionNode) => {
         track(node.body, null);
     });
-    nodeVisitor.on(ProgramNode, (node) => track(node, EvaluationState.rootState));
+    nodeVisitor.on(ProgramNode, (node) => track(node, null));
 
     function track(node:SemanticNode, parentState:EvaluationState) {
         const evaluationState = new EvaluationState(parentState, node.scope, node.context);

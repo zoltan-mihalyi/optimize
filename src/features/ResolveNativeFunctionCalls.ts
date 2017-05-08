@@ -66,7 +66,7 @@ export  = (visitor:TrackingVisitor) => {
             }
             let mutatingObject = getMutatingObject(fn, context, parameters);
             if (mutatingObject) {
-                if (state.isBuiltIn(mutatingObject)) {
+                if (state.scope.isBuiltIn(mutatingObject)) {
                     return;
                 }
                 if (isMutatingVariable(mutatingObject, context, parameters)) {
@@ -91,7 +91,7 @@ export  = (visitor:TrackingVisitor) => {
             } else if (fn === Object.prototype.toString) {
                 return context == null;
             } else if (fn === Object.prototype.hasOwnProperty) {
-                if (state.isBuiltIn(context)) {
+                if (state.scope.isBuiltIn(context)) {
                     return !state.dereference(state.getReferenceValue(context)).hasProperty(parameters[0]); //todo simplify
                 } else if (context instanceof RegExp) {
                     return true;

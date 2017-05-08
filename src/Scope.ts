@@ -1,13 +1,17 @@
 import {createUnusedName, hasOwnProperty} from "./Utils";
 import {Heap, Variable} from "./Variable";
-import {Value, ReferenceValue, HeapObject, unknown} from "./Value";
+import {HeapObject, ObjectClass, ReferenceValue, unknown, Value} from "./Value";
 import Map = require("./Map");
+import SafeProperties = require("./SafeProperties");
+import Resolver = require("./Resolver");
 
 interface Variables {
     [name:string]:Variable;
 }
 
-class Scope {
+class Scope extends Resolver {
+    static readonly ROOT_SCOPE = new Scope(null, false);
+
     possibleHeap:Heap;
     readonly initialValues:Map<Variable, Value> = new Map<Variable, Value>();
     readonly initialHeap:Heap = new Map<ReferenceValue, HeapObject>();
@@ -15,6 +19,7 @@ class Scope {
     private readonly variables:Variables = {};
 
     constructor(readonly parent:Scope, readonly blockScope:boolean) {
+        super(parent);
     }
 
     has(name:string):boolean {
@@ -54,7 +59,7 @@ class Scope {
         }
         const variable:Variable = this.variables[name] = {
             blockScoped: blockScope,
-            global: !this.parent,
+            global: this.parent === Scope.ROOT_SCOPE,
             name: name,
             usages: [], //todo remove
             writes: [],
@@ -138,12 +143,25 @@ class Scope {
         return false;
     }
 
+    createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue {
+        const reference = new ReferenceValue(objectClass);
+        this.possibleHeap.set(reference, heapObject);
+        return reference;
+    }
+
+    isBuiltIn(key:Object):boolean {
+        return Scope.ROOT_SCOPE.hasObject(key);
+    }
+
     private setUnknownGlobal(name:string):Variable {
-        if (this.parent) {
+        if (this.parent !== Scope.ROOT_SCOPE) {
             return this.parent.setUnknownGlobal(name);
         }
         return this.set(name, false, null);
     }
 }
+Scope.ROOT_SCOPE.possibleHeap = new Map<ReferenceValue, HeapObject>();
+
+SafeProperties.each(obj => Scope.ROOT_SCOPE.getReferenceValue(obj));
 
 export = Scope;

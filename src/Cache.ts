@@ -1,4 +1,5 @@
 import Map = require("./Map");
+
 class Cache<K,V> {
     private map:Map<K,V> = new Map<K,V>();
 

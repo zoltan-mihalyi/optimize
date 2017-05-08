@@ -83,7 +83,7 @@ export function semantic(expression:Expression, options:OptimizeOptions):Semanti
     if ((expression as any).errors && (expression as any).errors.length) {
         throw (expression as any).errors[0];
     }
-    const node = toSemanticNode(expression, null, null, null, null, new Context(options));
+    const node = toSemanticNode(expression, null, null, null, Scope.ROOT_SCOPE, new Context(options));
     node.initialize();
     return node;
 }
