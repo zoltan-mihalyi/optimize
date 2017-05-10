@@ -116,6 +116,9 @@ class Scope extends Resolver {
             return unknown;
         }
         if (hasOwnProperty(parent.variables, name)) {
+            if (parent.variables[name] !== variable) {
+                return unknown;
+            }
             return parent.variables[name].possibleValue || unknown;
         }
         return parent.getOuterValue(variable);

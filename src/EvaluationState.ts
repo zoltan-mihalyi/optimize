@@ -178,7 +178,6 @@ class EvaluationState extends Resolver {
     }
 
     protected getValueInner(variable:Variable):Value {
-
         if (this.variableValues.has(variable)) {
             return this.variableValues.get(variable);
         }

@@ -73,3 +73,13 @@ function trackInsideBranches() {
 
     return () => [typeof a, typeof b];
 }
+
+function dontUseOuter() {
+    var dontUseOuter;
+
+    setTimeout(function() {
+        dontUseOuter = true;
+    });
+
+    return typeof dontUseOuter;
+}
