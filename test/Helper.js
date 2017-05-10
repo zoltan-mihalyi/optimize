@@ -3,6 +3,7 @@ var optimize = require('../dist/optimize');
 var assert = require('assert');
 
 module.exports.assertMatch = function (filename, options) {
-    var expected = fs.readFileSync(__dirname + '/samples/' + filename + '.optimized.js', 'UTF-8').replace(/\r/g, '');
-    assert.equal(optimize(fs.readFileSync(__dirname + '/samples/' + filename + '.js', 'UTF-8'), options), expected);
+    var prefix = __dirname + '/' + filename;
+    var expected = fs.readFileSync(prefix + '.optimized.js', 'UTF-8').replace(/\r/g, '');
+    assert.equal(optimize(fs.readFileSync(prefix + '.js', 'UTF-8'), options), expected);
 };

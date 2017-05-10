@@ -2,7 +2,7 @@ var Helper = require('../Helper');
 
 describe('Assumption optimizations', function() {
     it('no native overwrite', function() {
-        Helper.assertMatch('assumptions/noNativeOverwrites', {
+        Helper.assertMatch('other/samples/assumptions/noNativeOverwrites', {
             assumptions: {
                 noNativeOverwrites: true,
                 noGlobalPropertyOverwrites: true
@@ -11,7 +11,7 @@ describe('Assumption optimizations', function() {
     });
 
     it('global property overwrites', function() {
-        Helper.assertMatch('assumptions/globalPropertyOverwrites', {
+        Helper.assertMatch('other/samples/assumptions/globalPropertyOverwrites', {
             assumptions: {
                 noGlobalPropertyOverwrites: false
             }
@@ -19,7 +19,7 @@ describe('Assumption optimizations', function() {
     });
 
     it('no global property reads', function() {
-        Helper.assertMatch('assumptions/noGlobalPropertyReads', {
+        Helper.assertMatch('other/samples/assumptions/noGlobalPropertyReads', {
             assumptions: {
                 noGlobalPropertyReads: true
             }
