@@ -1,24 +1,24 @@
-///<reference path="Expression.ts"/>
+///<reference path="utils/Expression.ts"/>
 import recast = require('recast');
 import {semantic} from "./Nodes";
-import {NodeVisitor, TrackingVisitor} from "./NodeVisitor";
+import {NodeVisitor, TrackingVisitor} from "./utils/NodeVisitor";
 
-import CalculateArithmetic = require("./features/CalculateArithmetic");
-import ReduceConditionals = require("./features/ReduceConditionals");
-import ReduceLogical = require("./features/ReduceLogical");
-import ReduceTailRecursion = require("./features/ReduceTailRecursion");
-import RemoveBlock = require("./features/RemoveBlock");
-import RemoveExpressionStatements = require("./features/RemoveExpressionStatements");
-import ResolvePropertyName = require("./features/ResolvePropertyName");
-import ResolvePropertyAccess = require("./features/ResolvePropertyAccess");
-import ResolveNativeFunctionCalls = require("./features/ResolveNativeFunctionCalls");
-import ReduceSequenceExpression = require("./features/ReduceSequenceExpression");
-import UnrollForIn = require("./features/UnrollForIn");
-import InlineFunctionCall = require("./features/InlineFunctionCall");
-import RemoveUnused = require("./features/RemoveUnused");
-import SetParameterValues = require("./features/SetParameterValues");
-import TrackValues = require("./features/TrackValues");
-import UseLiterals = require("./features/UseLiterals");
+import CalculateArithmetic = require("./features/calculate/CalculateArithmetic");
+import ReduceConditionals = require("./features/transform/ReduceConditionals");
+import ReduceLogical = require("./features/transform/ReduceLogical");
+import ReduceTailRecursion = require("./features/transform/ReduceTailRecursion");
+import RemoveBlock = require("./features/transform/RemoveBlock");
+import RemoveExpressionStatements = require("./features/transform/RemoveExpressionStatements");
+import ResolvePropertyName = require("./features/calculate/ResolvePropertyName");
+import ResolvePropertyAccess = require("./features/calculate/ResolvePropertyAccess");
+import ResolveNativeFunctionCalls = require("./features/calculate/ResolveNativeFunctionCalls");
+import ReduceSequenceExpression = require("./features/transform/ReduceSequenceExpression");
+import UnrollForIn = require("./features/transform/UnrollForIn");
+import InlineFunctionCall = require("./features/transform/InlineFunctionCall");
+import RemoveUnused = require("./features/transform/RemoveUnused");
+import SetParameterValues = require("./features/calculate/SetParameterValues");
+import TrackValues = require("./features/calculate/TrackValues");
+import UseLiterals = require("./features/transform/UseLiterals");
 
 const nodeVisitor = new NodeVisitor();
 ReduceConditionals(nodeVisitor);

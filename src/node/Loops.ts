@@ -1,12 +1,12 @@
 import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {InnerScoped} from "../Utils";
+import {InnerScoped} from "../utils/Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import {VariableDeclarationNode} from "./Variables";
-import {TrackingVisitor} from "../NodeVisitor";
-import {unknown} from "../Value";
-import EvaluationState = require("../EvaluationState");
-import Scope = require("../Scope");
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import {unknown} from "../tracking/Value";
+import EvaluationState = require("../tracking/EvaluationState");
+import Scope = require("../tracking/Scope");
 import Later = require("./Later");
 
 export abstract class LoopNode extends SemanticNode {

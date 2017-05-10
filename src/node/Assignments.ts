@@ -1,5 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {binaryCache, getTrueValue, hasTrueValue} from "../Utils";
+import {binaryCache, getTrueValue, hasTrueValue} from "../utils/Utils";
 import {
     DIRTY_OBJECT,
     HeapObject,
@@ -9,11 +9,11 @@ import {
     SingleValue,
     unknown,
     Value
-} from "../Value";
-import {TrackingVisitor} from "../NodeVisitor";
+} from "../tracking/Value";
+import {TrackingVisitor} from "../utils/NodeVisitor";
 import {MemberNode} from "./Others";
 import {IdentifierNode} from "./IdentifierNode";
-import EvaluationState = require("../EvaluationState");
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 
 type GetNewValue = (original:Value) => Value;

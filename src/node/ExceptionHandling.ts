@@ -2,9 +2,9 @@ import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
 import {IdentifierNode} from "./IdentifierNode";
 import {BlockNode} from "./Blocks";
-import {unknown} from "../Value";
-import {TrackingVisitor} from "../NodeVisitor";
-import EvaluationState = require("../EvaluationState");
+import {unknown} from "../tracking/Value";
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import EvaluationState = require("../tracking/EvaluationState");
 
 export class CatchNode extends SemanticNode {
     param:IdentifierNode;

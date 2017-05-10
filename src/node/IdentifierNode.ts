@@ -1,11 +1,11 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Variable} from "../Variable";
+import {Variable} from "../utils/Variable";
 import {MemberNode, ExpressionStatementNode} from "./Others";
 import {CallNode, NewNode} from "./CallNodes";
 import {AssignmentNode} from "./Assignments";
 import {VariableDeclaratorNode} from "./Variables";
-import EvaluationState = require("../EvaluationState");
-import Scope = require("../Scope");
+import EvaluationState = require("../tracking/EvaluationState");
+import Scope = require("../tracking/Scope");
 import Later = require("./Later");
 
 export class IdentifierNode extends ExpressionNode {

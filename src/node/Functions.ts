@@ -1,11 +1,11 @@
 import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {unknown, ARGUMENTS, HeapObject, NO_UNKNOWN_OVERRIDE} from "../Value";
-import {InnerScoped} from "../Utils";
+import {unknown, ARGUMENTS, HeapObject, NO_UNKNOWN_OVERRIDE} from "../tracking/Value";
+import {InnerScoped} from "../utils/Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import {BlockNode} from "./Blocks";
-import Scope = require("../Scope");
-import EvaluationState = require("../EvaluationState");
+import Scope = require("../tracking/Scope");
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 
 function addParametersToScope(node:FunctionNode, addArguments:boolean) {

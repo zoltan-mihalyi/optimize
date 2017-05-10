@@ -1,9 +1,9 @@
-import EvaluationState = require("../EvaluationState");
+import EvaluationState = require("../tracking/EvaluationState");
 import {ExpressionNode} from "./ExpressionNode";
 import {SemanticNode} from "./SemanticNode";
-import {PrimitiveValue, Value, IterableValue, ReferenceValue} from "../Value";
+import {PrimitiveValue, Value, IterableValue, ReferenceValue} from "../tracking/Value";
 import {IdentifierNode} from "./IdentifierNode";
-import {TrackingVisitor} from "../NodeVisitor";
+import {TrackingVisitor} from "../utils/NodeVisitor";
 import Later = require("./Later");
 
 export class EmptyNode extends SemanticNode {

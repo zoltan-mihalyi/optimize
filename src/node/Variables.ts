@@ -1,10 +1,10 @@
-import EvaluationState = require("../EvaluationState");
+import EvaluationState = require("../tracking/EvaluationState");
 import {SemanticNode} from "./SemanticNode";
-import {PrimitiveValue, unknown} from "../Value";
+import {PrimitiveValue, unknown} from "../tracking/Value";
 import {IdentifierNode} from "./IdentifierNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {TrackingVisitor} from "../NodeVisitor";
-import Scope = require("../Scope");
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import Scope = require("../tracking/Scope");
 import Later = require("./Later");
 
 export class VariableDeclarationNode extends SemanticNode {

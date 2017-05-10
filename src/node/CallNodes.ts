@@ -1,11 +1,11 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {TrackingVisitor} from "../NodeVisitor";
-import {ReferenceValue, SingleValue, HeapObject, FunctionObjectClass} from "../Value";
-import {getMutatingObject, getParameters, canWrap, isPrimitive, getClassName} from "../Utils";
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import {ReferenceValue, SingleValue, HeapObject, FunctionObjectClass} from "../tracking/Value";
+import {getMutatingObject, getParameters, canWrap, isPrimitive, getClassName} from "../utils/Utils";
 import {IdentifierNode} from "./IdentifierNode";
-import EvaluationState = require("../EvaluationState");
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
-import Map = require("../Map");
+import Map = require("../utils/Map");
 
 function clone(object:any, cloned:Map<Object,Object>) {//todo proto...
     if (isPrimitive(object)) {

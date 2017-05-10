@@ -1,8 +1,8 @@
 import {SemanticNode} from "./SemanticNode";
 import {IdentifierNode} from "./IdentifierNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {TrackingVisitor} from "../NodeVisitor";
-import EvaluationState = require("../EvaluationState");
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 
 export class BreakNode extends SemanticNode {

@@ -1,15 +1,15 @@
-import Scope = require("../Scope");
-import Context from "../Context";
+import Scope = require("../tracking/Scope");
+import Context from "../utils/Context";
 import {toSemanticNode} from "../Nodes";
-import {hasOwnProperty} from "../Utils";
+import {hasOwnProperty} from "../utils/Utils";
 import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
-import {TrackingVisitor} from "../NodeVisitor";
+import {TrackingVisitor} from "../utils/NodeVisitor";
 import Later = require("./Later");
 
 import recast = require("recast");
-import Map = require("../Map");
-import EvaluationState = require("../EvaluationState");
+import Map = require("../utils/Map");
+import EvaluationState = require("../tracking/EvaluationState");
 import {VariableDeclaratorNode} from "./Variables";
 
 const builders = recast.types.builders;

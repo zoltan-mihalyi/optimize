@@ -1,9 +1,9 @@
 import recast = require("recast");
-import {PrimitiveValue, unknown, UnknownValue, Value} from "../Value";
-import {equals, isValueUpdate} from "../Utils";
+import {PrimitiveValue, unknown, UnknownValue, Value} from "../tracking/Value";
+import {equals, isValueUpdate} from "../utils/Utils";
 import {SemanticNode} from "./SemanticNode";
 import {AbstractFunctionExpressionNode, LiteralNode, UnaryNode} from "./Later";
-import Scope = require("../Scope");
+import Scope = require("../tracking/Scope");
 
 const builders = recast.types.builders;
 

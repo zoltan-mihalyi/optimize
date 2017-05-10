@@ -1,7 +1,7 @@
 import {SemanticNode} from "./SemanticNode";
 import {ExpressionNode} from "./ExpressionNode";
-import {TrackingVisitor} from "../NodeVisitor";
-import EvaluationState = require("../EvaluationState");
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import EvaluationState = require("../tracking/EvaluationState");
 
 export class IfNode extends SemanticNode {
     test:ExpressionNode;

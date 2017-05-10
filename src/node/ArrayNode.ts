@@ -1,8 +1,8 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {ARRAY, HeapObject, KNOWS_ALL, PrimitiveValue, PropDescriptorMap} from "../Value";
-import {getTrueValue, hasTrueValue} from "../Utils";
-import {TrackingVisitor} from "../NodeVisitor";
-import EvaluationState = require("../EvaluationState");
+import {ARRAY, HeapObject, KNOWS_ALL, PrimitiveValue, PropDescriptorMap} from "../tracking/Value";
+import {getTrueValue, hasTrueValue} from "../utils/Utils";
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import EvaluationState = require("../tracking/EvaluationState");
 
 export class ArrayNode extends ExpressionNode {
     elements:ExpressionNode[];

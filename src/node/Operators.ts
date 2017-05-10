@@ -1,6 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {TrackingVisitor} from "../NodeVisitor";
-import EvaluationState = require("../EvaluationState");
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 
 export class BinaryNode extends ExpressionNode {

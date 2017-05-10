@@ -1,10 +1,10 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PropDescriptorMap, OBJECT, PrimitiveValue, HeapObject, KNOWS_ALL, MAY_HAVE_NEW} from "../Value";
-import {hasTrueValue, getTrueValue, throwValue} from "../Utils";
+import {Value, PropDescriptorMap, OBJECT, PrimitiveValue, HeapObject, KNOWS_ALL, MAY_HAVE_NEW} from "../tracking/Value";
+import {hasTrueValue, getTrueValue, throwValue} from "../utils/Utils";
 import {SemanticNode} from "./SemanticNode";
-import {TrackingVisitor} from "../NodeVisitor";
+import {TrackingVisitor} from "../utils/NodeVisitor";
 import {IdentifierNode} from "./IdentifierNode";
-import EvaluationState = require("../EvaluationState");
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 
 export class ObjectNode extends ExpressionNode {

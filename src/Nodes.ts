@@ -1,5 +1,5 @@
-///<reference path="Expression.ts"/>
-import Context from "./Context";
+///<reference path="utils/Expression.ts"/>
+import Context from "./utils/Context";
 import {SemanticNode} from "./node/SemanticNode";
 import {ArrayNode} from "./node/ArrayNode";
 import {FunctionDeclarationNode, FunctionExpressionNode, ArrowFunctionExpressionNode} from "./node/Functions";
@@ -17,7 +17,7 @@ import {IfNode, SwitchCaseNode, SwitchStatementNode} from "./node/Branches";
 import {LiteralNode} from "./node/Literal";
 import {ObjectNode, PropertyNode} from "./node/Objects";
 import {VariableDeclarationNode, VariableDeclaratorNode} from "./node/Variables";
-import Scope = require("./Scope");
+import Scope = require("./tracking/Scope");
 
 interface SemanticNodeConstructor {
     new(e:Expression, parent:SemanticNode, parentObj:any, property:string, scope:Scope, context:Context):SemanticNode;

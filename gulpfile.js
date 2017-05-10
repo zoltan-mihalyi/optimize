@@ -10,6 +10,8 @@ var through2 = require('through2');
 
 var tsProject = ts.createProject('tsconfig.json');
 
+var testFileGlob = 'test/**/*Test.js';
+
 gulp.task('default', ['tslint', 'test']);
 
 gulp.task('clean', function() {
@@ -37,7 +39,7 @@ gulp.task('watch', function() {
 });
 
 gulp.task('test', ['compile'], function() {
-    return gulp.src('test/*.js', {read: false})
+    return gulp.src(testFileGlob, {read: false})
         .pipe(mocha());
 });
 
@@ -59,7 +61,7 @@ gulp.task('self-optimize', ['compile'], function() {
 });
 
 gulp.task('test:cover', ['test:instrument'], function() {
-    return gulp.src('test/*.js', {read: false})
+    return gulp.src(testFileGlob, {read: false})
         .pipe(mocha({timeout: 10000}))
         .pipe(istanbul.writeReports({
             reporters: ['json']
@@ -77,7 +79,7 @@ gulp.task('test:cover', ['test:instrument'], function() {
 });
 
 gulp.task('test:cover-html', ['test:instrument'], function() {
-    return gulp.src('test/*.js', {read: false})
+    return gulp.src(testFileGlob, {read: false})
         .pipe(mocha({timeout: 10000}))
         .pipe(istanbul.writeReports({
             reporters: ['json']

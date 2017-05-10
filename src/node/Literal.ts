@@ -1,7 +1,7 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PrimitiveValue} from "../Value";
+import {Value, PrimitiveValue} from "../tracking/Value";
 import Later = require("./Later");
-import EvaluationState = require("../EvaluationState");
+import EvaluationState = require("../tracking/EvaluationState");
 
 export class LiteralNode extends ExpressionNode {
     value:any;

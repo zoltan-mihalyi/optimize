@@ -1,8 +1,8 @@
-import Scope = require("../Scope");
+import Scope = require("../tracking/Scope");
 import {SemanticNode} from "./SemanticNode";
-import {isInnerScoped} from "../Utils";
-import {TrackingVisitor} from "../NodeVisitor";
-import EvaluationState = require("../EvaluationState");
+import {isInnerScoped} from "../utils/Utils";
+import {TrackingVisitor} from "../utils/NodeVisitor";
+import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 const global = new Function('return this')();
 
