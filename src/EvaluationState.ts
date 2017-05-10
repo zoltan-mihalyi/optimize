@@ -165,9 +165,13 @@ class EvaluationState extends Resolver {
         do {
             unsureState.updated = false;
             unsureState.ownReferences = [];
-            nodes.forEach(node => node.track(unsureState, visitor));
+            nodes.forEach(node => {
+                const state = new EvaluationState(unsureState, this.scope, this.context);
+                node.track(state, visitor);
+                unsureState.mergeMaybe(state);
+            });
         } while (loop && unsureState.updated);
-        this.mergeMaybe(unsureState);
+        this.mergeBack(unsureState);
     }
 
     getValue(variable:Variable):Value {

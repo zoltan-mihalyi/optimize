@@ -138,6 +138,28 @@ function trackTryCatch() {
     throw (x = 3, console.log(x), new Error("!"));
 }
 
+function trackTryCatch2() {
+    var x;
+    try {
+        x = 1;
+    } catch (e) {
+        x = void 0;
+    }
+    return x;
+}
+
+function trackTryCatch3() {
+    var x;
+    try {
+        x = 1;
+        err();
+        x = void 0;
+    } catch (e) {
+        return x;
+    }
+    return x;
+}
+
 function trackTryFinally() {
     var x = 1;
     try {
