@@ -61,7 +61,6 @@ class Scope extends Resolver {
             blockScoped: blockScope,
             global: this.parent === Scope.ROOT_SCOPE,
             name: name,
-            usages: [], //todo remove
             writes: [],
             reads: [],
             possibleValue: null,

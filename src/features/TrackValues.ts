@@ -8,16 +8,12 @@ export = (nodeVisitor:NodeVisitor, trackingVisitor:TrackingVisitor) => {
     nodeVisitor.onStart(node => trackingVisitor.callStart(node));
     nodeVisitor.onEnd(node => trackingVisitor.callEnd(node));
 
-    nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
-        track(node.body, null);
-    });
-    nodeVisitor.on(AbstractFunctionExpressionNode as any, (node:AbstractFunctionExpressionNode) => {
-        track(node.body, null);
-    });
-    nodeVisitor.on(ProgramNode, (node) => track(node, null));
+    nodeVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => track(node.body));
+    nodeVisitor.on(AbstractFunctionExpressionNode as any, (node:AbstractFunctionExpressionNode) => track(node.body));
+    nodeVisitor.on(ProgramNode, track);
 
-    function track(node:SemanticNode, parentState:EvaluationState) {
-        const evaluationState = new EvaluationState(parentState, node.scope, node.context);
+    function track(node:SemanticNode) {
+        const evaluationState = new EvaluationState(null, node.scope, node.context);
         node.track(evaluationState, trackingVisitor);
         evaluationState.addPossibleValuesToScope();
     }

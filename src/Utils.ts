@@ -75,14 +75,6 @@ export function getTrueValue(value:Value, state:EvaluationState):any { //todo mo
     throw new Error('no true value');
 }
 
-export function map<S,T>(data:S[], transform:(source:S) => T):T[] {
-    const result = [];
-    for (let i = 0; i < data.length; i++) {
-        result.push(transform(data[i]));
-    }
-    return result;
-}
-
 export function void0():Expression {
     return builders.unaryExpression('void', builders.literal(0));
 }

@@ -1,7 +1,7 @@
 import Scope = require("../Scope");
 import Context from "../Context";
 import {toSemanticNode} from "../Nodes";
-import {map, hasOwnProperty} from "../Utils";
+import {hasOwnProperty} from "../Utils";
 import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
 import {TrackingVisitor} from "../NodeVisitor";
@@ -79,7 +79,7 @@ export abstract class SemanticNode {
             const childKey = this.childKeys[i];
             const childNode = (this as any)[childKey];
             if (Array.isArray(childNode)) {
-                (result as any)[childKey] = map(childNode, node => node.toAst(transform));
+                result[childKey] = childNode.map(node => node.toAst(transform));
             } else if (childNode instanceof SemanticNode) {
                 result[childKey] = childNode.toAst(transform);
             } else {
@@ -99,7 +99,7 @@ export abstract class SemanticNode {
             throw new Error('Parent does not exist.');
         }
 
-        const nodes:SemanticNode[] = map(expressions, e => {
+        const nodes:SemanticNode[] = expressions.map(e => {
             return toSemanticNode(e, this.parent, this.parentObject, this.parentProperty, this.scope, this.context);
         });
 
