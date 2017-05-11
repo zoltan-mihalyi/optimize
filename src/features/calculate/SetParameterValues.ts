@@ -1,4 +1,4 @@
-import {FunctionObjectClass, PrimitiveValue, Value} from "../../tracking/Value";
+import {FunctionObjectClass, PrimitiveValue, ReferenceValue, Value} from "../../tracking/Value";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
 import {CallNode, NewNode} from "../../node/CallNodes";
 import {AbstractFunctionExpressionNode, FunctionDeclarationNode, FunctionNode} from "../../node/Functions";
@@ -12,8 +12,8 @@ import EvaluationState = require("../../tracking/EvaluationState");
 import Map = require("../../utils/Map");
 import Scope = require("../../tracking/Scope");
 
-type Parameters = {
-    arguments:Value[];
+type Call = {
+    parameters:Value[];
     variableValues:Map<Variable, Value>;
     heap:Heap;
 };
@@ -56,14 +56,14 @@ function nullSafeConcat<T>(arr1:T[], arr2:T[]):T[] {
 }
 
 export = (trackingVisitor:TrackingVisitor) => {
-    let functionCalls:MultiMap<FunctionNode, Parameters>;
+    let functionCalls:MultiMap<FunctionNode, Call>;
     let variableFunctions:MultiMap<Variable, FunctionNode>;
-    let variableCalls:MultiMap<Variable, Parameters>;
+    let variableCalls:MultiMap<Variable, Call>;
 
     trackingVisitor.onStart(() => {
-        functionCalls = new MultiMap<FunctionNode, Parameters>();
+        functionCalls = new MultiMap<FunctionNode, Call>();
         variableFunctions = new MultiMap<Variable, FunctionNode>();
-        variableCalls = new MultiMap<Variable, Parameters>();
+        variableCalls = new MultiMap<Variable, Call>();
     });
 
     trackingVisitor.on(FunctionDeclarationNode, (node:FunctionDeclarationNode) => {
@@ -99,7 +99,7 @@ export = (trackingVisitor:TrackingVisitor) => {
                 return;
             }
 
-            let parametersList = functionCalls.has(node) ? functionCalls.get(node) : [];
+            let calls = functionCalls.has(node) ? functionCalls.get(node) : [];
 
             variableFunctions.each((variable:Variable, nodes:FunctionNode[]) => { //todo bimap
                 if (nodes.indexOf(node) === -1) {
@@ -107,21 +107,21 @@ export = (trackingVisitor:TrackingVisitor) => {
                 }
 
                 if (variable.global && !node.context.options.assumptions.noGlobalPropertyReads) {
-                    parametersList = null;
+                    calls = null;
                     return;
                 }
 
                 if (variableCalls.has(variable)) {
-                    parametersList = nullSafeConcat(parametersList, variableCalls.get(variable));
+                    calls = nullSafeConcat(calls, variableCalls.get(variable));
                 }
             });
 
-            if (parametersList === null || parametersList.length === 0) { //not called/no info
+            if (calls === null || calls.length === 0) { //not called/no info
                 return;
             }
             for (let i = 0; i < node.params.length; i++) {
                 const param = node.params[i];
-                const value = getValueAt(parametersList, i);
+                const value = getValueAt(calls, i);
                 const variable = param.getVariable();
 
                 const initialValues = node.innerScope.initialValues;
@@ -130,7 +130,7 @@ export = (trackingVisitor:TrackingVisitor) => {
                 }
                 initialValues.setOrUpdate(variable, value);
             }
-            mergeHeapAndInitialValues(node.innerScope, parametersList);
+            mergeHeapAndInitialValues(node.innerScope, calls);
         });
 
         functionCalls = null;
@@ -147,32 +147,41 @@ export = (trackingVisitor:TrackingVisitor) => {
 
     function onCall(node:CallNode | NewNode, state:EvaluationState) {
         const callee = node.callee;
-        if (!(callee instanceof IdentifierNode)) {
+        if (!(callee instanceof IdentifierNode || callee instanceof AbstractFunctionExpressionNode)) {
             return;
         }
 
-        const parameters:Parameters = {
-            arguments: node.arguments.map(arg => arg.getValue()),
+        const call:Call = {
+            parameters: node.arguments.map(arg => arg.getValue()),
             variableValues: state.getVariableValues(),
             heap: state.getHeap()
         };
-        const variable = callee.getVariable();
-        onPossibleCall(state, callee, variable, parameters);
+
+        if (callee instanceof IdentifierNode) {
+            onPossibleCall(state, callee, callee.getVariable(), call);
+        } else {
+            referenceCalled(callee.getValue() as ReferenceValue, call);
+        }
     }
 
-    function onPossibleCall(state:EvaluationState, id:IdentifierNode, variable:Variable, parameters:Parameters) {
+
+    function onPossibleCall(state:EvaluationState, id:IdentifierNode, variable:Variable, call:Call) {
         if (isOuterScoped(variable, id)) {
-            variableCalls.pushOrReset(variable, parameters);
+            variableCalls.pushOrReset(variable, call);
         }
 
         state.eachVariableReference(variable, reference => {
-            const objectClass = reference.objectClass;
-            if (objectClass instanceof FunctionObjectClass) {
-                if (objectClass.fn) {
-                    functionCalls.pushOrReset(objectClass.fn, parameters);
-                }
-            }
+            referenceCalled(reference, call);
         });
+    }
+
+    function referenceCalled(reference:ReferenceValue, call:Call) {
+        const objectClass = reference.objectClass;
+        if (objectClass instanceof FunctionObjectClass) {
+            if (objectClass.fn) {
+                functionCalls.pushOrReset(objectClass.fn, call);
+            }
+        }
     }
 
     function onAssign(left:IdentifierNode, right:IdentifierNode) {
@@ -184,22 +193,22 @@ export = (trackingVisitor:TrackingVisitor) => {
     }
 };
 
-function mergeHeapAndInitialValues(scope:Scope, parameterList:Parameters[]) {
-    for (let i = 0; i < parameterList.length; i++) {
-        const parameters = parameterList[i];
-        parameters.heap.each((reference, heapObject) => {
+function mergeHeapAndInitialValues(scope:Scope, calls:Call[]) {
+    for (let i = 0; i < calls.length; i++) {
+        const call = calls[i];
+        call.heap.each((reference, heapObject) => {
             updateHeap(scope.initialHeap, reference, heapObject);
         });
-        parameters.variableValues.each((variable, value) => {
+        call.variableValues.each((variable, value) => {
             scope.initialValues.setOrUpdate(variable, value);
         });
     }
 }
 
-function getValueAt(parametersList:Parameters[], index:number):Value {
+function getValueAt(calls:Call[], index:number):Value {
     let resultValue:Value = null;
-    for (let i = 0; i < parametersList.length; i++) {
-        const parameters = parametersList[i].arguments;
+    for (let i = 0; i < calls.length; i++) {
+        const parameters = calls[i].parameters;
         let value = parameters.length > index ? parameters[index] : new PrimitiveValue(void 0);
 
         if (resultValue === null) {

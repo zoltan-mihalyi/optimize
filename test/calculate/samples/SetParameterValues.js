@@ -163,3 +163,7 @@ function global(p) {
     return p;
 }
 global(1);
+
+(function(p) {
+    return p;
+})(42);
