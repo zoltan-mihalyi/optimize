@@ -1,10 +1,10 @@
 import {IdentifierNode} from "./IdentifierNode";
-import {FunctionDeclarationNode, AbstractFunctionExpressionNode} from "./Functions";
+import {AbstractFunctionExpressionNode, FunctionDeclarationNode} from "./Functions";
 import {BlockNode} from "./Blocks";
-import {LabeledNode, BreakNode, ContinueNode, ReturnNode} from "./JumpNodes";
+import {BreakNode, ContinueNode, LabeledNode, ReturnNode} from "./JumpNodes";
 import {PropertyNode} from "./Objects";
-import {UpdateNode, AssignmentNode} from "./Assignments";
-import {VariableDeclaratorNode, VariableDeclarationNode} from "./Variables";
+import {AssignmentNode, UpdateNode} from "./Assignments";
+import {VariableDeclarationNode, VariableDeclaratorNode} from "./Variables";
 import {ForEachNode} from "./Loops";
 import {MemberNode} from "./Others";
 import {UnaryNode} from "./Operators";

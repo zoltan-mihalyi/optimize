@@ -37,6 +37,7 @@ function fn() {
     }
 
     used();
+    used();
 
     function reassignedLater() {
     }

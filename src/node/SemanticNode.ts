@@ -5,12 +5,12 @@ import {hasOwnProperty, isFunctionNode} from "../utils/Utils";
 import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
 import {TrackingVisitor} from "../utils/NodeVisitor";
+import {VariableDeclaratorNode} from "./Variables";
 import Later = require("./Later");
 
 import recast = require("recast");
 import Map = require("../utils/Map");
 import EvaluationState = require("../tracking/EvaluationState");
-import {VariableDeclaratorNode} from "./Variables";
 
 const builders = recast.types.builders;
 
@@ -166,10 +166,6 @@ export abstract class SemanticNode {
         return this.walk(predicate) || false;
     }
 
-    containsType(type:new(...args:any[]) => SemanticNode):boolean {
-        return this.contains(node => node instanceof type);
-    }
-
     walk<T>(before:(node:this) => T):T {
         const wasChangedBefore = this.isChanged();
         let result:T = before(this);
@@ -213,6 +209,16 @@ export abstract class SemanticNode {
         return this.changed;
     }
 
+    isAnyParentChanged():boolean {
+        if (this.changed) {
+            return true;
+        }
+        if (this.parent) {
+            return this.parent.isAnyParentChanged();
+        }
+        return false;
+    }
+
     clearUpdated() {
         this.updated = false;
     }
@@ -248,17 +254,7 @@ export abstract class SemanticNode {
         this.afterTrack(state, visitor);
     }
 
-    protected handleDeclarationsForNode() {
-    }
-
-    protected updateAccessForNode() {
-    }
-
-    protected createSubScopeIfNeeded(scope:Scope):Scope {
-        return scope;
-    }
-
-    protected markChanged() {
+    markChanged() {
         if (this.parent) {
             this.parent.markChanged();
         }
@@ -273,6 +269,15 @@ export abstract class SemanticNode {
         this.updated = true;
     }
 
+    protected handleDeclarationsForNode() {
+    }
+
+    protected updateAccessForNode() {
+    }
+
+    protected createSubScopeIfNeeded(scope:Scope):Scope {
+        return scope;
+    }
     protected afterTrack(state:EvaluationState, visitor:TrackingVisitor) {
     }
 

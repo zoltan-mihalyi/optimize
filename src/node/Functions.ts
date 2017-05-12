@@ -7,6 +7,7 @@ import {BlockNode} from "./Blocks";
 import Scope = require("../tracking/Scope");
 import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
+import {ReturnNode} from "./JumpNodes";
 
 function addParametersToScope(node:FunctionNode, addArguments:boolean) {
     const params = node.params;
@@ -38,6 +39,9 @@ export interface FunctionNode extends InnerScoped {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:ExpressionNode | BlockNode;
+    callCount:number;
+    returns:ReturnNode[];
+    usesThis:boolean;
 
     addArgumentsIfNeeded(state:EvaluationState):void;
 }
@@ -48,6 +52,9 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
     body:ExpressionNode | BlockNode;
     innerScope:Scope;
     expression:boolean;
+    callCount:number = null;
+    returns:ReturnNode[] = [];
+    usesThis = false;
 
     onTrack(state:EvaluationState) {
         this.setValue(state.createCustomFunctionReference(this));
@@ -57,19 +64,6 @@ export abstract class AbstractFunctionExpressionNode extends ExpressionNode impl
         if (!this.isLambda()) {
             addArgumentsValue(this, state);
         }
-    }
-
-    getReturnExpression():ExpressionNode {
-        let body = this.body;
-        if (this.expression) {
-            return body as ExpressionNode;
-        } else if (body instanceof Later.BlockNode && body.body.length === 1) {
-            const statement = body.body[0];
-            if (statement instanceof Later.ReturnNode) {
-                return statement.argument;
-            }
-        }
-        return null;
     }
 
     protected isCleanInner():boolean {
@@ -99,6 +93,9 @@ export class FunctionDeclarationNode extends SemanticNode implements FunctionNod
     params:IdentifierNode[];
     body:BlockNode;
     innerScope:Scope;
+    callCount:number = null;
+    returns:ReturnNode[] = [];
+    usesThis = false;
 
     onTrack(state:EvaluationState) {
         state.setValue(this.id.getVariable(), state.createCustomFunctionReference(this), true);

@@ -5,6 +5,8 @@ import {PrimitiveValue, Value, IterableValue, ReferenceValue} from "../tracking/
 import {IdentifierNode} from "./IdentifierNode";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import Later = require("./Later");
+import {isFunctionNode} from "../utils/Utils";
+import {ArrowFunctionExpressionNode, FunctionNode} from "./Functions";
 
 export class EmptyNode extends SemanticNode {
     onTrack() {
@@ -94,6 +96,15 @@ export class ThisNode extends ExpressionNode {
     }
 
     onTrack() {
+    }
+
+    protected handleDeclarationsForNode() {
+        const fn = this.getParent<FunctionNode>((node):node is FunctionNode => {
+            return isFunctionNode(node) && !(node instanceof ArrowFunctionExpressionNode);
+        });
+        if (fn) {
+            fn.usesThis = true;
+        }
     }
 }
 

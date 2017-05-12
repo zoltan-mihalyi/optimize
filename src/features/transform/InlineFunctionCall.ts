@@ -1,82 +1,88 @@
 import {Variable} from "../../utils/Variable";
 import {void0} from "../../utils/Utils";
-import recast = require("recast");
-import Map = require("../../utils/Map");
-import {SemanticNode} from "../../node/SemanticNode";
 import {ExpressionNode} from "../../node/ExpressionNode";
-import {AbstractFunctionExpressionNode} from "../../node/Functions";
+import {AbstractFunctionExpressionNode, ArrowFunctionExpressionNode, FunctionNode} from "../../node/Functions";
 import {CallNode} from "../../node/CallNodes";
 import {LoopNode} from "../../node/Loops";
 import {ExpressionStatementNode} from "../../node/Others";
 import {ReturnNode} from "../../node/JumpNodes";
 import {IdentifierNode} from "../../node/IdentifierNode";
 import {NodeVisitor} from "../../utils/NodeVisitor";
+import {FunctionObjectClass, ReferenceValue} from "../../tracking/Value";
+import {BlockNode} from "../../node/Blocks";
+import {SemanticNode} from "../../node/SemanticNode";
+import recast = require("recast");
+import Map = require("../../utils/Map");
+import Scope = require("../../tracking/Scope");
 
 const builders = recast.types.builders;
 
 export = (nodeVisitor:NodeVisitor) => {
     nodeVisitor.on(CallNode, (callNode:CallNode) => {
-        let callee = callNode.callee;
-        if (!(callee instanceof AbstractFunctionExpressionNode)) {
+        const value = callNode.callee.getValue();
+        if (!(value instanceof ReferenceValue)) {
+            return;
+        }
+        const objectClass = value.objectClass;
+        if (!(objectClass instanceof FunctionObjectClass)) {
+            return;
+        }
+        const fn = objectClass.fn;
+        if (!fn) {
+            return;
+        }
+        if (fn.callCount !== 1) {
             return;
         }
 
-        const returnExpression = callee.getReturnExpression();
-        const canReduceToExpression = returnExpression && canSubstituteParameters(callNode, callee);
+        const returnExpression = getReturnExpression(fn);
+        const canReduceToExpression = returnExpression && canSubstituteParameters(callNode, fn);
 
-        if (!callee.isLambda() && callee.innerScope.hasArgumentsRead()) {
+        if (!(fn instanceof ArrowFunctionExpressionNode) && fn.innerScope.hasArgumentsRead()) {
             return;
         }
         if (callNode.hasParent(node => node instanceof LoopNode)) {
+            return;
+        }
+        if (fn.usesThis) {
             return;
         }
 
         if (canReduceToExpression) {
             reduceExpression(returnExpression, callNode);
         } else {
-            reduceStatement(callNode, callee);
+            reduceStatement(callNode, fn);
         }
     });
 
-    function reduceStatement(callNode:CallNode, callee:AbstractFunctionExpressionNode) {
+    function reduceStatement(callNode:CallNode, fn:FunctionNode) {
         if (!(callNode.parent instanceof ExpressionStatementNode)) {
             return;
         }
-        if (callee.containsType(ReturnNode)) { //todo only in the function scope
+        if (fn.returns.length > 0) {
             return;
         }
-        if (callNode.getEnclosingFunction() === null && callee.innerScope.hasFunctionScopedVariables()) { //avoid global pollution
+        if (callNode.getEnclosingFunction() === null && fn.innerScope.hasFunctionScopedVariables()) { //avoid global pollution
             return;
         }
 
-        const rename:Map<Variable,string> = new Map<Variable,string>();
-        let calleeAst = callee.toAst((node:SemanticNode, expression:Expression) => {
-            if (node instanceof IdentifierNode && node.isReal()) {
-                const name = node.name;
-                let variable = node.scope.get(name);
-                let newName:string;
-                if (rename.has(variable)) {
-                    newName = rename.get(variable);
-                } else if (!variable.blockScoped && variable !== callNode.scope.get(name)) {
-                    newName = callNode.scope.createUnusedIdentifier(name);
-                    rename.set(variable, newName);
-                }
-                if (newName) {
-                    (expression as any).name = newName;
-                }
-            }
-            return expression;
-        }) as any;
+        if (callNode.isAnyParentChanged()) {
+            return;
+        }
 
+        const renamedFn = renameOrPrepare(fn, callNode) as any;
+        if (!renamedFn) {
+            return;
+        }
         const body:Expression[] = [];
-        let max = Math.max(calleeAst.params.length, callNode.arguments.length);
+        const max = Math.max(renamedFn.params.length, callNode.arguments.length);
         for (let i = 0; i < max; i++) {
-            if (calleeAst.params.length <= i) {
+            if (renamedFn.params.length <= i) {
                 body.push(builders.expressionStatement(callNode.arguments[i].toAst()));
                 continue;
             }
 
-            const paramId = calleeAst.params[i];
+            const paramId = renamedFn.params[i];
             let paramValue;
             if (callNode.arguments.length <= i) {
                 paramValue = void0();
@@ -86,16 +92,19 @@ export = (nodeVisitor:NodeVisitor) => {
 
             body.push(builders.variableDeclaration('var', [builders.variableDeclarator(paramId, paramValue)]));
         }
-        body.push(...calleeAst.body.body);
+        body.push(...renamedFn.body.body);
         callNode.parent.replaceWith([builders.blockStatement(body)]);
     }
 
     function reduceExpression(returnExpression:ExpressionNode, callNode:CallNode) {
-        callNode.replaceWith([returnExpression.toAst()]);
+        const expression = renameOrPrepare(returnExpression, callNode);
+        if (expression) {
+            callNode.replaceWith([expression]);
+        }
     }
 
-    function canSubstituteParameters(node:CallNode, callee:AbstractFunctionExpressionNode) {
-        if (callee.params.length > 0) {
+    function canSubstituteParameters(node:CallNode, fn:FunctionNode) {
+        if (fn.params.length > 0) {
             return false;
         }
         for (let i = 0; i < node.arguments.length; i++) {
@@ -107,3 +116,83 @@ export = (nodeVisitor:NodeVisitor) => {
         return true;
     }
 };
+
+function getReturnExpression(fn:FunctionNode):ExpressionNode {
+    let body = fn.body;
+    if (fn instanceof AbstractFunctionExpressionNode && fn.expression) {
+        return body as ExpressionNode;
+    } else if (body instanceof BlockNode && body.body.length === 1) {
+        const statement = body.body[0];
+        if (statement instanceof ReturnNode) {
+            return statement.argument;
+        }
+    }
+    return null;
+}
+
+function renameOrPrepare(inline:SemanticNode, callNode:CallNode):Expression {
+    const fnRenames:Map<Variable, string> = new Map<Variable, string>();
+    const callSiteRenames:Map<Variable, string> = new Map<Variable, string>();
+
+    const expression = inline.toAst((node, expression) => {
+        if (node instanceof IdentifierNode && node.isReal()) {
+            const name = node.name;
+            const fnVariable = node.scope.get(name);
+            const callSiteVariable = callNode.scope.get(name);
+            if (fnVariable !== callSiteVariable && callSiteVariable !== null) {
+                if (fnVariable.scope.isAncestorOf(callSiteVariable.scope)) {
+                    createName(callSiteRenames, callSiteVariable);
+                } else {
+                    (expression as any).name = createName(fnRenames, fnVariable);
+                }
+            }
+        }
+        return expression;
+    });
+    if (!callSiteRenames.isEmpty()) {
+        applyRenames(callSiteRenames, callNode);
+        return null;
+    }
+    return expression;
+}
+
+function createName(renames:Map<Variable, string>, variable:Variable) {
+    if (renames.has(variable)) {
+        return renames.get(variable);
+    } else {
+        const name = variable.scope.createUnusedIdentifier(variable.name);
+        renames.set(variable, name);
+        return name;
+    }
+}
+
+function applyRenames(renames:Map<Variable, string>, node:SemanticNode) {
+    node.markChanged();
+    let parent = node;
+    while (true) {
+        if (isAllInside(parent.scope)) {
+            break;
+        }
+        parent = parent.getParent(node => node instanceof BlockNode);
+    }
+    const expression = parent.toAst(((n, e:any) => {
+        if (n instanceof IdentifierNode && n.isReal()) {
+            const variable = n.getVariable();
+            if (renames.has(variable)) {
+                e.name = renames.get(variable);
+            }
+        }
+        return e;
+    }));
+    parent.replaceWith([expression]);
+
+    function isAllInside(scope:Scope):boolean {
+        let allInside = true;
+        renames.each((variable) => {
+            if (!scope.isAncestorOf(variable.scope)) {
+                allInside = false;
+            }
+        });
+        return allInside;
+    }
+}

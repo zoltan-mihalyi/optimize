@@ -54,6 +54,10 @@ class Map<K, V> {
         result.values.push(...this.values);
         return result;
     }
+
+    isEmpty():boolean {
+        return this.keys.length === 0;
+    }
 }
 
 export = Map;

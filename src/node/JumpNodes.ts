@@ -31,6 +31,10 @@ Later.LabeledNode = LabeledNode;
 export class ReturnNode extends SemanticNode {
     argument:ExpressionNode;
 
+    protected handleDeclarationsForNode() {
+        this.getEnclosingFunction().returns.push(this);
+    }
+
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         if (this.argument) {
             this.argument.track(state, visitor);

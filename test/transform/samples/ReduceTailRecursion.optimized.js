@@ -45,6 +45,7 @@ noParam();
 
 function cannotReduce() {
     cannotReduceInner();
+    cannotReduceInner();
     function cannotReduceInner() {
         return cannotReduce();
     }

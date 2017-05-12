@@ -76,3 +76,102 @@ console.log((function() {
 })(1, a));
 
 console.log((() => a * a)());
+
+function nameCollisionExpression() {
+    var a = {x: 1};
+
+    function getA() {
+        return a;
+    }
+
+    function inner() {
+        var a = {x: 2};
+        log(a);
+        return getA();
+    }
+
+    return inner;
+}
+
+function nameCollisionStatement() {
+    var a = {a: 1};
+    var b = {b: 1};
+
+    function logAB(c) {
+        var b = {b: 2};
+        log(a);
+        log(b);
+        log(c);
+    }
+
+    function inner(c) {
+        var a = {a: 2};
+        log(a);
+        log(b);
+        logAB({});
+        return c;
+    }
+
+    return inner;
+}
+
+function blockScopeNameCollision() {
+    var x = {};
+
+    function b(p) {
+        let x = {x: 1};
+        log(x);
+        log(p);
+    }
+
+    b(x);
+}
+
+function doubleReplace() {
+    function first() {
+        log('first');
+    }
+
+    function second() {
+        log('second');
+    }
+
+    function third(log) {
+        first();
+        second();
+    }
+
+    return third;
+}
+
+function handleThis(){
+    function getGlobal(){
+        return this;
+    }
+
+    return {
+        timeout: function(fn, ms) {
+            return getGlobal().setTimeout(fn, ms);
+        }
+    };
+}
+
+function inlineWithInnerReturn(){
+    function inlinable(){
+        log(1, innerReturner);
+
+        function innerReturner() {
+            return 1;
+        }
+    }
+
+    inlinable();
+}
+
+function inlineExpression(){
+    var fn = function() {
+        log(1);
+    };
+
+    fn();
+}

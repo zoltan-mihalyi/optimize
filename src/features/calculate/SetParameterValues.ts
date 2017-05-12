@@ -116,6 +116,7 @@ export = (trackingVisitor:TrackingVisitor) => {
                 }
             });
 
+            node.callCount = calls === null ? null : calls.length;
             if (calls === null || calls.length === 0) { //not called/no info
                 return;
             }

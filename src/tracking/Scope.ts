@@ -155,6 +155,17 @@ class Scope extends Resolver {
         return Scope.ROOT_SCOPE.hasObject(key);
     }
 
+    isAncestorOf(other:Scope):boolean {
+        const parent = other.parent;
+        if (!parent) {
+            return false;
+        }
+        if (parent === this) {
+            return true;
+        }
+        return this.isAncestorOf(parent);
+    }
+
     private setUnknownGlobal(name:string):Variable {
         if (this.parent !== Scope.ROOT_SCOPE) {
             return this.parent.setUnknownGlobal(name);

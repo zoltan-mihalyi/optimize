@@ -45,6 +45,7 @@ function fn() {
     }
 
     otherScope2();
+    otherScope2();
     setTimeout(untrackable2);
 
 
@@ -56,6 +57,7 @@ function fn() {
         setTimeout(untrackable3);
     }
 
+    otherScope3();
     otherScope3();
     untrackable3(1);
 
@@ -69,6 +71,7 @@ function fn() {
         console.log(a(1));
     }
 
+    innerScope();
     innerScope();
 
 
@@ -106,6 +109,7 @@ function fn() {
     }
 
     objectParameter(obj);
+    objectParameter(obj);
     obj.x = 2;
 
 
@@ -133,13 +137,15 @@ function fn() {
     function moreObjectInSingleCall(a, b) {
     }
 
-    moreObjectInSingleCall({}, {});
+    return moreObjectInSingleCall({}, {});
 }
 
 function setScopeValues() {
     var a = 1;
     fn();
+    fn();
     a = 2;
+    fn2();
     fn2();
 
     function fn() {
@@ -155,7 +161,7 @@ function setScopeValues() {
     }
 
     return function() {
-        return fn3();
+        return [fn3(), fn3()];
     }
 }
 

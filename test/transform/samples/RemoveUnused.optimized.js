@@ -12,6 +12,7 @@ function fn() {
     }
 
     used();
+    used();
 
     var reassignedLater;
 

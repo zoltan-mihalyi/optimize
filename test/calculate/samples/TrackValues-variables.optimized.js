@@ -171,6 +171,7 @@ function trackTryFinally() {
 function trackFunctionUpdate() {
     var x = 1;
     add();
+    add();
     console.log(x);
 
     function add() {
