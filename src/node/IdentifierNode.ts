@@ -7,6 +7,7 @@ import {VariableDeclaratorNode} from "./Variables";
 import EvaluationState = require("../tracking/EvaluationState");
 import Scope = require("../tracking/Scope");
 import Later = require("./Later");
+import {BinaryNode} from "./Operators";
 
 export class IdentifierNode extends ExpressionNode {
     readonly name:string;
@@ -50,6 +51,10 @@ export class IdentifierNode extends ExpressionNode {
             return false;
         }
         if (parent instanceof VariableDeclaratorNode) {
+            return false;
+        }
+        //noinspection RedundantIfStatementJS
+        if (parent instanceof BinaryNode && (parent.operator === 'instanceof' || parent.operator === 'in')) {
             return false;
         }
         return true;
