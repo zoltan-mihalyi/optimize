@@ -50,13 +50,22 @@ function usesArguments() {
 usesArguments();
 
 function hasVars(x) {
+    let b;
     if (x) {
         var a = x;
+        b = x;
+        function c(){
+        }
     }
     if (a) {
-        console.log(a);
+        console.log(a, b, c, inner);
     }
     return hasVars();
+
+    function inner(i0) {
+        var i1 = {};
+        return [i0, i1];
+    }
 }
 
 hasVars(1);

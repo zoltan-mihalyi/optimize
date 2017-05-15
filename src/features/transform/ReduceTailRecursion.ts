@@ -1,14 +1,12 @@
 import {createUnusedName, void0} from "../../utils/Utils";
-import {unknown, ReferenceValue} from "../../tracking/Value";
+import {ReferenceValue, unknown} from "../../tracking/Value";
 import {SemanticNode} from "../../node/SemanticNode";
 import {FunctionDeclarationNode} from "../../node/Functions";
 import {CallNode} from "../../node/CallNodes";
-import {ReturnNode, LabeledNode} from "../../node/JumpNodes";
+import {LabeledNode, ReturnNode} from "../../node/JumpNodes";
 import {IdentifierNode} from "../../node/IdentifierNode";
 import {LiteralNode} from "../../node/Literal";
 import {WhileNode} from "../../node/Loops";
-import {BlockNode} from "../../node/Blocks";
-import {VariableDeclarationNode} from "../../node/Variables";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
 import Scope = require("../../tracking/Scope");
 import recast = require("recast");
@@ -66,7 +64,7 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
     node.parent.replaceWith([
         builders.blockStatement([ //change params and goto
             ...swapVars(node.scope, enclosingFunction.params, node.arguments),
-            ...resetUnsafeVars(enclosingFunction.body),
+            ...resetUnsafeVars(enclosingFunction),
             builders.continueStatement(builders.identifier(labelName))
         ])
     ]);
@@ -88,18 +86,20 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
     }
 }
 
-function resetUnsafeVars(block:BlockNode):Expression[] {
+function resetUnsafeVars(fn:FunctionDeclarationNode):Expression[] {
     const result:Expression[] = [];
-    block.walk(node => {
-        if (node instanceof VariableDeclarationNode && !node.isBlockScoped()) {
-            const declarations = node.declarations;
-            for (let i = 0; i < declarations.length; i++) {
-                let variableName = declarations[i].id.name;
-                result.push(builders.expressionStatement(
-                    builders.assignmentExpression('=', builders.identifier(variableName), void0())
-                ));
+    fn.innerScope.each((name, variable) => {
+        if (variable.blockScoped || variable.reads.length === 0) {
+            return;
+        }
+        for (let i = 0; i < fn.params.length; i++) {
+            if (fn.params[i].name === name) {
+                return;
             }
         }
+        result.push(builders.expressionStatement(
+            builders.assignmentExpression('=', builders.identifier(name), void0())
+        ));
     });
     return result;
 }

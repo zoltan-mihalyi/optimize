@@ -20,7 +20,7 @@ export  = (nodeVisitor:NodeVisitor) => {
         for (let i = 0; i < declarationNode.declarations.length; i++) {
             const node = declarationNode.declarations[i];
 
-            let variable = node.scope.get(node.id.name);
+            const variable = node.id.getVariable();
             if (canBeUsed(variable) || canBeUsedThroughGlobalScope(variable, node) || hasWriteWithoutDeclaration(variable)) {
                 if (currentDeclarations) {
                     currentDeclarations.push(node.toAst());
@@ -98,7 +98,7 @@ export  = (nodeVisitor:NodeVisitor) => {
         if (isGlobalScoped(node)) {
             return true;
         }
-        let reads = node.id.scope.get(node.id.name).reads;
+        const reads = node.id.getVariable().reads;
         for (let i = 0; i < reads.length; i++) {
             const read = reads[i];
             const fn = getEnclosingFunctionDeclaration(read);

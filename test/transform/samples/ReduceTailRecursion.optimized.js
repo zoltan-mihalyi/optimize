@@ -80,15 +80,26 @@ usesArguments();
 function hasVars(x) {
     x:
     while (1) {
+        let b;
         if (x) {
             var a = x;
+            b = x;
+            function c(){
+            }
         }
         if (a) {
-            console.log(a);
+            console.log(a, b, c, inner);
         }
         x = void 0;
         a = void 0;
+        c = void 0;
+        inner = void 0;
         continue x;
+
+        function inner(i0) {
+            var i1 = {};
+            return [i0, i1];
+        }
         return;
     }
 }

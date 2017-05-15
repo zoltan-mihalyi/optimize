@@ -204,7 +204,6 @@ export abstract class SemanticNode {
     initialize() {
         this.walk(node => node.handleDeclarationsForNode());
         this.walk(node => node.updateAccessForNode());
-        this.walk(node => node.initializeNode());
     }
 
     isUpdated():boolean {
@@ -254,9 +253,6 @@ export abstract class SemanticNode {
     }
 
     protected updateAccessForNode() {
-    }
-
-    protected initializeNode() {
     }
 
     protected createSubScopeIfNeeded(scope:Scope):Scope {
