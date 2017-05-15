@@ -1,5 +1,5 @@
 import {PrimitiveValue, unknown, ReferenceValue, SingleValue} from "../../tracking/Value";
-import {hasTrueValue, getTrueValue, binaryCache} from "../../utils/Utils";
+import {hasTrueValue, getTrueValue, binaryCache, throwValue} from "../../utils/Utils";
 import {BinaryNode, UnaryNode} from "../../node/Operators";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
 import Cache = require("../../utils/Cache");
@@ -74,7 +74,20 @@ export = (trackingVisitor:TrackingVisitor) => {
                         return unknown;
                     }
                 }
-                return state.createValue(evaluator(getTrueValue(leftValue, state), getTrueValue(rightValue, state)));
+                const leftTrueValue = getTrueValue(leftValue, state);
+                const rightTrueValue = getTrueValue(rightValue, state);
+                if (node.operator === 'in') {
+                    if (rightValue instanceof ReferenceValue) {
+                        if (state.dereference(rightValue).hasPropertyDeep(state, leftTrueValue + '')) {
+                            return new PrimitiveValue(true);
+                        } else {
+                            return unknown;
+                        }
+                    } else {
+                        return throwValue('USING in OPERATOR WITH PRIMITIVE');
+                    }
+                }
+                return state.createValue(evaluator(leftTrueValue, rightTrueValue));
             }
             return unknown;
         }));

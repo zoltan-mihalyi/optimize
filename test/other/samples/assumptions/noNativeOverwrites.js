@@ -12,3 +12,6 @@ console.log(obj[true.constructor]);
 
 console.log({} instanceof Object);
 console.log('toString' in []);
+
+console.log('a' in 1);
+console.log('create' in Object);

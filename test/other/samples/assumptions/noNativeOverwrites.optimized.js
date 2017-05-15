@@ -10,3 +10,6 @@ console.log(obj["function Boolean() { [native code] }"]);
 
 console.log(true);
 console.log(true);
+
+console.log('a' in 1);
+console.log('create' in Object);
