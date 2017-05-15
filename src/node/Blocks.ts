@@ -1,6 +1,6 @@
 import Scope = require("../tracking/Scope");
 import {SemanticNode} from "./SemanticNode";
-import {isInnerScoped} from "../utils/Utils";
+import {isFunctionNode, isInnerScoped} from "../utils/Utils";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
@@ -42,8 +42,9 @@ export class BlockNode extends SemanticNode {
 
     onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         const blockState = new EvaluationState(state, this.scope, this.context);
-        if (this.parent instanceof Later.FunctionDeclarationNode || this.parent instanceof Later.AbstractFunctionExpressionNode) {
-            this.parent.addArgumentsIfNeeded(state);
+        const parent = this.parent;
+        if (isFunctionNode(parent)) {
+            parent.addArgumentsIfNeeded(state);
         }
         for (let i = 0; i < this.body.length; i++) {
             const node = this.body[i];

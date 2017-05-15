@@ -1,7 +1,7 @@
 import Scope = require("../tracking/Scope");
 import Context from "../utils/Context";
 import {toSemanticNode} from "../Nodes";
-import {hasOwnProperty} from "../utils/Utils";
+import {hasOwnProperty, isFunctionNode} from "../utils/Utils";
 import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
 import {TrackingVisitor} from "../utils/NodeVisitor";
@@ -56,9 +56,15 @@ export abstract class SemanticNode {
     }
 
     getEnclosingFunction():FunctionNode {
+        return this.getParent<FunctionNode>(isFunctionNode);
+    }
+
+    getParent(predicate:(node:SemanticNode) => boolean):SemanticNode;
+    getParent<T extends SemanticNode>(predicate:(node:SemanticNode) => node is T):T;
+    getParent<T extends SemanticNode>(predicate:(node:SemanticNode) => node is T):T {
         let parent = this.parent;
         while (parent) {
-            if (parent instanceof Later.FunctionDeclarationNode || parent instanceof Later.AbstractFunctionExpressionNode) {
+            if (predicate(parent)) {
                 return parent;
             }
             parent = parent.parent;
@@ -143,14 +149,7 @@ export abstract class SemanticNode {
     }
 
     hasParent(predicate:(node:SemanticNode) => boolean):boolean {
-        let parent = this.parent;
-        while (parent) {
-            if (predicate(parent)) {
-                return true;
-            }
-            parent = parent.parent;
-        }
-        return false;
+        return this.getParent(predicate) !== null;
     }
 
     addComment(comment:Comment) {

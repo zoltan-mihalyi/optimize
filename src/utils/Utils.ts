@@ -18,6 +18,8 @@ import {Heap} from "./Variable";
 import Cache = require("./Cache");
 import Scope = require("../tracking/Scope");
 import EvaluationState = require("../tracking/EvaluationState");
+import Later = require("../node/Later");
+import {FunctionNode} from "../node/Functions";
 
 export interface InnerScoped extends SemanticNode {
     innerScope:Scope;
@@ -155,4 +157,8 @@ export function updateHeap(target:Heap, reference:ReferenceValue, heapObject:Hea
     } else {
         target.set(reference, heapObject);
     }
+}
+
+export function isFunctionNode(node:SemanticNode):node is FunctionNode {
+    return node instanceof Later.FunctionDeclarationNode || node instanceof Later.AbstractFunctionExpressionNode;
 }

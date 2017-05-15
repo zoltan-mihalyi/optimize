@@ -7,7 +7,7 @@ import {SemanticNode} from "../../node/SemanticNode";
 import {AssignmentNode} from "../../node/Assignments";
 import {VariableDeclaratorNode} from "../../node/Variables";
 import {Heap, Variable} from "../../utils/Variable";
-import {isValueUpdate, updateHeap} from "../../utils/Utils";
+import {isFunctionNode, isValueUpdate, updateHeap} from "../../utils/Utils";
 import EvaluationState = require("../../tracking/EvaluationState");
 import Map = require("../../utils/Map");
 import Scope = require("../../tracking/Scope");
@@ -95,7 +95,7 @@ export = (trackingVisitor:TrackingVisitor) => {
     trackingVisitor.onEnd((node:SemanticNode) => {
 
         node.walk((node:SemanticNode) => {
-            if (!(node instanceof FunctionDeclarationNode || node instanceof AbstractFunctionExpressionNode)) {
+            if (!isFunctionNode(node)) {
                 return;
             }
 

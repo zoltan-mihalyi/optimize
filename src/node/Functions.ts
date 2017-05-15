@@ -38,6 +38,8 @@ export interface FunctionNode extends InnerScoped {
     id:IdentifierNode;
     params:IdentifierNode[];
     body:ExpressionNode | BlockNode;
+
+    addArgumentsIfNeeded(state:EvaluationState):void;
 }
 
 export abstract class AbstractFunctionExpressionNode extends ExpressionNode implements FunctionNode {
