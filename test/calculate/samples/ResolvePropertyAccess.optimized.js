@@ -14,6 +14,7 @@ console.log("function");
 console.log("function");
 console.log(2);
 console.log(1);
+console.log(typeof (() => 0).prototype);
 
 console.log(3);
 console.log("a");

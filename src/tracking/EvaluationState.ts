@@ -17,7 +17,7 @@ import {
 import {Heap, Variable} from "../utils/Variable";
 import {nonEnumerable, throwValue, updateHeap} from "../utils/Utils";
 import Context from "../utils/Context";
-import {FunctionNode} from "../node/Functions";
+import {ArrowFunctionExpressionNode, FunctionNode} from "../node/Functions";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import {SemanticNode} from "../node/SemanticNode";
 import Map = require("../utils/Map");
@@ -205,14 +205,16 @@ class EvaluationState extends Resolver {
         let properties:any = {};
 
         const fn = this.createFunctionValue(properties, functionNode);
-        properties.prototype = nonEnumerable(this.createObject(OBJECT, new HeapObject({
-            proto: this.getReferenceValue(Object.prototype),
-            properties: {
-                constructor: nonEnumerable(fn)
-            },
-            propertyInfo: KNOWS_ALL,
-            trueValue: null //todo
-        })));
+        if (!(functionNode instanceof ArrowFunctionExpressionNode)) {
+            properties.prototype = nonEnumerable(this.createObject(OBJECT, new HeapObject({
+                proto: this.getReferenceValue(Object.prototype),
+                properties: {
+                    constructor: nonEnumerable(fn)
+                },
+                propertyInfo: KNOWS_ALL,
+                trueValue: null //todo
+            })));
+        }
 
         return fn;
     }

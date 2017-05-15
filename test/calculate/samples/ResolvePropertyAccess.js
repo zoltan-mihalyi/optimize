@@ -22,6 +22,7 @@ console.log((function(a, b) {
 }).length);
 console.log((function x(a) {
 }).prototype.constructor.length);
+console.log(typeof (() => 0).prototype);
 
 console.log('abc'.length);
 console.log('abc'[0]);
