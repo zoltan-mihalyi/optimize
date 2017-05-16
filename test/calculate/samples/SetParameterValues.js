@@ -137,7 +137,7 @@ function fn() {
     function moreObjectInSingleCall(a, b) {
     }
 
-    return moreObjectInSingleCall({}, {});
+    log(moreObjectInSingleCall({}, {}));
 }
 
 function setScopeValues() {

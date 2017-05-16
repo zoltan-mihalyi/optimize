@@ -175,3 +175,47 @@ function inlineExpression(){
 
     fn();
 }
+
+function inlineNonExpression() {
+    function fn(p) {
+        if (u) {
+            return;
+        }
+        return p;
+    }
+
+    return fn(3);
+}
+
+function inlineNonExpressionWithoutReturn(){
+    function fn(){
+        log(1);
+        log(2);
+    }
+
+    if(u) {
+        return fn();
+    }
+    log(3);
+}
+
+function inlineWithLabel(){
+    function fn(){
+        x:{
+            if (u) {
+                return 1;
+            }
+            log(1);
+            break x;
+        }
+    }
+
+    return fn();
+}
+
+function callNonFunction(){
+    var o = {}; //complicate to avoid IDE warning
+    var fn = o;
+
+    return fn();
+}

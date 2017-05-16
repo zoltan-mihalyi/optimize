@@ -145,3 +145,50 @@ function inlineWithInnerReturn(){
 function inlineExpression(){
     log(1);
 }
+
+function inlineNonExpression() {
+    x:
+    {
+        var result;
+        if (u) {
+            break x;
+        }
+        result = 3;
+        break x;
+    }
+
+    return result;
+}
+
+function inlineNonExpressionWithoutReturn(){
+    if(u) {
+        log(1);
+        log(2);
+        return void 0;
+    }
+    log(3);
+}
+
+function inlineWithLabel(){
+    x2:
+    {
+        var result;
+        x:{
+            if (u) {
+                result = 1;
+                break x2;
+            }
+            log(1);
+            break x;
+        }
+    }
+
+    return result;
+}
+
+function callNonFunction(){
+    var o = {}; //complicate to avoid IDE warning
+    var fn = o;
+
+    return fn();
+}

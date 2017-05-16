@@ -1,4 +1,4 @@
-import {createUnusedName, void0} from "../../utils/Utils";
+import {void0} from "../../utils/Utils";
 import {ReferenceValue, unknown} from "../../tracking/Value";
 import {SemanticNode} from "../../node/SemanticNode";
 import {FunctionDeclarationNode} from "../../node/Functions";
@@ -56,9 +56,7 @@ function replaceRecursionWithGoto(node:CallNode, enclosingFunction:FunctionDecla
         }
     }
     if (!labelName) {
-        labelName = createUnusedName('x', name => {
-            return enclosingFunction.contains(node => node instanceof LabeledNode && node.label.name === name);
-        });
+        labelName = enclosingFunction.createUnusedLabel();
     }
 
     node.parent.replaceWith([

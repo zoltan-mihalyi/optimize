@@ -1,7 +1,7 @@
 import Scope = require("../tracking/Scope");
 import Context from "../utils/Context";
 import {toSemanticNode} from "../Nodes";
-import {hasOwnProperty, isFunctionNode} from "../utils/Utils";
+import {createUnusedName, hasOwnProperty, isFunctionNode} from "../utils/Utils";
 import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
 import {TrackingVisitor} from "../utils/NodeVisitor";
@@ -245,6 +245,12 @@ export abstract class SemanticNode {
         });
         return names.map(name => {
             return builders.variableDeclaration('var', [builders.variableDeclarator(builders.identifier(name), null)]);
+        });
+    }
+
+    createUnusedLabel():string {
+        return createUnusedName('x', name => {
+            return this.contains(node => node instanceof Later.LabeledNode && node.label.name === name);
         });
     }
 
