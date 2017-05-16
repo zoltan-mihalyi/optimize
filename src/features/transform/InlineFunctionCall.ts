@@ -61,13 +61,14 @@ export = (nodeVisitor:NodeVisitor) => {
         if (!(parentNode instanceof ExpressionStatementNode || parentNode instanceof ReturnNode)) { //todo more types
             return;
         }
-        if (callNode.getEnclosingFunction() === null) { //avoid global pollution
+        const enclosingFunction = callNode.getEnclosingFunction();
+        if (enclosingFunction === null) { //avoid global pollution
             if (fn.innerScope.hasFunctionScopedVariables() || transformedReturn) {
                 return;
             }
         }
-        if (callNode.isAnyParentChanged()) {
-            return;
+        if ((enclosingFunction && enclosingFunction.isChanged()) || fn.isChanged()) {
+             return;
         }
 
         const resultVar = fn.innerScope.createUnusedIdentifier('result');
@@ -209,7 +210,6 @@ function createName(renames:Map<Variable, string>, variable:Variable) {
 }
 
 function applyRenames(renames:Map<Variable, string>, node:SemanticNode) {
-    node.markChanged();
     let parent = node;
     while (true) {
         if (isAllInside(parent.scope)) {
@@ -217,6 +217,10 @@ function applyRenames(renames:Map<Variable, string>, node:SemanticNode) {
         }
         parent = parent.getParent(node => node instanceof BlockNode);
     }
+    if (parent.isChanged()) {
+        return;
+    }
+
     const expression = parent.toAst(((n, e:any) => {
         if (n instanceof IdentifierNode && n.isReal()) {
             const variable = n.getVariable();

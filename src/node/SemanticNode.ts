@@ -260,7 +260,7 @@ export abstract class SemanticNode {
         this.afterTrack(state, visitor);
     }
 
-    markChanged() {
+    protected markChanged() {
         if (this.parent) {
             this.parent.markChanged();
         }

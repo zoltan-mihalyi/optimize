@@ -192,3 +192,26 @@ function callNonFunction(){
 
     return fn();
 }
+
+function inlineNonExpressionResultCollision(){
+    x:
+    {
+        var result2;
+        var result = u;
+        if(u1) {
+            result2 = 1;
+            break x;
+        }
+        result2 = result;
+        break x;
+    }
+
+    x:
+    {
+        var result3;
+        if(u2) {
+            result3 = 1;
+            break x;
+        }
+    }
+}

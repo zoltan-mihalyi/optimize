@@ -219,3 +219,21 @@ function callNonFunction(){
 
     return fn();
 }
+
+function inlineNonExpressionResultCollision(){
+    function fn1() {
+        var result = u;
+        if(u1) {
+            return 1;
+        }
+        return result;
+    }
+    function fn2() {
+        if(u2) {
+            return 1;
+        }
+    }
+
+    fn1();
+    fn2();
+}
