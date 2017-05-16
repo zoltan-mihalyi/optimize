@@ -1,4 +1,4 @@
-import {PrimitiveValue, unknown, ReferenceValue, SingleValue} from "../../tracking/Value";
+import {PrimitiveValue, unknown, ReferenceValue, SingleValue, FunctionObjectClass} from "../../tracking/Value";
 import {hasTrueValue, getTrueValue, binaryCache, throwValue} from "../../utils/Utils";
 import {BinaryNode, UnaryNode} from "../../node/Operators";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
@@ -67,6 +67,38 @@ export = (trackingVisitor:TrackingVisitor) => {
                     return maybeNegated(false);
                 }
             }
+            if (node.operator === 'in') {
+                if (rightValue instanceof ReferenceValue) {
+                    if (!hasTrueValue(leftValue, state)) {
+                        return unknown;
+                    }
+                    if (state.dereference(rightValue).hasPropertyDeep(state, getTrueValue(leftValue, state) + '')) {
+                        return new PrimitiveValue(true);
+                    } else {
+                        return unknown;
+                    }
+                } else {
+                    return throwValue('USING in OPERATOR WITH PRIMITIVE');
+                }
+            }
+            if (node.operator === 'instanceof') {
+                if (rightValue instanceof ReferenceValue) {
+                    if (!(rightValue.objectClass instanceof FunctionObjectClass)) {
+                        return unknown; //not throwValue, because Function subclasses return false in some environments.
+                    }
+                    if (leftValue instanceof ReferenceValue) {
+                        const isInstance = state.dereference(leftValue).isInstanceOf(state.dereference(rightValue), state);
+                        if (isInstance === null) {
+                            return unknown;
+                        }
+                        return new PrimitiveValue(isInstance);
+                    } else {
+                        return new PrimitiveValue(false);
+                    }
+                } else {
+                    return throwValue('USING instanceof WITH PRIMITIVE');
+                }
+            }
 
             if (hasTrueValue(leftValue, state) && hasTrueValue(rightValue, state)) {
                 if ((leftValue instanceof ReferenceValue || rightValue instanceof ReferenceValue)) {
@@ -74,20 +106,7 @@ export = (trackingVisitor:TrackingVisitor) => {
                         return unknown;
                     }
                 }
-                const leftTrueValue = getTrueValue(leftValue, state);
-                const rightTrueValue = getTrueValue(rightValue, state);
-                if (node.operator === 'in') {
-                    if (rightValue instanceof ReferenceValue) {
-                        if (state.dereference(rightValue).hasPropertyDeep(state, leftTrueValue + '')) {
-                            return new PrimitiveValue(true);
-                        } else {
-                            return unknown;
-                        }
-                    } else {
-                        return throwValue('USING in OPERATOR WITH PRIMITIVE');
-                    }
-                }
-                return state.createValue(evaluator(leftTrueValue, rightTrueValue));
+                return state.createValue(evaluator(getTrueValue(leftValue, state), getTrueValue(rightValue, state)));
             }
             return unknown;
         }));

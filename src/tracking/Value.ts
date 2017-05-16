@@ -296,21 +296,23 @@ export class HeapObject {
         return this.resolvePropertyDescriptor(state, name) !== null;
     }
 
-    eachReference(callback:(reference:ReferenceValue) => void) {
-        if (this.proto) {
-            callback(this.proto);
+    isInstanceOf(constructor:HeapObject, state:EvaluationState):boolean {
+        const prototype = constructor.resolvePropertyDescriptor(state, 'prototype');
+        if (!prototype || !prototype.value) {
+            return null;
         }
-        for (const i in this.properties) {
-            /* istanbul ignore else */
-            if (hasOwnProperty(this.properties, i)) {
-                const property = this.properties[i];
-                if (property.get) {
-                    callback(property.get);
+        let current:HeapObject = this;
+        while (true) {
+            if (current.proto === null) {
+                if (!current.propertyInfo.knowsAllOverride) {
+                    return null;
                 }
-                if (property.value instanceof ReferenceValue) {
-                    callback(property.value);
-                }
+                return false;
             }
+            if (current.proto === prototype.value) {
+                return true;
+            }
+            current = state.dereference(current.proto);
         }
     }
 
