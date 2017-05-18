@@ -39,9 +39,10 @@ export const binaryCache = new Cache<string, (x:any, y:any) => any>(operator => 
     return new Function('left,right', `return left ${operator} right;`) as (x:any, y:any) => any;
 });
 
-export function nonEnumerable(value:Value):PropDescriptor {
+export function nonEnumerable(writable:boolean, value:Value):PropDescriptor {
     return {
         enumerable: false,
+        writable: writable,
         value: value
     };
 }

@@ -19,7 +19,9 @@ export class ArrayNode extends ExpressionNode {
         const properties:PropDescriptorMap = {
             length: {
                 enumerable: false,
-                value: new PrimitiveValue(this.elements.length)
+                writable: true,
+                value: new PrimitiveValue(this.elements.length),
+                hiddenSetter: true
             }
         };
         let trueValue:any[] = [];
@@ -28,6 +30,7 @@ export class ArrayNode extends ExpressionNode {
             let value = element.getValue();
             properties[i] = {
                 enumerable: true,
+                writable: true,
                 value: value
             };
             if (trueValue && hasTrueValue(value, state)) {

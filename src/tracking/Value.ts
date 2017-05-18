@@ -104,8 +104,11 @@ export const ARGUMENTS = new ArgumentsObjectClass();
 
 export interface PropDescriptor {
     enumerable:boolean;
+    writable:boolean;
+    hiddenSetter?:boolean;
     value?:Value;
     get?:ReferenceValue;
+    set?:ReferenceValue;
 }
 
 export interface PropDescriptorMap {
@@ -148,24 +151,39 @@ function mergePropInfos(propInfo1:PropInfo, propInfo2:PropInfo):PropInfo {
     };
 }
 
+const BOOLEAN_PROPERTY_INFOS:(keyof PropDescriptor)[] = ['enumerable', 'writable', 'hiddenSetter'];
+
 function mergeProps(prop1:PropDescriptor, prop2:PropDescriptor):PropDescriptor {
-    if (prop1.enumerable === prop2.enumerable) {
-        if (prop1.value && prop2.value) {
-            return {
-                value: prop1.value.or(prop2.value),
-                enumerable: prop1.enumerable
-            };
-        } else if (prop1.get && prop1.get === prop2.get) {
-            return {
-                enumerable: prop1.enumerable,
-                get: prop1.get
-            };
+    const result:PropDescriptor = {} as any;
+    for (let i = 0; i < BOOLEAN_PROPERTY_INFOS.length; i++) {
+        const property = BOOLEAN_PROPERTY_INFOS[i];
+        if (prop1[property] !== prop2[property]) {
+            return null;
         }
+        result[property] = prop1[property];
+    }
+
+    if (prop1.value) {
+        if (prop2.value) {
+            result.value = prop1.value.or(prop2.value);
+            return result;
+        }
+    } else if (prop1.get === prop2.get && prop1.set === prop2.set) {
+        result.get = prop1.get;
+        result.set = prop1.get;
+        return result;
     }
     return null;
 }
 
 export class HeapObject {
+    static DIRTY_OBJECT = new HeapObject({
+        proto: null,
+        properties: {},
+        propertyInfo: MAY_HAVE_NEW,
+        trueValue: null
+    });
+
     readonly trueValue:Object | null;
     private proto:ReferenceValue;
     private properties:PropDescriptorMap;
@@ -190,7 +208,25 @@ export class HeapObject {
         }
     }
 
-    withProperty(name:string, newValue:Value):HeapObject {
+    withProperty(name:string, newValue:Value, state:EvaluationState):HeapObject {
+        const descriptor = this.resolvePropertyDescriptor(state, name);
+        if (!descriptor) {
+            return HeapObject.DIRTY_OBJECT;
+        }
+
+        if (!descriptor.value) {
+            if (descriptor.set) {
+                return HeapObject.DIRTY_OBJECT;
+            } else {
+                return this;
+            }
+        }
+        if (!descriptor.writable) {
+            return this;
+        }
+        if (descriptor.hiddenSetter) {
+            return HeapObject.DIRTY_OBJECT;
+        }
 
         const properties:PropDescriptorMap = {};
 
@@ -200,7 +236,8 @@ export class HeapObject {
             }
         }
         properties[name] = {
-            enumerable: true,
+            enumerable: descriptor.enumerable,
+            writable: true,
             value: newValue
         };
 
@@ -339,13 +376,6 @@ export class HeapObject {
         return null;
     }
 }
-
-export const DIRTY_OBJECT = new HeapObject({
-    proto: null,
-    properties: {},
-    propertyInfo: MAY_HAVE_NEW,
-    trueValue: null
-});
 
 export class FiniteSetOfValues extends IterableValue {
     static create(values:SingleValue[]):Value {

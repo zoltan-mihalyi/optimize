@@ -1,5 +1,4 @@
 import {
-    DIRTY_OBJECT,
     FunctionObjectClass,
     HeapObject,
     IterableValue,
@@ -206,10 +205,10 @@ class EvaluationState extends Resolver {
 
         const fn = this.createFunctionValue(properties, functionNode);
         if (!(functionNode instanceof ArrowFunctionExpressionNode)) {
-            properties.prototype = nonEnumerable(this.createObject(OBJECT, new HeapObject({
+            properties.prototype = nonEnumerable(true, this.createObject(OBJECT, new HeapObject({
                 proto: this.getReferenceValue(Object.prototype),
                 properties: {
-                    constructor: nonEnumerable(fn)
+                    constructor: nonEnumerable(true, fn)
                 },
                 propertyInfo: KNOWS_ALL,
                 trueValue: null //todo
@@ -220,9 +219,9 @@ class EvaluationState extends Resolver {
     }
 
     createFunctionValue(properties:PropDescriptorMap, functionNode:FunctionNode):ReferenceValue {
-        (properties as any).arguments = nonEnumerable(unknown);
-        (properties as any).caller = nonEnumerable(unknown);
-        (properties as any).length = nonEnumerable(new PrimitiveValue(functionNode.params.length));
+        (properties as any).arguments = nonEnumerable(false, unknown);
+        (properties as any).caller = nonEnumerable(false, unknown);
+        (properties as any).length = nonEnumerable(false, new PrimitiveValue(functionNode.params.length));
 
         return this.createObject(new FunctionObjectClass(functionNode, null), new HeapObject({
             proto: this.getReferenceValue(Function.prototype),
@@ -286,7 +285,7 @@ class EvaluationState extends Resolver {
     }
 
     makeDirty(reference:ReferenceValue) {
-        this.updateObject(reference, DIRTY_OBJECT);
+        this.updateObject(reference, HeapObject.DIRTY_OBJECT);
     }
 
     makeDirtyAll(variable:Variable) {
@@ -446,7 +445,7 @@ class UnsureEvaluationState extends EvaluationState {
     }
 
     dereference(reference:ReferenceValue):HeapObject {
-        return DIRTY_OBJECT;
+        return HeapObject.DIRTY_OBJECT;
     }
 }
 

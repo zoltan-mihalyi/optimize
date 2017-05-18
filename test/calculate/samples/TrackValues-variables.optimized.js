@@ -104,26 +104,6 @@ function trackLoopTest() {
     console.log(x5);
 }
 
-function trackLoopUnchanged() {
-    var i = 1;
-
-    function fn() {
-    }
-
-    fn.x = 1;
-    console.log(1);
-
-    while (true) {
-        console.log(1);
-        fn();
-        console.log("function");
-        console.log(fn.x);
-        fn.x = 2;
-        console.log(2);
-    }
-    i++;
-}
-
 function trackTryCatch() {
     var x = 1;
     try {

@@ -35,6 +35,7 @@ export class ObjectNode extends ExpressionNode {
                 }
                 properties[key] = {
                     enumerable: true,
+                    writable: true,
                     value: propertyValue
                 };
                 if (trueValue && hasTrueValue(propertyValue, state)) {

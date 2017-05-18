@@ -179,3 +179,42 @@ function trackAnotherScope() {
 
     console.log(a.x);
 }
+
+function trackNoSetter() {
+    var a = (/a/); //parens to avoid IDE error
+    a.global = true;
+    return false;
+}
+
+function trackNonWritable(){
+    function fn(){}
+
+    fn.length = 42;
+    return 0;
+}
+
+function trackArrayProperties(){
+    var a = [];
+
+    a.length = '1';
+    log(a.length);
+    a[4] = 1;
+    log(a.length);
+
+    a = [1];
+    a.length = 0;
+    log(a[0]);
+}
+
+function trackCanBeSetter() {
+    var a = {};
+    a.x = 1;
+    return a.x;
+}
+
+function trackNonEnumerable() {
+    function fn() {
+    }
+
+    fn.prototype = {};
+}

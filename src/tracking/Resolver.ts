@@ -56,7 +56,8 @@ abstract class Resolver {
         let properties:PropDescriptorMap = {};
         let proto = Object.getPrototypeOf(object);
 
-        const result = this.createObject(getObjectClass(object), new HeapObject({
+        const objectClass = getObjectClass(object);
+        const result = this.createObject(objectClass, new HeapObject({
             proto: proto ? this.getReferenceValue(proto) : null,
             properties: properties,
             propertyInfo: SafeProperties.has(object) ? NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : KNOWS_ALL,
@@ -69,12 +70,19 @@ abstract class Resolver {
             const propName = propNames[i];
             const propertyDescriptor = Object.getOwnPropertyDescriptor(object, propName);
             const propDescriptor:PropDescriptor = {
-                enumerable: propertyDescriptor.enumerable
+                enumerable: propertyDescriptor.enumerable,
+                writable: propertyDescriptor.writable,
+                hiddenSetter: objectClass === ARRAY && propName === 'length'
             };
             if (hasOwnProperty(propertyDescriptor, 'value')) {
                 propDescriptor.value = this.createValue((object as any)[propName]);
-            } else if (hasOwnProperty(propertyDescriptor, 'get')) {
-                propDescriptor.get = this.createValue(propertyDescriptor.get) as ReferenceValue;
+            } else {
+                if (propertyDescriptor.get) {
+                    propDescriptor.get = this.createValue(propertyDescriptor.get) as ReferenceValue;
+                }
+                if (propertyDescriptor.set) {
+                    propDescriptor.set = this.createValue(propertyDescriptor.set) as ReferenceValue;
+                }
             }
             properties[propName] = propDescriptor;
         }

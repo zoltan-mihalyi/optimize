@@ -1,7 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {binaryCache, getTrueValue, hasTrueValue} from "../utils/Utils";
 import {
-    DIRTY_OBJECT,
     HeapObject,
     IterableValue,
     PrimitiveValue,
@@ -54,7 +53,7 @@ function createModifiedObject(state:EvaluationState, left:MemberNode, heapObject
                 let propertyName = prop.value + '';
                 let previousValue = heapObject.resolveProperty(state, propertyName, heapObject.trueValue); //todo trueValue
                 let newValue = getNewValue(previousValue);
-                let modifiedHeapObject = heapObject.withProperty(propertyName, newValue);
+                let modifiedHeapObject = heapObject.withProperty(propertyName, newValue, state);
                 if (newHeapObject === null) {
                     newHeapObject = modifiedHeapObject;
                 } else {
@@ -68,7 +67,7 @@ function createModifiedObject(state:EvaluationState, left:MemberNode, heapObject
         hasUnknownProperty = true;
     }
     if (hasUnknownProperty) {
-        newHeapObject = DIRTY_OBJECT;
+        newHeapObject = HeapObject.DIRTY_OBJECT;
     }
     return newHeapObject;
 }
