@@ -2,24 +2,24 @@ import recast = require("recast");
 
 const builders = recast.types.builders;
 import {
+    FiniteSetOfValues,
+    HeapObject,
     PrimitiveValue,
-    Value,
     PropDescriptor,
-    unknown,
     ReferenceValue,
     SingleValue,
+    unknown,
     UnknownValue,
-    FiniteSetOfValues,
-    HeapObject
+    Value
 } from "../tracking/Value";
 import {SemanticNode} from "../node/SemanticNode";
 import {CallNode, NewNode} from "../node/CallNodes";
 import {Heap} from "./Variable";
+import {FunctionNode} from "../node/Functions";
 import Cache = require("./Cache");
 import Scope = require("../tracking/Scope");
 import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("../node/Later");
-import {FunctionNode} from "../node/Functions";
 
 export interface InnerScoped extends SemanticNode {
     innerScope:Scope;
@@ -104,9 +104,17 @@ const MUTATING_METHODS:Function[] = [
     Array.prototype.splice
 ];
 
+const apply = Function.prototype.apply;
+const call = Function.prototype.call;
+const slice = Array.prototype.slice;
+
 export function getRealFunctionAndContext(fn:Function, context:any, parameters:any[]):[Function, any] {
-    if (fn === Function.prototype.apply || fn === Function.prototype.call) {
-        return [context, parameters[0]];
+    if (isPrimitive(parameters)) {
+        return [null, null];
+    }
+    if (fn === apply || fn === call) {
+        const newParams = fn === call ? slice.call(parameters, 1) : parameters[1];
+        return getRealFunctionAndContext(context, parameters[0], newParams);
     }
     return [fn, context];
 }

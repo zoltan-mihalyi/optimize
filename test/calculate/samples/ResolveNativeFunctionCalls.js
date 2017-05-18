@@ -31,6 +31,15 @@ console.log((function(){}).apply(Date));
 
 console.log(Array.prototype.push(1));
 console.log(Array.prototype.push.apply(Object.prototype, [1]));
+console.log(Function.prototype.apply.call(Array.prototype.push, Object.prototype, [1]));
+console.log(Function.prototype.call.apply(Array.prototype.push, [Object.prototype, 1]));
+console.log(Function.prototype.call.apply(Array.prototype.push, {
+    length: 2,
+    0: Object.prototype,
+    1: 1
+}));
+
+console.log(Function.prototype.call.apply(Array.prototype.push, null));
 
 function resolveInside() {
     return String(1);
