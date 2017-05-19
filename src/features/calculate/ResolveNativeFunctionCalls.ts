@@ -1,5 +1,5 @@
 import {FunctionObjectClass, ReferenceValue, Value} from "../../tracking/Value";
-import {getMutatingObject, getParameters, getRealFunctionAndContext, getTrueValue, hasTrueValue} from "../../utils/Utils";
+import {getMutatingObject, getParameters, getRealFunctionAndContext} from "../../utils/Utils";
 import {CallNode, NewNode} from "../../node/CallNodes";
 import {MemberNode} from "../../node/Others";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
@@ -55,8 +55,9 @@ export  = (visitor:TrackingVisitor) => {
             let context = null;
             if (callee instanceof MemberNode) {
                 const contextValue = callee.object.getValue();
-                if (hasTrueValue(contextValue, state)) {
-                    context = getTrueValue(contextValue, state);
+                const trueValue = state.getTrueValue(contextValue);
+                if (trueValue) {
+                    context = trueValue.value;
                 } else {
                     return;
                 }

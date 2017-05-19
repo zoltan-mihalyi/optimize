@@ -72,6 +72,7 @@ export function toSemanticNode(expression:Expression, parent:SemanticNode, paren
                                scope:Scope, context:Context):SemanticNode {
 
     let Node = typeToNodeMap[expression.type];
+    /* istanbul ignore else */
     if (Node) {
         return new Node(expression, parent, parentObject, parentProperty, scope, context);
     } else {

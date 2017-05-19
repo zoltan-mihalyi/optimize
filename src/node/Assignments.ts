@@ -1,5 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {binaryCache, getTrueValue, hasTrueValue} from "../utils/Utils";
+import {binaryCache} from "../utils/Utils";
 import {
     HeapObject,
     IterableValue,
@@ -92,8 +92,12 @@ export class AssignmentNode extends ExpressionNode {
             const evaluator = binaryCache.get(this.operator.substring(0, this.operator.length - 1));
 
             return leftValue.product(rightValue, (left:SingleValue, right:SingleValue) => {
-                if (hasTrueValue(left, state) && hasTrueValue(right, state)) {
-                    return state.createValue(evaluator(getTrueValue(left, state), getTrueValue(right, state)));
+                const leftTrueValue = state.getTrueValue(left);
+                if (leftTrueValue) {
+                    const rightTrueValue = state.getTrueValue(right);
+                    if (rightTrueValue) {
+                        return state.createValue(evaluator(leftTrueValue.value, rightTrueValue.value));
+                    }
                 }
                 return unknown;
             });
@@ -123,8 +127,9 @@ export class UpdateNode extends ExpressionNode {
 
         trackAssignment(state, this.argument, (leftValue:Value) => {
             return leftValue.map((value:SingleValue) => {
-                if (hasTrueValue(value, state)) {
-                    let numberValue:number = +getTrueValue(value, state);
+                const trueValue = state.getTrueValue(value);
+                if (trueValue) {
+                    let numberValue:number = +trueValue.value;
                     return new PrimitiveValue(this.operator === '++' ? numberValue + 1 : numberValue - 1);
                 } else {
                     return unknown;

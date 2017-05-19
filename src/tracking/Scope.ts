@@ -46,10 +46,8 @@ class Scope extends Resolver {
     }
 
     each(callback:(name:string, variable:Variable) => void) {
-        for (const name in this.variables) {
-            if (hasOwnProperty(this.variables, name)) {
-                callback(name, this.variables[name]);
-            }
+        for (const name of Object.keys(this.variables)) {
+            callback(name, this.variables[name]);
         }
     }
 
@@ -78,13 +76,10 @@ class Scope extends Resolver {
 
     getFunctionScopedVariables():Variable[] {
         const result:Variable[] = [];
-        for (const name in this.variables) {
-            /* istanbul ignore else */
-            if (hasOwnProperty(this.variables, name)) {
-                const variable = this.variables[name];
-                if (!variable.blockScoped) {
-                    result.push(variable);
-                }
+        for (const name of Object.keys(this.variables)) {
+            const variable = this.variables[name];
+            if (!variable.blockScoped) {
+                result.push(variable);
             }
         }
         return result;

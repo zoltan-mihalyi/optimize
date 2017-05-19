@@ -25,6 +25,7 @@ console.log(Object.prototype.toString.call(null));
 console.log(/a/.hasOwnProperty('global'));
 console.log(new Function('return typeof Object.create')());
 console.log(eval('1+1'));
+console.log((function(){}).apply());
 
 console.log(Function.prototype.apply.call(function(){}));
 console.log((function(){}).apply(Date));

@@ -1,6 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {ARRAY, HeapObject, KNOWS_ALL, PrimitiveValue, PropDescriptorMap} from "../tracking/Value";
-import {getTrueValue, hasTrueValue} from "../utils/Utils";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import EvaluationState = require("../tracking/EvaluationState");
 
@@ -33,8 +32,9 @@ export class ArrayNode extends ExpressionNode {
                 writable: true,
                 value: value
             };
-            if (trueValue && hasTrueValue(value, state)) {
-                trueValue.push(getTrueValue(value, state));
+            const itemTrueValue = state.getTrueValue(value);
+            if (trueValue && itemTrueValue) {
+                trueValue.push(itemTrueValue.value);
             } else {
                 trueValue = null;
             }

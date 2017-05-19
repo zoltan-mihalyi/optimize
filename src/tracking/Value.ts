@@ -230,10 +230,8 @@ export class HeapObject {
 
         const properties:PropDescriptorMap = {};
 
-        for (const i in this.properties) {
-            if (hasOwnProperty(this.properties, i)) {
-                properties[i] = this.properties[i];
-            }
+        for (const i of Object.keys(this.properties)) {
+            properties[i] = this.properties[i];
         }
         properties[name] = {
             enumerable: descriptor.enumerable,
@@ -260,13 +258,10 @@ export class HeapObject {
     }
 
     iterate(state:EvaluationState, callback:(key:string) => void) {
-        for (const i in this.properties) {
-            /* istanbul ignore else */
-            if (hasOwnProperty(this.properties, i)) {
-                const property = this.properties[i];
-                if (property.enumerable) {
-                    callback(i);
-                }
+        for (const i of Object.keys(this.properties)) {
+            const property = this.properties[i];
+            if (property.enumerable) {
+                callback(i);
             }
         }
         if (this.proto) {
@@ -281,32 +276,28 @@ export class HeapObject {
     or(other:HeapObject):HeapObject {
         const properties:PropDescriptorMap = {};
         let mayHaveNew = false;
-        for (const propName in this.properties) {
-            if (hasOwnProperty(this.properties, propName)) {
-                const prop1 = this.properties[propName];
-                if (hasOwnProperty(other.properties, propName)) {
-                    const prop2 = other.properties[propName];
-                    const merged = mergeProps(prop1, prop2);
-                    if (merged) {
-                        properties[propName] = merged;
-                    } else {
-                        mayHaveNew = true;
-                    }
+        for (const propName of Object.keys(this.properties)) {
+            const prop1 = this.properties[propName];
+            if (hasOwnProperty(other.properties, propName)) {
+                const prop2 = other.properties[propName];
+                const merged = mergeProps(prop1, prop2);
+                if (merged) {
+                    properties[propName] = merged;
                 } else {
                     mayHaveNew = true;
                 }
+            } else {
+                mayHaveNew = true;
             }
         }
 
-        for (const propName in other.properties) {
-            if (hasOwnProperty(other.properties, propName)) {
-                const prop1 = other.properties[propName];
-                if (!hasOwnProperty(this.properties, propName)) {
-                    if (this.propertyInfo.knowsAll) {
-                        properties[propName] = prop1;
-                    } else {
-                        mayHaveNew = true;
-                    }
+        for (const propName of Object.keys(other.properties)) {
+            const prop1 = other.properties[propName];
+            if (!hasOwnProperty(this.properties, propName)) {
+                if (this.propertyInfo.knowsAll) {
+                    properties[propName] = prop1;
+                } else {
+                    mayHaveNew = true;
                 }
             }
         }

@@ -1,5 +1,5 @@
 import {PrimitiveValue, unknown, ReferenceValue, SingleValue, FunctionObjectClass} from "../../tracking/Value";
-import {hasTrueValue, getTrueValue, binaryCache, throwValue} from "../../utils/Utils";
+import { binaryCache, throwValue} from "../../utils/Utils";
 import {BinaryNode, UnaryNode} from "../../node/Operators";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
 import Cache = require("../../utils/Cache");
@@ -69,10 +69,11 @@ export = (trackingVisitor:TrackingVisitor) => {
             }
             if (node.operator === 'in') {
                 if (rightValue instanceof ReferenceValue) {
-                    if (!hasTrueValue(leftValue, state)) {
+                    const trueValue = state.getTrueValue(leftValue);
+                    if (!trueValue) {
                         return unknown;
                     }
-                    if (state.dereference(rightValue).hasPropertyDeep(state, getTrueValue(leftValue, state) + '')) {
+                    if (state.dereference(rightValue).hasPropertyDeep(state, trueValue.value + '')) {
                         return new PrimitiveValue(true);
                     } else {
                         return unknown;
@@ -99,14 +100,15 @@ export = (trackingVisitor:TrackingVisitor) => {
                     return throwValue('USING instanceof WITH PRIMITIVE');
                 }
             }
-
-            if (hasTrueValue(leftValue, state) && hasTrueValue(rightValue, state)) {
+            const leftTrueValue = state.getTrueValue(leftValue);
+            const rightTrueValue = state.getTrueValue(rightValue);
+            if (leftTrueValue && rightTrueValue) {
                 if ((leftValue instanceof ReferenceValue || rightValue instanceof ReferenceValue)) {
                     if (!node.context.options.assumptions.noNativeOverwrites) {
                         return unknown;
                     }
                 }
-                return state.createValue(evaluator(getTrueValue(leftValue, state), getTrueValue(rightValue, state)));
+                return state.createValue(evaluator(leftTrueValue.value, rightTrueValue.value));
             }
             return unknown;
         }));
@@ -129,9 +131,10 @@ export = (trackingVisitor:TrackingVisitor) => {
         const valueInformation = argument.getValue();
         const mapper = unaryCache.get(node.operator);
         node.setValue(valueInformation.map(value => {
-            if (hasTrueValue(value, state)) {
+            const trueValue = state.getTrueValue(value);
+            if (trueValue) {
                 if (value instanceof PrimitiveValue || node.context.options.assumptions.noNativeOverwrites) {
-                    return state.createValue(mapper(getTrueValue(value, state)));
+                    return state.createValue(mapper(trueValue.value));
                 }
             }
             if (node.operator === '!') {

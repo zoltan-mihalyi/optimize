@@ -62,22 +62,6 @@ export function equals(a:any, b:any):boolean {
     return a === b || (a !== a && b !== b);
 }
 
-export function hasTrueValue(value:Value, state:EvaluationState):boolean {
-    return value instanceof PrimitiveValue || (value instanceof ReferenceValue && !!state.dereference(value).trueValue);
-}
-
-export function getTrueValue(value:Value, state:EvaluationState):any { //todo move to state
-    if (value instanceof PrimitiveValue) {
-        return value.value;
-    } else if (value instanceof ReferenceValue) {
-        const trueValue = state.dereference(value).trueValue;
-        if (trueValue) {
-            return trueValue;
-        }
-    }
-    throw new Error('no true value');
-}
-
 export function void0():Expression {
     return builders.unaryExpression('void', builders.literal(0));
 }
@@ -130,8 +114,9 @@ export function getParameters(state:EvaluationState, node:CallNode|NewNode):any[
     for (let i = 0; i < node.arguments.length; i++) {
         const argument = node.arguments[i];
         let parameter = argument.getValue();
-        if (hasTrueValue(parameter, state)) {
-            parameters.push(getTrueValue(parameter, state));
+        const trueValue = state.getTrueValue(parameter);
+        if (trueValue) {
+            parameters.push(trueValue.value);
         } else {
             return null;
         }

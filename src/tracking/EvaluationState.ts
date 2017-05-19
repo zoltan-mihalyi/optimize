@@ -33,6 +33,10 @@ const newCallCache = new Cache<number, Function>(paramNum => {
     return new Function(paramsString, 'return new this(' + paramsString + ')');
 });
 
+interface TrueValueHolder {
+    value:any;
+}
+
 class EvaluationState extends Resolver {
     private variableValues:Map<Variable, Value> = new Map<Variable, Value>();
     private heap:Heap = new Map<ReferenceValue, HeapObject>();
@@ -321,6 +325,22 @@ class EvaluationState extends Resolver {
         return this.heap.clone();
     }
 
+    getTrueValue(value:Value):TrueValueHolder | null {
+        if (value instanceof PrimitiveValue) {
+            return {
+                value: value.value
+            };
+        } else if (value instanceof ReferenceValue) {
+            const trueValue = this.dereference(value).trueValue;
+            if (trueValue) {
+                return {
+                    value: trueValue
+                };
+            }
+        }
+        return null;
+    }
+
     private setOrUpdateVariable(variable:Variable, value:Value, initialize:boolean) {
         if (!initialize && this.possibleValues.has(variable)) {
             this.possibleValues.setOrUpdate(variable, this.possibleValues.get(variable).or(value));
@@ -444,7 +464,7 @@ class UnsureEvaluationState extends EvaluationState {
         return super.getValueInner(variable);
     }
 
-    dereference(reference:ReferenceValue):HeapObject {
+    dereference():HeapObject {
         return HeapObject.DIRTY_OBJECT;
     }
 }

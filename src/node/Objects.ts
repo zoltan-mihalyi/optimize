@@ -1,6 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {Value, PropDescriptorMap, OBJECT, PrimitiveValue, HeapObject, KNOWS_ALL, MAY_HAVE_NEW} from "../tracking/Value";
-import {hasTrueValue, getTrueValue, throwValue} from "../utils/Utils";
+import {throwValue} from "../utils/Utils";
 import {SemanticNode} from "./SemanticNode";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import {IdentifierNode} from "./IdentifierNode";
@@ -25,11 +25,12 @@ export class ObjectNode extends ExpressionNode {
         for (let i = 0; i < this.properties.length; i++) {
             const property = this.properties[i];
             let value = property.getKeyValue();
-            if (hasTrueValue(value, state)) {
+            const keyTrueValue = state.getTrueValue(value);
+            if (keyTrueValue) {
                 const propertyValue = property.value.getValue();
                 let key;
                 try {
-                    key = '' + getTrueValue(value, state);
+                    key = '' + keyTrueValue.value;
                 } catch (e) {
                     return throwValue('CANNOT RESOLVE DYNAMIC PROPERTY' + e);
                 }
@@ -38,8 +39,9 @@ export class ObjectNode extends ExpressionNode {
                     writable: true,
                     value: propertyValue
                 };
-                if (trueValue && hasTrueValue(propertyValue, state)) {
-                    trueValue[key] = getTrueValue(propertyValue, state);
+                const propertyTrueValue = state.getTrueValue(propertyValue);
+                if (trueValue && propertyTrueValue) {
+                    trueValue[key] = propertyTrueValue.value;
                 } else {
                     trueValue = null;
                 }

@@ -1,7 +1,7 @@
 import Scope = require("../tracking/Scope");
 import Context from "../utils/Context";
 import {toSemanticNode} from "../Nodes";
-import {createUnusedName, hasOwnProperty, isFunctionNode} from "../utils/Utils";
+import {createUnusedName, isFunctionNode} from "../utils/Utils";
 import {FunctionNode} from "./Functions";
 import {Comment} from "./Comments";
 import {TrackingVisitor} from "../utils/NodeVisitor";
@@ -34,23 +34,21 @@ export abstract class SemanticNode {
         this.scope = scope;
 
         this.original = source.original;
-        for (let childKey in source) {
-            if (hasOwnProperty(source, childKey)) {
-                this.childKeys.push(childKey);
-                let sourceChild:any = (source as any)[childKey];
-                if (Array.isArray(sourceChild)) {
+        for (let childKey of Object.keys(source)) {
+            this.childKeys.push(childKey);
+            let sourceChild:any = (source as any)[childKey];
+            if (Array.isArray(sourceChild)) {
 
-                    const semanticArray = [];
-                    for (let i = 0; i < sourceChild.length; i++) {
-                        semanticArray.push(toSemanticNode(sourceChild[i], this, semanticArray, i + '', scope, context));
-                    }
-
-                    (this as any)[childKey] = semanticArray;
-                } else if (sourceChild && sourceChild.type) {
-                    (this as any)[childKey] = toSemanticNode(sourceChild, this, this, childKey, scope, context);
-                } else {
-                    (this as any)[childKey] = sourceChild;
+                const semanticArray = [];
+                for (let i = 0; i < sourceChild.length; i++) {
+                    semanticArray.push(toSemanticNode(sourceChild[i], this, semanticArray, i + '', scope, context));
                 }
+
+                (this as any)[childKey] = semanticArray;
+            } else if (sourceChild && sourceChild.type) {
+                (this as any)[childKey] = toSemanticNode(sourceChild, this, this, childKey, scope, context);
+            } else {
+                (this as any)[childKey] = sourceChild;
             }
         }
     }
@@ -209,16 +207,6 @@ export abstract class SemanticNode {
         return this.changed;
     }
 
-    isAnyParentChanged():boolean {
-        if (this.changed) {
-            return true;
-        }
-        if (this.parent) {
-            return this.parent.isAnyParentChanged();
-        }
-        return false;
-    }
-
     clearUpdated() {
         this.updated = false;
     }
@@ -257,7 +245,7 @@ export abstract class SemanticNode {
     track(state:EvaluationState, visitor:TrackingVisitor) {
         this.onTrack(state, visitor);
         visitor.callAll(this, state);
-        this.afterTrack(state, visitor);
+        this.afterTrack(state);
     }
 
     protected markChanged() {
@@ -284,7 +272,7 @@ export abstract class SemanticNode {
     protected createSubScopeIfNeeded(scope:Scope):Scope {
         return scope;
     }
-    protected afterTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    protected afterTrack(state:EvaluationState) {
     }
 
     protected abstract onTrack(state:EvaluationState, visitor:TrackingVisitor):void;

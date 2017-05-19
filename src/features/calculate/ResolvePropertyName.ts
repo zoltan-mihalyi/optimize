@@ -1,5 +1,5 @@
 import {SingleValue, PrimitiveValue} from "../../tracking/Value";
-import {throwValue, hasTrueValue, getTrueValue} from "../../utils/Utils";
+import {throwValue} from "../../utils/Utils";
 import {MemberNode} from "../../node/Others";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
 import EvaluationState = require("../../tracking/EvaluationState");
@@ -10,9 +10,10 @@ export  = (nodeVisitor:TrackingVisitor) => {
             return;
         }
         let propertyValue = node.property.getValue().map((propertyValue:SingleValue) => {
-            if (hasTrueValue(propertyValue, state)) {
+            const trueValue = state.getTrueValue(propertyValue);
+            if (trueValue) {
                 try {
-                    let string = getTrueValue(propertyValue, state) + '';
+                    let string = trueValue.value + '';
                     let number = toNumber(string);
                     return new PrimitiveValue(number === null ? string : number);
                 } catch (e) {

@@ -15,7 +15,7 @@ console.log('toString' in []);
 console.log('toString' in (() => 0));
 
 console.log('a' in 1);
-console.log(() => 1 in {});
+console.log((() => 1) in {});
 console.log('create' in Object);
 
 console.log(1 instanceof 1);

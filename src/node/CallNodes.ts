@@ -75,7 +75,7 @@ export class CallNode extends ExpressionNode {
         }
     }
 
-    protected afterTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    protected afterTrack(state:EvaluationState) {
         const callee = this.callee;
 
         if (callee instanceof Later.MemberNode) {

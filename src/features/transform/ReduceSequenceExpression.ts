@@ -15,7 +15,7 @@ export = (nodeVisitor:NodeVisitor) => {
         }
         if (nodes.length < node.expressions.length) {
             const expressions = [];
-            for (var i = 0; i < nodes.length; i++) {
+            for (let i = 0; i < nodes.length; i++) {
                 expressions.push(nodes[i].toAst());
             }
             let result = expressions.length === 1 ? expressions[0] : builders.sequenceExpression(expressions);
