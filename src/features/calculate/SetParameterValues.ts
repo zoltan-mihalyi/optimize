@@ -7,7 +7,7 @@ import {
     Value
 } from "../../tracking/Value";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
-import {CallNode, NewNode} from "../../node/CallNodes";
+import {CallLikeNode, CallNode, NewNode} from "../../node/CallNodes";
 import {AbstractFunctionExpressionNode, FunctionDeclarationNode, FunctionNode} from "../../node/Functions";
 import {IdentifierNode} from "../../node/IdentifierNode";
 import {SemanticNode} from "../../node/SemanticNode";
@@ -52,7 +52,7 @@ function isOuterScoped(variable:Variable, node:IdentifierNode) {
 
 function isCalling(node:IdentifierNode):boolean {
     const parent = node.parent;
-    return (parent instanceof CallNode || parent instanceof NewNode) && parent.callee === node;
+    return (parent instanceof CallLikeNode) && parent.callee === node;
 }
 
 function nullSafeConcat<T>(arr1:T[], arr2:T[]):T[] {

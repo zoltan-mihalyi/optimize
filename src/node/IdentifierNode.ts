@@ -1,13 +1,13 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {Variable} from "../utils/Variable";
-import {MemberNode, ExpressionStatementNode} from "./Others";
-import {CallNode, NewNode} from "./CallNodes";
+import {ExpressionStatementNode, MemberNode} from "./Others";
+import {CallLikeNode} from "./CallNodes";
 import {AssignmentNode} from "./Assignments";
 import {VariableDeclaratorNode} from "./Variables";
+import {BinaryNode} from "./Operators";
 import EvaluationState = require("../tracking/EvaluationState");
 import Scope = require("../tracking/Scope");
 import Later = require("./Later");
-import {BinaryNode} from "./Operators";
 
 export class IdentifierNode extends ExpressionNode {
     readonly name:string;
@@ -42,7 +42,7 @@ export class IdentifierNode extends ExpressionNode {
         if (parent instanceof MemberNode) {
             return false; // member node handles this
         }
-        if (parent instanceof CallNode || parent instanceof NewNode) {
+        if (parent instanceof CallLikeNode) {
             if (parent.callee === this) {
                 return false;
             }

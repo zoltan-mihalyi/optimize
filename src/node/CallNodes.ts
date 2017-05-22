@@ -1,7 +1,7 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {TrackingVisitor} from "../utils/NodeVisitor";
-import {ReferenceValue, SingleValue, HeapObject, FunctionObjectClass} from "../tracking/Value";
-import {getMutatingObject, getParameters, canWrap, isPrimitive, getClassName} from "../utils/Utils";
+import {FunctionObjectClass, HeapObject, ReferenceValue, SingleValue} from "../tracking/Value";
+import {canWrap, getClassName, getMutatingObject, getParameters, isPrimitive} from "../utils/Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
@@ -64,9 +64,13 @@ function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, fn:Fu
     return false;
 }
 
-export class CallNode extends ExpressionNode {
+export abstract class CallLikeNode extends ExpressionNode {
     callee:ExpressionNode;
     arguments:ExpressionNode[];
+
+    protected isCleanInner():boolean {
+        return false;
+    }
 
     protected onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.callee.track(state, visitor);
@@ -75,6 +79,17 @@ export class CallNode extends ExpressionNode {
         }
     }
 
+    protected afterTrack(state:EvaluationState) {
+        for (let i = 0; i < this.arguments.length; i++) {
+            const argument = this.arguments[i];
+            if (argument instanceof IdentifierNode) {
+                state.makeDirtyAll(argument.getVariable());
+            }
+        }
+    }
+}
+
+export class CallNode extends CallLikeNode {
     protected afterTrack(state:EvaluationState) {
         const callee = this.callee;
 
@@ -100,32 +115,9 @@ export class CallNode extends ExpressionNode {
             }
         }
 
-        for (let i = 0; i < this.arguments.length; i++) {
-            let obj = this.arguments[i];
-            if (obj instanceof IdentifierNode) {
-                state.makeDirtyAll(obj.getVariable());
-            }
-        }
-    }
-
-    protected isCleanInner():boolean {
-        return false;
+        super.afterTrack(state);
     }
 }
 
-export class NewNode extends ExpressionNode {
-    callee:ExpressionNode;
-    arguments:ExpressionNode[];
-
-    protected isCleanInner():boolean {
-        return false;
-    }
-
-    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
-        this.callee.track(state, visitor);
-        for (let i = 0; i < this.arguments.length; i++) {
-            this.arguments[i].track(state, visitor);
-        }
-    }
-
+export class NewNode extends CallLikeNode {
 }
