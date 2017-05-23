@@ -1,6 +1,6 @@
 import {createUnusedName, hasOwnProperty} from "../utils/Utils";
 import {Heap, Variable} from "../utils/Variable";
-import {HeapObject, ObjectClass, ReferenceValue, unknown, Value} from "./Value";
+import {HeapObject, ReferenceValue, unknown, Value} from "./Value";
 import Map = require("../utils/Map");
 import SafeProperties = require("./SafeProperties");
 import Resolver = require("./Resolver");
@@ -140,12 +140,6 @@ class Scope extends Resolver {
         return false;
     }
 
-    createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue {
-        const reference = new ReferenceValue(objectClass);
-        this.possibleHeap.set(reference, heapObject);
-        return reference;
-    }
-
     isBuiltIn(key:Object):boolean {
         return Scope.ROOT_SCOPE.hasObject(key);
     }
@@ -159,6 +153,11 @@ class Scope extends Resolver {
             return true;
         }
         return this.isAncestorOf(parent);
+    }
+
+    protected onObjectCreate(heapObject:HeapObject, reference:ReferenceValue) {
+        this.possibleHeap.set(reference, heapObject);
+        return reference;
     }
 
     private setUnknownGlobal(name:string):Variable {

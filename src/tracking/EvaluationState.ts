@@ -5,7 +5,6 @@ import {
     KNOWS_ALL,
     NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE,
     OBJECT,
-    ObjectClass,
     PrimitiveValue,
     PropDescriptorMap,
     ReferenceValue,
@@ -239,13 +238,6 @@ class EvaluationState extends Resolver {
         this.setOrUpdateHeap(reference, heapObject);
     }
 
-    createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue {
-        const reference = new ReferenceValue(objectClass);
-        this.ownReferences.push(reference);
-        this.setOrUpdateHeap(reference, heapObject);
-        return reference;
-    }
-
     hasReference(reference:ReferenceValue):boolean {
         if (this.heap.has(reference)) {
             return true;
@@ -339,6 +331,12 @@ class EvaluationState extends Resolver {
             }
         }
         return null;
+    }
+
+    protected onObjectCreate(heapObject:HeapObject, reference:ReferenceValue) {
+        this.ownReferences.push(reference);
+        this.setOrUpdateHeap(reference, heapObject);
+        return reference;
     }
 
     private setOrUpdateVariable(variable:Variable, value:Value, initialize:boolean) {

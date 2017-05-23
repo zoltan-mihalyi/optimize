@@ -63,7 +63,6 @@ abstract class Resolver {
             propertyInfo: SafeProperties.has(object) ? NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : KNOWS_ALL,
             trueValue: object
         }));
-        this.objectToReferenceMap.set(object, result);
 
         const propNames:string[] = SafeProperties.has(object) ? SafeProperties.get(object) : Object.getOwnPropertyNames(object);
         for (let i = 0; i < propNames.length; i++) {
@@ -101,7 +100,16 @@ abstract class Resolver {
         return this.objectToReferenceMap.has(key);
     }
 
-    abstract createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue;
+    createObject(objectClass:ObjectClass, heapObject:HeapObject) {
+        const reference = new ReferenceValue(objectClass);
+        this.onObjectCreate(heapObject, reference);
+        if (heapObject.trueValue) {
+            this.objectToReferenceMap.set(heapObject.trueValue, reference);
+        }
+        return reference;
+    }
+
+    protected abstract onObjectCreate(heapObject:HeapObject, reference:ReferenceValue):void;
 
     private getObjectReference(object:Object):ReferenceValue {
         if (this.objectToReferenceMap.has(object)) {

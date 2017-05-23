@@ -218,3 +218,9 @@ function trackNonEnumerable() {
 
     fn.prototype = {};
 }
+
+function knownCallDoesNotMakeObjectDirty() {
+    var a = [1];
+    a.push.apply(a, [2, 3]);
+    return 3;
+}

@@ -43,9 +43,7 @@ export class IdentifierNode extends ExpressionNode {
             return false; // member node handles this
         }
         if (parent instanceof CallLikeNode) {
-            if (parent.callee === this) {
-                return false;
-            }
+            return false; //call like nodes handle this
         }
         if (parent instanceof AssignmentNode && parent.right === this && parent.parent instanceof ExpressionStatementNode) {
             return false;

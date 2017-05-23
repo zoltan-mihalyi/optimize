@@ -54,7 +54,7 @@ function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, fn:Fu
 
                 state.createValueFromCall(fn, context, parameters);
 
-                state.updateObject(objectValue, state.dereference(state.getReferenceValue(clonedObject)));
+                state.updateObject(state.getReferenceValue(mutatingObject), state.dereference(state.getReferenceValue(clonedObject)));
             }
         }
         return true;
