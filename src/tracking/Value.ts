@@ -123,7 +123,11 @@ interface PropInfo {
 
 export const MAY_HAVE_NEW:PropInfo = {knowsAll: false, knowsAllEnumerable: false, knowsAllOverride: false};
 export const NO_UNKNOWN_OVERRIDE:PropInfo = {knowsAll: false, knowsAllEnumerable: false, knowsAllOverride: true};
-export const NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:PropInfo = {knowsAll: false, knowsAllEnumerable: true, knowsAllOverride: true};
+export const NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE:PropInfo = {
+    knowsAll: false,
+    knowsAllEnumerable: true,
+    knowsAllOverride: true
+};
 export const KNOWS_ALL:PropInfo = {knowsAll: true, knowsAllEnumerable: true, knowsAllOverride: true};
 
 interface ObjectParameters {
@@ -341,6 +345,24 @@ export class HeapObject {
                 return true;
             }
             current = state.dereference(current.proto);
+        }
+    }
+
+    eachReference(callback:(reference:ReferenceValue) => void) {
+        if (this.proto) {
+            callback(this.proto);
+        }
+        for (const i in this.properties) {
+            const property = this.properties[i];
+            if (property.get) {
+                callback(property.get);
+            }
+            if (property.set) {
+                callback(property.set);
+            }
+            if (property.value instanceof ReferenceValue) {
+                callback(property.value);
+            }
         }
     }
 

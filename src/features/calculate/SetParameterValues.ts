@@ -1,4 +1,11 @@
-import {FunctionObjectClass, PrimitiveValue, ReferenceValue, Value} from "../../tracking/Value";
+import {
+    FunctionObjectClass,
+    HeapObject,
+    IterableValue,
+    PrimitiveValue,
+    ReferenceValue,
+    Value
+} from "../../tracking/Value";
 import {TrackingVisitor} from "../../utils/NodeVisitor";
 import {CallNode, NewNode} from "../../node/CallNodes";
 import {AbstractFunctionExpressionNode, FunctionDeclarationNode, FunctionNode} from "../../node/Functions";
@@ -152,10 +159,11 @@ export = (trackingVisitor:TrackingVisitor) => {
             return;
         }
 
+        const parameters = node.arguments.map(arg => arg.getValue());
         const call:Call = {
-            parameters: node.arguments.map(arg => arg.getValue()),
+            parameters: parameters,
             variableValues: state.getVariableValues(),
-            heap: state.getHeap()
+            heap: getHeapFor(parameters, state)
         };
 
         if (callee instanceof IdentifierNode) {
@@ -219,4 +227,29 @@ function getValueAt(calls:Call[], index:number):Value {
         }
     }
     return resultValue;
+}
+
+function getHeapFor(parameters:Value[], state:EvaluationState):Heap {
+    const heap:Heap = new Map<ReferenceValue, HeapObject>();
+
+    parameters.forEach(param => {
+        if (!(param instanceof IterableValue)) {
+            return;
+        }
+        param.each(val => {
+            if (val instanceof ReferenceValue) {
+                addReference(val);
+            }
+        });
+    });
+
+    function addReference(reference:ReferenceValue) {
+        if (!heap.has(reference)) {
+            const heapObject = state.dereference(reference);
+            heap.set(reference, heapObject);
+            heapObject.eachReference(addReference);
+        }
+    }
+
+    return heap
 }
