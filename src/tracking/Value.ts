@@ -1,4 +1,4 @@
-import {equals, hasOwnProperty} from "../utils/Utils";
+import {createMatchingObj, equals, hasOwnProperty} from "../utils/Utils";
 import {FunctionNode} from "../node/Functions";
 import EvaluationState = require("./EvaluationState");
 
@@ -105,6 +105,7 @@ export const ARGUMENTS = new ArgumentsObjectClass();
 export interface PropDescriptor {
     enumerable:boolean;
     writable:boolean;
+    configurable:boolean;
     hiddenSetter?:boolean;
     value?:Value;
     get?:ReferenceValue;
@@ -231,15 +232,11 @@ export class HeapObject {
         if (descriptor.hiddenSetter) {
             return HeapObject.DIRTY_OBJECT;
         }
-
-        const properties:PropDescriptorMap = {};
-
-        for (const i of Object.keys(this.properties)) {
-            properties[i] = this.properties[i];
-        }
+        const properties = this.cloneProperties();
         properties[name] = {
             enumerable: descriptor.enumerable,
             writable: true,
+            configurable: descriptor.configurable,
             value: newValue
         };
 
@@ -248,6 +245,40 @@ export class HeapObject {
             properties: properties,
             propertyInfo: this.propertyInfo,
             trueValue: null //todo
+        });
+    }
+
+    withoutProperty(name:string):HeapObject {
+        if (!this.hasProperty(name)) {
+            return this;
+        }
+        const propertyDescriptor = this.properties[name];
+        if (!propertyDescriptor.configurable) {
+            return this;
+        }
+
+        const properties = this.cloneProperties();
+        delete properties[name];
+        let trueValue:any;
+        if (this.trueValue) {
+            trueValue = createMatchingObj(this.trueValue);
+
+            const propNames = Object.getOwnPropertyNames(this.trueValue);
+            for (let i = 0; i < propNames.length; i++) {
+                const propName = propNames[i];
+                if (propName !== name) {
+                    trueValue[propName] = (this.trueValue as any)[propName];
+                }
+            }
+        } else {
+            trueValue = null;
+        }
+
+        return new HeapObject({
+            proto: this.proto,
+            properties: properties,
+            propertyInfo: this.propertyInfo,
+            trueValue: trueValue //todo
         });
     }
 
@@ -364,6 +395,15 @@ export class HeapObject {
                 callback(property.value);
             }
         }
+    }
+
+    private cloneProperties() {
+        const properties:PropDescriptorMap = {};
+
+        for (const i of Object.keys(this.properties)) {
+            properties[i] = this.properties[i];
+        }
+        return properties;
     }
 
     private resolvePropertyDescriptor(state:EvaluationState, name:string):PropDescriptor {

@@ -7,6 +7,7 @@ import {TrackingVisitor} from "../utils/NodeVisitor";
 import Later = require("./Later");
 import {isFunctionNode} from "../utils/Utils";
 import {ArrowFunctionExpressionNode, FunctionNode} from "./Functions";
+import {UnaryNode} from "./Operators";
 
 export class EmptyNode extends SemanticNode {
     onTrack() {
@@ -44,6 +45,10 @@ export class MemberNode extends ExpressionNode {
             return;
         }
 
+        if (!this.isReadOnly()) {
+            return;
+        }
+
         let objectValue = object.getValue();
         const propertyValue = this.getPropertyValue();
         if (propertyValue instanceof IterableValue) {
@@ -76,8 +81,11 @@ export class MemberNode extends ExpressionNode {
         if (this.parent instanceof Later.UpdateNode) {
             return false;
         }
-        //noinspection RedundantIfStatementJS
         if (this.parent instanceof Later.AssignmentNode && this.parent.left === this) {
+            return false;
+        }
+        //noinspection RedundantIfStatementJS
+        if (this.parent instanceof UnaryNode && this.parent.isDelete()) {
             return false;
         }
         return true;

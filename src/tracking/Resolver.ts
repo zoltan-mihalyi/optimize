@@ -71,6 +71,7 @@ abstract class Resolver {
             const propDescriptor:PropDescriptor = {
                 enumerable: propertyDescriptor.enumerable,
                 writable: propertyDescriptor.writable,
+                configurable: propertyDescriptor.configurable,
                 hiddenSetter: objectClass === ARRAY && propName === 'length'
             };
             if (propertyDescriptor.value) {

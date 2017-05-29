@@ -37,6 +37,7 @@ export class ObjectNode extends ExpressionNode {
                 properties[key] = {
                     enumerable: true,
                     writable: true,
+                    configurable: true,
                     value: propertyValue
                 };
                 const propertyTrueValue = state.getTrueValue(propertyValue);

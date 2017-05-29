@@ -4,6 +4,7 @@ const builders = recast.types.builders;
 import {
     FiniteSetOfValues,
     HeapObject,
+    IterableValue,
     PrimitiveValue,
     PropDescriptor,
     ReferenceValue,
@@ -16,6 +17,7 @@ import {SemanticNode} from "../node/SemanticNode";
 import {CallNode, NewNode} from "../node/CallNodes";
 import {Heap} from "./Variable";
 import {FunctionNode} from "../node/Functions";
+import {MemberNode} from "../node/Others";
 import Cache = require("./Cache");
 import Scope = require("../tracking/Scope");
 import EvaluationState = require("../tracking/EvaluationState");
@@ -39,10 +41,11 @@ export const binaryCache = new Cache<string, (x:any, y:any) => any>(operator => 
     return new Function('left,right', `return left ${operator} right;`) as (x:any, y:any) => any;
 });
 
-export function nonEnumerable(writable:boolean, value:Value):PropDescriptor {
+export function nonEnumerable(writable:boolean, configurable:boolean, value:Value):PropDescriptor {
     return {
         enumerable: false,
         writable: writable,
+        configurable: configurable,
         value: value
     };
 }
@@ -155,4 +158,60 @@ export function updateHeap(target:Heap, reference:ReferenceValue, heapObject:Hea
 
 export function isFunctionNode(node:SemanticNode):node is FunctionNode {
     return node instanceof Later.FunctionDeclarationNode || node instanceof Later.AbstractFunctionExpressionNode;
+}
+
+export type HeapObjectModifier = (heapObject:HeapObject, property:string) => HeapObject;
+
+export function handleMemberChange(state:EvaluationState, node:MemberNode, modifier:HeapObjectModifier) {
+    const objectValue = node.object.getValue();
+    if (objectValue instanceof IterableValue) {
+        const isSingle = objectValue instanceof ReferenceValue;
+        objectValue.each((singleValue) => {
+            if (singleValue instanceof ReferenceValue) {
+                const heapObject = state.dereference(singleValue);
+                const newHeapObject = createModifiedObject(node, heapObject, modifier);
+                state.updateObject(singleValue, isSingle ? newHeapObject : heapObject.or(newHeapObject));
+            }
+        });
+    }
+}
+
+function createModifiedObject(left:MemberNode, heapObject:HeapObject, modifier:HeapObjectModifier):HeapObject {
+    let newHeapObject:HeapObject = null;
+    let hasUnknownProperty = false;
+    const propertyValue = left.getPropertyValue();
+    if (propertyValue instanceof IterableValue) {
+        propertyValue.each(prop => {
+            if (!hasUnknownProperty && prop instanceof PrimitiveValue) {
+                let propertyName = prop.value + '';
+                let modifiedHeapObject = modifier(heapObject, propertyName);
+
+                if (newHeapObject === null) {
+                    newHeapObject = modifiedHeapObject;
+                } else {
+                    newHeapObject = newHeapObject.or(modifiedHeapObject);
+                }
+            } else {
+                hasUnknownProperty = true;
+            }
+        });
+    } else {
+        hasUnknownProperty = true;
+    }
+    if (hasUnknownProperty) {
+        newHeapObject = HeapObject.DIRTY_OBJECT;
+    }
+    return newHeapObject;
+}
+
+export function createMatchingObj<T extends Object>(object:T):T {
+    const className = getClassName(object);
+
+    if (className === 'Object') {
+        return {} as any;
+    } else if (className === 'Array') {
+        return [] as any;
+    } else {
+        throw new Error(`${className} not supported!`);
+    }
 }

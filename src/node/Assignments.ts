@@ -1,14 +1,6 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {binaryCache} from "../utils/Utils";
-import {
-    HeapObject,
-    IterableValue,
-    PrimitiveValue,
-    ReferenceValue,
-    SingleValue,
-    unknown,
-    Value
-} from "../tracking/Value";
+import {binaryCache, handleMemberChange} from "../utils/Utils";
+import {PrimitiveValue, SingleValue, unknown, Value} from "../tracking/Value";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import {MemberNode} from "./Others";
 import {IdentifierNode} from "./IdentifierNode";
@@ -20,56 +12,17 @@ type GetNewValue = (original:Value) => Value;
 
 function trackAssignment(state:EvaluationState, node:ExpressionNode, getNewValue:GetNewValue) {
     if (!(node instanceof Later.IdentifierNode)) {
-        handleMemberAssignment(state, node as MemberNode, getNewValue);
+        handleMemberChange(state, node as MemberNode, (heapObject, propertyName) => {
+            let previousValue = heapObject.resolveProperty(state, propertyName, heapObject.trueValue); //todo trueValue
+            let newValue = getNewValue(previousValue);
+            return heapObject.withProperty(propertyName, newValue, state);
+        });
         return;
     }
 
     const variable = node.getVariable();
     const leftValue = state.getValue(variable);
     state.setValue(variable, getNewValue(leftValue), false);
-}
-
-function handleMemberAssignment(state:EvaluationState, node:MemberNode, getNewValue:GetNewValue) {
-    const objectValue = node.object.getValue();
-    if (objectValue instanceof IterableValue) {
-        const isSingle = objectValue instanceof ReferenceValue;
-        objectValue.each((singleValue) => {
-            if (singleValue instanceof ReferenceValue) {
-                const heapObject = state.dereference(singleValue);
-                const newHeapObject = createModifiedObject(state, node, heapObject, getNewValue);
-                state.updateObject(singleValue, isSingle ? newHeapObject : heapObject.or(newHeapObject));
-            }
-        });
-    }
-}
-
-function createModifiedObject(state:EvaluationState, left:MemberNode, heapObject:HeapObject, getNewValue:GetNewValue):HeapObject {
-    let newHeapObject:HeapObject = null;
-    let hasUnknownProperty = false;
-    const propertyValue = left.getPropertyValue();
-    if (propertyValue instanceof IterableValue) {
-        propertyValue.each(prop => {
-            if (!hasUnknownProperty && prop instanceof PrimitiveValue) {
-                let propertyName = prop.value + '';
-                let previousValue = heapObject.resolveProperty(state, propertyName, heapObject.trueValue); //todo trueValue
-                let newValue = getNewValue(previousValue);
-                let modifiedHeapObject = heapObject.withProperty(propertyName, newValue, state);
-                if (newHeapObject === null) {
-                    newHeapObject = modifiedHeapObject;
-                } else {
-                    newHeapObject = newHeapObject.or(modifiedHeapObject);
-                }
-            } else {
-                hasUnknownProperty = true;
-            }
-        });
-    } else {
-        hasUnknownProperty = true;
-    }
-    if (hasUnknownProperty) {
-        newHeapObject = HeapObject.DIRTY_OBJECT;
-    }
-    return newHeapObject;
 }
 
 export class AssignmentNode extends ExpressionNode {

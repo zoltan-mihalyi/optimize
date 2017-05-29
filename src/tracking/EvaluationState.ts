@@ -208,10 +208,10 @@ class EvaluationState extends Resolver {
 
         const fn = this.createFunctionValue(properties, functionNode);
         if (!(functionNode instanceof ArrowFunctionExpressionNode)) {
-            properties.prototype = nonEnumerable(true, this.createObject(OBJECT, new HeapObject({
+            properties.prototype = nonEnumerable(true, false, this.createObject(OBJECT, new HeapObject({
                 proto: this.getReferenceValue(Object.prototype),
                 properties: {
-                    constructor: nonEnumerable(true, fn)
+                    constructor: nonEnumerable(true, true, fn)
                 },
                 propertyInfo: KNOWS_ALL,
                 trueValue: null //todo
@@ -222,9 +222,9 @@ class EvaluationState extends Resolver {
     }
 
     createFunctionValue(properties:PropDescriptorMap, functionNode:FunctionNode):ReferenceValue {
-        (properties as any).arguments = nonEnumerable(false, unknown);
-        (properties as any).caller = nonEnumerable(false, unknown);
-        (properties as any).length = nonEnumerable(false, new PrimitiveValue(functionNode.params.length));
+        (properties as any).arguments = nonEnumerable(false, false, unknown);
+        (properties as any).caller = nonEnumerable(false, false, unknown);
+        (properties as any).length = nonEnumerable(false, true, new PrimitiveValue(functionNode.params.length));
 
         return this.createObject(new FunctionObjectClass(functionNode, null), new HeapObject({
             proto: this.getReferenceValue(Function.prototype),

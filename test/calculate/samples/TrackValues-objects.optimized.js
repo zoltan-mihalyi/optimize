@@ -224,3 +224,35 @@ function knownCallDoesNotMakeObjectDirty() {
     a.push.apply(a, [2, 3]);
     return 3;
 }
+
+function trackDeleteNone() {
+    var o = {
+        y: 1
+    };
+    delete o.x;
+    log(1);
+}
+
+function trackDelete() {
+    var o = {
+        x: 1,
+        y: 1
+    };
+    delete o.x;
+    log(1, false, o.x);
+}
+
+function trackDeleteNonConfigurable() {
+    var o = [];
+    delete o.length;
+    log(0);
+}
+
+function trackDeleteNoTrueValue() {
+    var o = {
+        x: 1,
+        y: () => 1
+    };
+    delete o.x;
+    log("function");
+}

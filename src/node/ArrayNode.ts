@@ -19,6 +19,7 @@ export class ArrayNode extends ExpressionNode {
             length: {
                 enumerable: false,
                 writable: true,
+                configurable: false,
                 value: new PrimitiveValue(this.elements.length),
                 hiddenSetter: true
             }
@@ -30,6 +31,7 @@ export class ArrayNode extends ExpressionNode {
             properties[i] = {
                 enumerable: true,
                 writable: true,
+                configurable: true,
                 value: value
             };
             const itemTrueValue = state.getTrueValue(value);

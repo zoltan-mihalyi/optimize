@@ -1,7 +1,7 @@
 import {ExpressionNode} from "./ExpressionNode";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import {FunctionObjectClass, HeapObject, ReferenceValue, SingleValue} from "../tracking/Value";
-import {canWrap, getClassName, getMutatingObject, getParameters, isPrimitive} from "../utils/Utils";
+import {canWrap, createMatchingObj, getMutatingObject, getParameters, isPrimitive} from "../utils/Utils";
 import {IdentifierNode} from "./IdentifierNode";
 import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
@@ -17,16 +17,7 @@ function clone(object:any, cloned:Map<Object,Object>) {//todo proto...
     if (typeof object === 'function') {
         throw new Error('cloning function is not possible!');
     }
-    let className = getClassName(object);
-
-    let result:any;
-    if (className === 'Object') {
-        result = {};
-    } else if (className === 'Array') {
-        result = [];
-    } else {
-        throw new Error(`${className} not supported!`);
-    }
+    const result = createMatchingObj(object);
 
     cloned.set(object, result);
     const propNames = Object.getOwnPropertyNames(object);

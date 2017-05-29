@@ -229,3 +229,35 @@ function knownCallDoesNotMakeObjectDirty() {
     a.push.apply(a, [2, 3]);
     return a.length;
 }
+
+function trackDeleteNone() {
+    var o = {
+        y: 1
+    };
+    delete o.x;
+    log(o.y);
+}
+
+function trackDelete() {
+    var o = {
+        x: 1,
+        y: 1
+    };
+    delete o.x;
+    log(o.y, o.hasOwnProperty('x'), o.x);
+}
+
+function trackDeleteNonConfigurable() {
+    var o = [];
+    delete o.length;
+    log(o.length);
+}
+
+function trackDeleteNoTrueValue() {
+    var o = {
+        x: 1,
+        y: () => 1
+    };
+    delete o.x;
+    log(typeof o.y);
+}

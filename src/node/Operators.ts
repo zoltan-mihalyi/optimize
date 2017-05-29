@@ -2,13 +2,15 @@ import {ExpressionNode} from "./ExpressionNode";
 import {TrackingVisitor} from "../utils/NodeVisitor";
 import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
+import {MemberNode} from "./Others";
+import {handleMemberChange} from "../utils/Utils";
 
 export class BinaryNode extends ExpressionNode {
     operator:string;
     left:ExpressionNode;
     right:ExpressionNode;
 
-    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    protected onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.left.track(state, visitor);
         this.right.track(state, visitor);
     }
@@ -23,7 +25,7 @@ export class ConditionalNode extends ExpressionNode {
     consequent:ExpressionNode;
     alternate:ExpressionNode;
 
-    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    protected onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.test.track(state, visitor);
         const consequentCtx = new EvaluationState(state, this.scope, this.context);
         this.consequent.track(consequentCtx, visitor);
@@ -42,7 +44,7 @@ export class LogicalNode extends BinaryNode {
         return this.left.isClean() && this.right.isClean();
     }
 
-    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    protected onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.left.track(state, visitor);
         const rightState = new EvaluationState(state, this.scope, this.context);
         this.right.track(rightState, visitor);
@@ -54,8 +56,17 @@ export class UnaryNode extends ExpressionNode {
     argument:ExpressionNode;
     operator:string;
 
-    onTrack(state:EvaluationState, visitor:TrackingVisitor) {
+    isDelete():this is DeleteNode {
+        return this.operator === 'delete';
+    }
+
+    protected onTrack(state:EvaluationState, visitor:TrackingVisitor) {
         this.argument.track(state, visitor);
+        if (this.isDelete()) {
+            handleMemberChange(state, this.argument, (heapObject, propertyName) => {
+                return heapObject.withoutProperty(propertyName);
+            });
+        }
     }
 
     protected isCleanInner():boolean {
@@ -63,3 +74,8 @@ export class UnaryNode extends ExpressionNode {
     }
 }
 Later.UnaryNode = UnaryNode;
+
+interface DeleteNode extends UnaryNode {
+    argument:MemberNode;
+    operator:'delete';
+}
