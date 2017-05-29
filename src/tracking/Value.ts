@@ -352,7 +352,7 @@ export class HeapObject {
         if (this.proto) {
             callback(this.proto);
         }
-        for (const i in this.properties) {
+        for (const i of Object.keys(this.properties)) {
             const property = this.properties[i];
             if (property.get) {
                 callback(property.get);

@@ -251,5 +251,5 @@ function getHeapFor(parameters:Value[], state:EvaluationState):Heap {
         }
     }
 
-    return heap
+    return heap;
 }
