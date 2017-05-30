@@ -1,5 +1,5 @@
 import {ExpressionNode} from "./ExpressionNode";
-import {Value, PropDescriptorMap, OBJECT, PrimitiveValue, HeapObject, KNOWS_ALL, MAY_HAVE_NEW} from "../tracking/Value";
+import {HeapObject, KNOWS_ALL, MAY_HAVE_NEW, OBJECT, PrimitiveValue, PropDescriptorMap, Value} from "../tracking/Value";
 import {throwValue} from "../utils/Utils";
 import {SemanticNode} from "./SemanticNode";
 import {TrackingVisitor} from "../utils/NodeVisitor";
@@ -23,30 +23,7 @@ export class ObjectNode extends ExpressionNode {
         let knowsAll = true;
         let trueValue:{ [idx:string]:any } = {};
         for (let i = 0; i < this.properties.length; i++) {
-            const property = this.properties[i];
-            let value = property.getKeyValue();
-            const keyTrueValue = state.getTrueValue(value);
-            if (keyTrueValue) {
-                const propertyValue = property.value.getValue();
-                let key;
-                try {
-                    key = '' + keyTrueValue.value;
-                } catch (e) {
-                    return throwValue('CANNOT RESOLVE DYNAMIC PROPERTY' + e);
-                }
-                properties[key] = {
-                    enumerable: true,
-                    writable: true,
-                    configurable: true,
-                    value: propertyValue
-                };
-                const propertyTrueValue = state.getTrueValue(propertyValue);
-                if (trueValue && propertyTrueValue) {
-                    trueValue[key] = propertyTrueValue.value;
-                } else {
-                    trueValue = null;
-                }
-            } else {
+            if (!addProperty(this.properties[i])) {
                 properties = {};
                 knowsAll = false;
                 trueValue = null;
@@ -59,6 +36,36 @@ export class ObjectNode extends ExpressionNode {
             propertyInfo: knowsAll ? KNOWS_ALL : MAY_HAVE_NEW,
             trueValue: trueValue
         })));
+
+        function addProperty(property:PropertyNode) {
+            const keyTrueValue = state.getTrueValue(property.getKeyValue());
+            if (!keyTrueValue) {
+                return false;
+            }
+            const propertyValue = property.value.getValue();
+            let key;
+            try {
+                key = '' + keyTrueValue.value;
+            } catch (e) {
+                return throwValue('CANNOT RESOLVE DYNAMIC PROPERTY' + e);
+            }
+            if (key === '__proto__') {
+                return false;
+            }
+            properties[key] = {
+                enumerable: true,
+                writable: true,
+                configurable: true,
+                value: propertyValue
+            };
+            const propertyTrueValue = state.getTrueValue(propertyValue);
+            if (trueValue && propertyTrueValue) {
+                trueValue[key] = propertyTrueValue.value;
+            } else {
+                trueValue = null;
+            }
+            return true;
+        }
     }
 
     protected isCleanInner():boolean {

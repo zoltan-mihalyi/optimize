@@ -256,3 +256,17 @@ function trackDeleteNoTrueValue() {
     delete o.x;
     log("function");
 }
+
+function trackProtoAssignment() {
+    log(typeof {
+        __proto__: null
+    }.toString);
+
+    log(typeof {
+        ['__proto__']: null
+    }.toString);
+
+    log(typeof {
+        [PROTO]: null
+    }.toString);
+}
