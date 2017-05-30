@@ -16,7 +16,7 @@ import {
     SingleValue,
     STRING
 } from "./Value";
-import {getClassName, isPrimitive} from "../utils/Utils";
+import {getClassName, hasOwnProperty, isPrimitive} from "../utils/Utils";
 import Map = require("../utils/Map");
 import SafeProperties = require("./SafeProperties");
 
@@ -74,7 +74,7 @@ abstract class Resolver {
                 configurable: propertyDescriptor.configurable,
                 hiddenSetter: objectClass === ARRAY && propName === 'length'
             };
-            if (propertyDescriptor.value) {
+            if (hasOwnProperty(propertyDescriptor, 'value')) {
                 propDescriptor.value = this.createValue((object as any)[propName]);
             } else {
                 if (propertyDescriptor.get) {
