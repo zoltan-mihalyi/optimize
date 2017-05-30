@@ -19,8 +19,16 @@ class Map<K, V> {
         return this.values[idx];
     }
 
+    getKey(value:V):K {
+        return this.keys[this.values.indexOf(value)];
+    }
+
     has(key:K):boolean {
         return this.keys.indexOf(key) !== -1;
+    }
+
+    hasValue(value:V):boolean {
+        return this.values.indexOf(value) !== -1;
     }
 
     remove(key:K) {

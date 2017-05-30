@@ -51,9 +51,11 @@ export class IdentifierNode extends ExpressionNode {
         if (parent instanceof VariableDeclaratorNode) {
             return false;
         }
-        //noinspection RedundantIfStatementJS
-        if (parent instanceof BinaryNode && (parent.operator === 'instanceof' || parent.operator === 'in')) {
-            return false;
+        if (parent instanceof BinaryNode) {
+            const operator = parent.operator;
+            if (operator === 'instanceof' || operator === 'in' || operator === '===') {
+                return false;
+            }
         }
         return true;
     }

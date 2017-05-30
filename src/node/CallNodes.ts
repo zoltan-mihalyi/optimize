@@ -7,7 +7,7 @@ import EvaluationState = require("../tracking/EvaluationState");
 import Later = require("./Later");
 import Map = require("../utils/Map");
 
-function clone(object:any, cloned:Map<Object,Object>) {//todo proto...
+function makeClone(object:any, cloned:Map<Object, Object>) {//todo proto...
     if (isPrimitive(object)) {
         return object;
     }
@@ -20,10 +20,43 @@ function clone(object:any, cloned:Map<Object,Object>) {//todo proto...
     const result = createMatchingObj(object);
 
     cloned.set(object, result);
-    const propNames = Object.getOwnPropertyNames(object);
-    for (let i = 0; i < propNames.length; i++) {
-        const propName = propNames[i];
-        result[propName] = clone(object[propName], cloned);
+    for (const propName of Object.getOwnPropertyNames(object)) {
+        result[propName] = makeClone(object[propName], cloned);
+    }
+    return result;
+}
+
+function makeCloneIfNeeded(mutatingObject:Object, object:any, cloned:Map<Object, Object>) {
+    const visited:Object[] = [];
+
+    if (needsClone(object)) {
+        makeClone(object, cloned);
+    }
+
+    function needsClone(object:any) {
+        if (object === mutatingObject) {
+            return true;
+        }
+        if (isPrimitive(object)) {
+            return false;
+        }
+        if (visited.indexOf(object) !== -1) {
+            return false;
+        }
+        visited.push(object);
+        for (const propName of Object.getOwnPropertyNames(object)) {
+            if (needsClone(object[propName])) {
+                return true;
+            }
+        }
+    }
+}
+
+function substituteToCloned(clones:Map<Object, Object>, objects:any[]):any[] {
+    const result = new Array(objects.length);
+    for (let i = 0; i < objects.length; i++) {
+        const obj = objects[i];
+        result[i] = clones.has(obj) ? clones.get(obj) : obj;
     }
     return result;
 }
@@ -33,26 +66,25 @@ function applyFunctionCall(state:EvaluationState, objectValue:SingleValue, fn:Fu
 
     try {
         if (objectValue instanceof ReferenceValue) {
-            const mutatingObject = getMutatingObject(fn, objectObject.trueValue, parameters);
+            const originalContext = objectObject.trueValue;
+            const mutatingObject = getMutatingObject(fn, originalContext, parameters);
             if (mutatingObject) {
-                const clonedObject = clone(mutatingObject, new Map<Object, Object>());
-                let context = objectObject.trueValue;
-                if (context === mutatingObject) {
-                    context = clonedObject;
-                } else {
-                    parameters[0] = clonedObject;
-                }
+                const clones = new Map<Object, Object>();
 
-                state.createValueFromCall(fn, context, parameters);
+                const contextAndParams = [originalContext, ...parameters];
+                contextAndParams.forEach((object) => makeCloneIfNeeded(mutatingObject, object, clones));
 
-                state.updateObject(state.getReferenceValue(mutatingObject), state.dereference(state.getReferenceValue(clonedObject)));
+                const clonedContextAndParams = substituteToCloned(clones, contextAndParams);
+
+                state.createValueFromCall(fn, clonedContextAndParams[0], clonedContextAndParams.slice(1));
+
+                state.updateTrueValues(clones);
             }
         }
         return true;
     } catch (e) {
-        //no problem
+        return false;
     }
-    return false;
 }
 
 export abstract class CallLikeNode extends ExpressionNode {

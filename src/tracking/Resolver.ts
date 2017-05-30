@@ -52,17 +52,21 @@ abstract class Resolver {
         if (referenceValue !== null) {
             return referenceValue;
         }
+        return this.createHeapObject(object, (objectClass, heapObject) => this.createObject(objectClass, heapObject));
+    }
 
+    createHeapObject<T>(object:Object, register:(objectClass:ObjectClass, heapObject:HeapObject) => T) {
         let properties:PropDescriptorMap = {};
         let proto = Object.getPrototypeOf(object);
 
         const objectClass = getObjectClass(object);
-        const result = this.createObject(objectClass, new HeapObject({
+        const heapObject = new HeapObject({
             proto: proto ? this.getReferenceValue(proto) : null,
             properties: properties,
             propertyInfo: SafeProperties.has(object) ? NO_UNKNOWN_OVERRIDE_OR_ENUMERABLE : KNOWS_ALL,
             trueValue: object
-        }));
+        });
+        const reference = register(objectClass, heapObject);
 
         const propNames:string[] = SafeProperties.has(object) ? SafeProperties.get(object) : Object.getOwnPropertyNames(object);
         for (let i = 0; i < propNames.length; i++) {
@@ -86,7 +90,7 @@ abstract class Resolver {
             }
             properties[propName] = propDescriptor;
         }
-        return result;
+        return reference;
     }
 
     createValue(value:any):SingleValue {
@@ -101,7 +105,7 @@ abstract class Resolver {
         return this.objectToReferenceMap.has(key);
     }
 
-    createObject(objectClass:ObjectClass, heapObject:HeapObject) {
+    createObject(objectClass:ObjectClass, heapObject:HeapObject):ReferenceValue {
         const reference = new ReferenceValue(objectClass);
         this.onObjectCreate(heapObject, reference);
         if (heapObject.trueValue) {
@@ -110,9 +114,13 @@ abstract class Resolver {
         return reference;
     }
 
+    protected updateObjectToReference(cloned:Object, reference:ReferenceValue) {
+        this.objectToReferenceMap.set(cloned, reference);
+    }
+
     protected abstract onObjectCreate(heapObject:HeapObject, reference:ReferenceValue):void;
 
-    private getObjectReference(object:Object):ReferenceValue {
+    protected getObjectReference(object:Object):ReferenceValue {
         if (this.objectToReferenceMap.has(object)) {
             return this.objectToReferenceMap.get(object);
         }

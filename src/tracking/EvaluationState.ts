@@ -238,6 +238,24 @@ class EvaluationState extends Resolver {
         this.setOrUpdateHeap(reference, heapObject);
     }
 
+    updateTrueValues(clones:Map<Object, Object>) {
+        const proxy:EvaluationState = Object.create(this);
+        proxy.getObjectReference = (object:Object):ReferenceValue => {
+            if (clones.hasValue(object)) {
+                return proxy.getObjectReference(clones.getKey(object));
+            }
+            return this.getObjectReference.call(proxy, object);
+        };
+
+        clones.each((orig, cloned) => {
+            const heapObject = proxy.createHeapObject(cloned, (objectClass, heapObject) => heapObject);
+
+            const origRef = this.getObjectReference(orig);
+            this.setOrUpdateHeap(origRef, heapObject);
+            this.updateObjectToReference(cloned, origRef);
+        });
+    }
+
     hasReference(reference:ReferenceValue):boolean {
         if (this.heap.has(reference)) {
             return true;
@@ -336,7 +354,6 @@ class EvaluationState extends Resolver {
     protected onObjectCreate(heapObject:HeapObject, reference:ReferenceValue) {
         this.ownReferences.push(reference);
         this.setOrUpdateHeap(reference, heapObject);
-        return reference;
     }
 
     private setOrUpdateVariable(variable:Variable, value:Value, initialize:boolean) {

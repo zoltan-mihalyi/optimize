@@ -106,6 +106,23 @@ function trackArray() {
     console.log(true);
 }
 
+function trackArrayMultiChange() {
+    var arr = [];
+    arr.push(1);
+    arr.push(1);
+    return 2;
+}
+
+function trackArrayRecursive() {
+    var a1 = [];
+    var a2 = [];
+    a1.push(a2);
+    a2.push(a2);
+    a2.push(a1);
+    a1.push(a2);
+    return true;
+}
+
 function known() {
     console.log(1);
 }
