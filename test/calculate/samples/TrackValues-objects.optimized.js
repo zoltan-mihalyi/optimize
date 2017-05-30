@@ -11,6 +11,28 @@ function track() {
     console.log(true);
 }
 
+function trackMultiProperty() {
+    var o = {x: 0, y: 0};
+    var p = 'x';
+    if (u) {
+        p = 'y';
+    }
+    o[p] = 1;
+    return true;
+}
+
+function trackUnknownProperty() {
+    var o = {x: 0, y: 0};
+    o[u] = 1;
+    return o.x;
+}
+
+function trackObjectProperty() {
+    var o = {x: 0, y: 0};
+    o[() => 1] = 1;
+    return o.x;
+}
+
 function trackNewObject() {
     var o = {x: 1};
     if (u) {

@@ -10,7 +10,6 @@ import {
     ReferenceValue,
     SingleValue,
     unknown,
-    UnknownValue,
     Value
 } from "../tracking/Value";
 import {SemanticNode} from "../node/SemanticNode";
@@ -133,9 +132,6 @@ export function getClassName(value:Object) {
 }
 
 export function isValueUpdate(oldValue:Value, newValue:Value) { //todo
-    if (newValue instanceof UnknownValue) {
-        return false;
-    }
     if (oldValue.equals(newValue)) {
         return false;
     }

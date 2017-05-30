@@ -138,6 +138,12 @@ function fn() {
     }
 
     log(moreObjectInSingleCall({}, {}));
+
+    function passGetterSetter(regExp) {
+        return false;
+    }
+    passGetterSetter(/a/);
+    passGetterSetter(/b/)
 }
 
 function setScopeValues() {
